@@ -10,11 +10,10 @@ int main(int argc, char *argv[])
     w.show();
     goose_census t;
     std::vector<goose> mg = t.importCsvData();
-    std::vector<matingPair> mps = t.getMatingPairs(mg, 17);
-    matingPair mp = t.findClosestPair(mg);
-    qDebug() << mp.distance <<mp.femaleGoose.species <<mp.maleGoose.species;
-    mp = t.findClosestPair(mg);
-    qDebug() << mp.distance<<mp.femaleGoose.species <<mp.maleGoose.species;
-    qDebug() << mps.size();
+    std::vector<matingPair> mp = t.getMatingPairsAllGeese(mg);
+    qDebug() << mp.size();
+    //qDebug() << mps;
+    //matingPair mp = t.findClosestPair(mp);
+    //qDebug() << mp.distance <<mp.femaleGoose.species <<mp.maleGoose.species;
     return a.exec();
 }

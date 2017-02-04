@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     modules/uas_message/response_message.cpp \
     gcom_controller.cpp \
     modules/mavlink_relay/mavlink_relay_tcp.cpp \
-    modules/goose_census/goose_census.cpp
+    modules/goose_census/goose_census.cpp \
+
 
 HEADERS  += \
     modules/uas_message/uas_message.hpp \
@@ -321,7 +322,10 @@ HEADERS  += \
     Mavlink/mavlink_types.h \
     Mavlink/protocol.h \
     modules/uas_message/uas_message_tcp_framer.hpp \
-    modules/goose_census/goose_census.hpp
+    modules/goose_census/goose_census.hpp \
+
+
+
 
 FORMS    += gcomcontroller.ui
 
