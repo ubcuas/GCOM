@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     goose_census t;
     std::vector<goose> mg = t.importCsvData();
     std::vector<matingPair> mp = t.getMatingPairsAllGeese(mg);
-    qDebug() << mp.size();
+    t.matingPairsToCSV(mp);
     //qDebug() << mps;
     //matingPair mp = t.findClosestPair(mp);
     //qDebug() << mp.distance <<mp.femaleGoose.species <<mp.maleGoose.species;

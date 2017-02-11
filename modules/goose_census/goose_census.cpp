@@ -1,18 +1,56 @@
+//===================================================================
+// Includes
+//===================================================================
 #include "goose_census.hpp"
 #include <iostream>
 #include <fstream>
-#include <QDebug>
+//#include <QDebug>
+#include <iomanip>
+#include <vector>
 #include <string>
 using namespace std;
 
+//===================================================================
+// Class Definitions
+//===================================================================
 goose_census::goose_census()
 {
 
+
+}
+void goose_census::setup(double nestingDistance, std::string csvFilename)
+{
+    this->matingPairDistance = nestingDistance;
+    this->csvFilename = csvFilename;
+}
+// Gets nesting pairs from a vector of geese and saves it to a CSV file
+void goose_census::geeseToNestCSV(std::vector<goose> gooseList)
+{
+    std::vector<matingPair> matingPairs = getMatingPairsAllGeese(gooseList);
+    matingPairsToCSV(matingPairs);
 }
 
+//create new folder tools
 void goose_census::matingPairsToCSV(vector<matingPair> matingPairs)
 {
-    //Todo: Write a vector of mating pairs to a CSV file
+      ofstream gooseFile;
+      gooseFile.open (csvFilename);
+      for(std::vector<matingPair>::iterator  matingPairsIterator = matingPairs.begin();
+                                      matingPairsIterator != matingPairs.end();
+                                      ++matingPairsIterator)
+      {
+          matingPair tempPair = *matingPairsIterator;
+          gooseFile << std::setprecision(12) << tempPair.nestCentroid.xcoord
+                 << ","
+                 <<  std::setprecision(12) << tempPair.nestCentroid.ycoord
+                 << ","
+                 << tempPair.maleGoose.filepath
+                 << ","
+                 << tempPair.femaleGoose.filepath
+                 << "\n";
+      }
+      gooseFile.close();
+    return;
 }
 
 vector<matingPair> goose_census::getMatingPairsAllGeese(vector<goose> gooseList)
@@ -21,7 +59,8 @@ vector<matingPair> goose_census::getMatingPairsAllGeese(vector<goose> gooseList)
     vector<matingPair> singleSpeciesMatingPairs;
     vector<goose> singleSpeciesGooseList;
     vector<int> speciesList = getAllSpecies(gooseList);
-    for(std::vector<int>::iterator speciesIterator = speciesList.begin(); speciesIterator != speciesList.end(); ++speciesIterator)
+    for(std::vector<int>::iterator  speciesIterator = speciesList.begin();
+                                    speciesIterator != speciesList.end(); ++speciesIterator)
     {
         singleSpeciesGooseList = getSeparateSpecies(gooseList,*speciesIterator);
         singleSpeciesMatingPairs = getMatingPairs(singleSpeciesGooseList, matingPairDistance);
@@ -113,8 +152,8 @@ vector<matingPair> goose_census::getMatingPairs(vector<goose> eligableGeese, dou
 nest goose_census::getCentroid(matingPair nestingPair)
 {
     nest matingPairNest;
-    matingPairNest.xcoord = (nestingPair.maleGoose.xcoord + nestingPair.femaleGoose.xcoord)/2;
-    matingPairNest.ycoord = (nestingPair.femaleGoose.ycoord + nestingPair.maleGoose.ycoord)/2;
+    matingPairNest.xcoord = (nestingPair.maleGoose.xcoord + nestingPair.femaleGoose.xcoord)/2.0;
+    matingPairNest.ycoord = (nestingPair.femaleGoose.ycoord + nestingPair.maleGoose.ycoord)/2.0;
     return matingPairNest;
 }
 
@@ -186,7 +225,9 @@ vector<goose> goose_census::importCsvData()
             while ((pos = line.find(delimiter)) != string::npos) {
                 token = line.substr(0, pos);
                 if (rowcount == 0)
+                {
                     goosebuffer.xcoord = std::stod(token,&sz);
+                }
                 else if(rowcount == 1)
                     goosebuffer.ycoord = std::stod(token, &sz);
                 else if(rowcount == 2)
@@ -194,14 +235,16 @@ vector<goose> goose_census::importCsvData()
                     goosebuffer.species = std::stod(token, &sz);
                 }
                 line.erase(0, pos + delimiter.length());
+
+
                 rowcount ++;
             }
+            goosebuffer.filepath ="FilePathGoesHere";
             gooseData.push_back(goosebuffer);
             }
         myfile.close();
       }
 
-    else qDebug() << "Unable to open file";
 
     return gooseData;
 }
