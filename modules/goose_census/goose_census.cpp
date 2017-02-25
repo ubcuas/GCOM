@@ -248,3 +248,23 @@ vector<goose> goose_census::importCsvData()
 
     return gooseData;
 }
+
+vector<goose> goose_census::LatLongtoUTM(vector<goose> LatLongGeese)
+{
+
+    vector<goose> UTMGeese;
+
+    goose tempGoose;
+    for(std::vector<goose>::iterator    gooseIterator = LatLongGeese.begin();
+                                        gooseIterator != LatLongGeese.end();
+                                        ++gooseIterator)
+    {
+        tempGoose = *gooseIterator;
+
+        tempGoose.xcoord = tempGoose.xcoord*latitudeToMeters;
+        tempGoose.ycoord = tempGoose.ycoord*longitudeToMeters;
+
+        UTMGeese.push_back(tempGoose);
+    }
+    return UTMGeese;
+}

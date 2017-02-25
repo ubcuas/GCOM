@@ -43,6 +43,10 @@ public:
     void setup(double nestingDistance, std::string csvFilename);
     void geeseToNestCSV(std::vector<goose> gooseList);
 private:
+    //Alma conversion values
+    //Todo: Allow users to change values, add vancouver value
+    double latitudeToMeters = 111200.98;
+    double longitudeToMeters = 73827.95;
     double matingPairDistance = 17;
     std::string csvFilename = "matingPairs.csv";
 
@@ -53,6 +57,7 @@ private:
     std::vector<matingPair> getMatingPairs(std::vector<goose> eligableGeese, double minimumDistance);
     std::vector<goose> getSeparateSpecies(std::vector<goose> gooseList, int species);
     std::vector<int> getAllSpecies(std::vector<goose> gooseList);
+    std::vector<goose> LatLongtoUTM(std::vector<goose> LatLongGeese);
 };
 
 #endif // GOOSE_CENSUS_H
