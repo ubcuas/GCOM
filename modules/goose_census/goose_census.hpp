@@ -8,7 +8,7 @@
 using namespace std;
 
 //===================================================================
-// Structs
+// Goose Structs
 //===================================================================
 struct goose {
   int species;
@@ -32,16 +32,60 @@ struct matingPair{
 //===================================================================
 // Class Declarations
 //===================================================================
-//Todo: Write fancy descriptions
+/*!
+ * \brief The goose_census class is designed to take in coordinate (lat/long) and species
+ * information of geese and calculate the locations of the nest.  It also converts the lat/long
+ * coordinates to UTM so that a Ripley K script can be run.
+ * \author Grant Nicol
+ */
 class goose_census
 {
 public:
     goose_census();
-    std::vector<goose> importCsvData();
-    void matingPairsToCSV(std::vector<matingPair> matingPairs);
-    std::vector<matingPair> getMatingPairsAllGeese(std::vector<goose> gooselist);
-    void setup(double nestingDistance, std::string csvFilename);
+
+
+    /*!
+     * \brief geeseToNestCSV uses getMatingPairsAllGeese and MatingPairToCSV to take a list
+     * of geese and create a csv file containing the locations and filepaths of the image
+     * containing the geese.
+     *
+     * \param gooseList
+     */
     void geeseToNestCSV(std::vector<goose> gooseList);
+
+    /*!
+     * \brief getMatingPairsAllGeese finds all mating pairs of geese (CONOPPS defines a
+     * mating pair as two geese of the same species within 3 meters of eachother) and
+     * calculates the loaction of their nest.
+     * \param gooselist, a list of the geese to be processed. This is to be generated from
+     *  imagery analysis
+     * \return a vector of the mating pairs
+     */
+    std::vector<matingPair> getMatingPairsAllGeese(std::vector<goose> gooselist);
+
+    /*!
+     * \brief matingPairsToCSV saves the list of mating pairs to a CSV which can be used in
+     * the report
+     * \param matingPairs
+     */
+    void matingPairsToCSV(std::vector<matingPair> matingPairs);
+
+    /*!
+     * \brief setup
+     * \param nestingDistance is the distance that defines a mating pair. CONOPS specifies this
+     * distance to be 3m
+     * \param csvFilename is the name of the file you want to save your mating pairs to
+     */
+    void setup(double nestingDistance, std::string csvFilename);
+
+    /*!
+     * \brief importCsvData is used for testing purposes only. It reads a CSV file of
+     * simulated goose information and returns a vector of geese
+     * \return vector<goose>, a vector of geese. This is what is expected to be given to
+     * the goose census in operating conditions.
+     */
+    std::vector<goose> importCsvData();
+
 private:
     //Alma conversion values
     //Todo: Allow users to change values, add vancouver value
