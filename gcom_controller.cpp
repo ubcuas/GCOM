@@ -42,6 +42,10 @@ const QString STOP_SERVER_BUTTON_TEXT("Stop Server");
 const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 
+// Image Tagger Constants
+const QString START_IMAGE_RELAY("Start Image Relay");
+const QString STOP_IMAGE_RELAY("Stop Image Relay");
+
 //===================================================================
 // Class Declarations
 //===================================================================
@@ -443,6 +447,12 @@ void GcomController::on_startTrackButton_clicked()
     else
         qDebug() << "wrong neighbourhood";
 }
+
+//===================================================================
+// Image Tagger Methods
+//===================================================================
+
+//void GcomController::on_tagger_imageRelay_clicked() {};
 
 //===================================================================
 // Utility Methods
