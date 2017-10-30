@@ -32,6 +32,11 @@ const QString SEARCHING_LABEL("<font color='#EED202'> SEARCHING </font>"
                                "<img src=':/connection/connecting.png'>");
 const QRegExp IP_REGEX("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$");
 
+// tabMain Constants
+bool TAB_ENABLE = true;
+bool TAB_DISABLE = false;
+const int TAB_IMAGE_TAGGER = 2;
+
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
 const QString CONNECTING_BUTTON_TEXT("Cancel Connecting");
@@ -45,7 +50,24 @@ const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 
 // Image Tagger Constants
-const QRegExp PATH_REGEX("^([a-zA-z]:)?/([^<>:\"/\\\\|?*]+/)*([^<>:\"/\\\\|?*]+)*$");
+#ifdef Q_OS_WIN
+    const QRegExp PATH_REGEX(
+            "^([a-zA-z]:)?"
+            "/"
+            "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/)*"
+            "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*)*$");
+#elif defined(Q_OS_MACOS)
+    const QRegExp PATH_REGEX("^([~])?/([^.:][^:]*/)*([^.:][^:]*)*$");
+#elif defined(Q_OS_LINUX)
+    const QRegExp PATH_REGEX("^([~])?/([^/]+/)*([^/]+)*$");
+#else
+#error
+#endif
+
+const QString TAGGER_READY_LABEL("<font color='#05c400'> READY </font>");
+const QString TAGGER_INVALID_LABEL("<font color='#D52D2D'> INVALID PATHS </font>");
+const QString TAGGER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
+
 const QString START_IMAGE_RELAY("Start Image Relay");
 const QString STOP_IMAGE_RELAY("Stop Image Relay");
 const int PATH_UNTAGGED = 0;
@@ -117,6 +139,9 @@ GcomController::GcomController(QWidget *parent) :
     ui->taggerLocationTaggedField->setValidator(new QRegExpValidator(PATH_REGEX));
     ui->taggerLocationTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
 
+    ui->taggerStatusField->setText(TAGGER_READY_LABEL);
+
+    enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
 }
 
 GcomController::~GcomController()
@@ -249,6 +274,9 @@ void GcomController::resetDCNCGUI()
     ui->dcncStatusMovie->setText(" ");
     // Deactivate the drop gremlin button
     ui->dcncDropGremlin->setDisabled(false);
+
+    // Disable tabs
+    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
 }
 
 void GcomController::on_dcncConnectionButton_clicked()
@@ -336,6 +364,7 @@ void GcomController::dcncDisconnected()
 {
     // Update the UI
     ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
+    ui->dcncStatusField->setText(SEARCHING_LABEL);
     ui->dcncConnectionStatusField->setText(DISCONNECT_LABEL);
     // Stop the connection timer
     dcncConnectionTimer->stop();
@@ -346,6 +375,9 @@ void GcomController::dcncDisconnected()
     ui->dcncDropGremlin->setDisabled(false);
     // Start the connection timeout timer.
     dcncSearchTimeoutTimer->start(ui->dcncServerTimeoutField->text().toULong() * 1000);
+
+    // Disable tabs
+    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
 }
 
 void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped)
@@ -357,11 +389,15 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
-    if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::IMAGE_RELAY))
-    {
-        ui->dcncCapabilitiesField->addItem("Image Relay");
-        dcnc->startImageRelay();
-    }
+    // May have several capabilities, so loop through all of them
+     while (static_cast<uint32_t>(capabilities) > 0) {
+         if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::IMAGE_TAGGER))
+         {
+             ui->dcncCapabilitiesField->addItem("Image Tagger");
+             enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
+         }
+         capabilities = capabilities >> 8;
+     }
 }
 
 void GcomController::dcncTimerTimeout()
@@ -563,6 +599,12 @@ void GcomController::taggerChangeDir(const int locationType) {
         tagsDir = dir;
         ui->taggerLocationTagsField->setModified(false);
     }
+    qDebug() << dir;
+}
+
+void GcomController::on_taggerImageTransferButton_clicked()
+{
+    dcnc->startImageRelay();
 }
 
 //===================================================================
@@ -579,11 +621,15 @@ QString GcomController::formatDuration(unsigned long seconds)
     return QString("%1:%2:%3").arg(hours).arg(minutes).arg(seconds);
 }
 
-void GcomController::on_tabWidget_tabBarClicked(int index)
+void GcomController::on_tabMain_tabBarClicked(int index)
 {
     if (index == 1)
     {
         on_arduinoRefreshButton_clicked();
         on_zaberRefreshButton_clicked();
     }
+}
+
+void GcomController::enableTabMain(const int tab, bool enable) {
+     ui->tabMain->setTabEnabled(tab, enable);
 }

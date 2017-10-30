@@ -15,7 +15,7 @@ CapabilitiesMessage::CapabilitiesMessage(const std::vector<unsigned char> &seria
 
 UASMessage::MessageID CapabilitiesMessage::type()
 {
-    return  UASMessage::MessageID::DATA_IMAGE;
+    return  UASMessage::MessageID::DATA_CAPABILITIES;
 }
 
 CapabilitiesMessage::~CapabilitiesMessage()

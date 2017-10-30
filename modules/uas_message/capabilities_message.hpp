@@ -27,7 +27,7 @@ class CapabilitiesMessage : public UASMessage
          */
         enum class Capabilities : uint32_t
         {
-            IMAGE_RELAY             = 0x01,
+            IMAGE_TAGGER             = 0x01,
         };
 
         //Public Methods

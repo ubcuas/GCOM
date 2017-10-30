@@ -40,7 +40,7 @@ private slots:
     void on_mavlinkConnectionButton_clicked();
     void on_dcncConnectionButton_clicked();
     void on_arduinoRefreshButton_clicked();
-    void on_tabWidget_tabBarClicked(int index);
+    void on_tabMain_tabBarClicked(int index);
     void on_dcncDropGremlin_clicked();
     // MAVLinkRelay Slots
     void mavlinkRelayConnected();
@@ -71,6 +71,8 @@ private slots:
     void on_taggerLocationUntaggedButton_clicked();
     void on_taggerLocationTaggedButton_clicked();
     void on_taggerLocationTagsButton_clicked();
+
+    void on_taggerImageTransferButton_clicked();
 
 private:
     // Private Member Variables
@@ -123,6 +125,13 @@ private:
      * \param locationType, type of file to save - untagged, tagged, tags
      */
     void taggerChangeDir(const int locationType);
+
+    /*!
+     * \brief enableTabMain, enables or disables tabs in the tab group tabMain
+     * \param tab, tab to enable or disable
+     * \param enable, true to enable, false to disable
+     */
+    void enableTabMain(const int tab, bool enable);
 };
 
 #endif // GCOMCONTROLLER_HPP
