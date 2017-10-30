@@ -9,6 +9,8 @@
 #include <QRegExp>
 #include <QTimer>
 #include <QDebug>
+#include <QDir>
+#include <QFileDialog>
 // GCOM Includes
 #include "gcom_controller.hpp"
 #include "ui_gcomcontroller.h"
@@ -43,8 +45,12 @@ const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 
 // Image Tagger Constants
+const QRegExp PATH_REGEX("^([a-zA-z]:)?/([^<>:\"/\\\\|?*]+/)*([^<>:\"/\\\\|?*]+)*$");
 const QString START_IMAGE_RELAY("Start Image Relay");
 const QString STOP_IMAGE_RELAY("Stop Image Relay");
+const int PATH_UNTAGGED = 0;
+const int PATH_TAGGED = 1;
+const int PATH_TAGS = 2;
 
 //===================================================================
 // Class Declarations
@@ -95,6 +101,22 @@ GcomController::GcomController(QWidget *parent) :
     // Antenna Tracker Setup
     tracker = new AntennaTracker();
     ui->antennaTrackerTab->setDisabled(true);
+
+    // Image Tagger Setup
+    QDir dir;
+    currentDir = dir.currentPath();
+    untaggedDir = taggedDir = tagsDir = currentDir;
+
+    tagger = new ImageTagger(untaggedDir, taggedDir, tagsDir, dcnc);
+
+    ui->taggerLocationUntaggedField->setText(untaggedDir);
+    ui->taggerLocationTaggedField->setText(taggedDir);
+    ui->taggerLocationTagsField->setText(tagsDir);
+
+    ui->taggerLocationUntaggedField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->taggerLocationTaggedField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->taggerLocationTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
+
 }
 
 GcomController::~GcomController()
@@ -105,6 +127,7 @@ GcomController::~GcomController()
     delete mavlinkConnectingMovie;
     delete dcnc;
     delete tracker;
+    delete tagger;
 }
 
 //===================================================================
@@ -451,8 +474,96 @@ void GcomController::on_startTrackButton_clicked()
 //===================================================================
 // Image Tagger Methods
 //===================================================================
+void GcomController::on_taggerLocationUntaggedButton_clicked()
+{
+    taggerBrowseDir(PATH_UNTAGGED);
+}
 
-//void GcomController::on_tagger_imageRelay_clicked() {};
+void GcomController::on_taggerLocationTaggedButton_clicked()
+{
+    taggerBrowseDir(PATH_TAGGED);
+}
+
+void GcomController::on_taggerLocationTagsButton_clicked()
+{
+    taggerBrowseDir(PATH_TAGS);
+}
+
+void GcomController::on_taggerLocationUntaggedField_returnPressed()
+{
+    ui->taggerLocationUntaggedField->clearFocus();
+}
+
+void GcomController::on_taggerLocationTaggedField_returnPressed()
+{
+    ui->taggerLocationTaggedField->clearFocus();
+}
+
+void GcomController::on_taggerLocationTagsField_returnPressed()
+{
+    ui->taggerLocationTagsField->clearFocus();
+}
+
+void GcomController::on_taggerLocationUntaggedField_editingFinished()
+{
+    if (ui->taggerLocationUntaggedField->isModified())
+        taggerChangeDir(PATH_UNTAGGED);
+}
+
+void GcomController::on_taggerLocationTaggedField_editingFinished()
+{
+    if (ui->taggerLocationTaggedField->isModified())
+        taggerChangeDir(PATH_TAGGED);
+}
+
+void GcomController::on_taggerLocationTagsField_editingFinished()
+{
+    if (ui->taggerLocationTagsField->isModified())
+        taggerChangeDir(PATH_TAGS);
+}
+
+void GcomController::taggerBrowseDir(const int locationType) {
+    QString dir = QFileDialog::getExistingDirectory(
+                this,
+                "Select Folder",
+                currentDir,
+                QFileDialog::ShowDirsOnly);
+
+    if (dir.length()) {
+        if (locationType == PATH_UNTAGGED) {
+            untaggedDir = dir;
+            ui->taggerLocationUntaggedField->setText(untaggedDir);
+        }
+        else if (locationType == PATH_TAGGED) {
+            taggedDir = dir;
+            ui->taggerLocationTaggedField->setText(taggedDir);
+        }
+        else if (locationType == PATH_TAGS) {
+            tagsDir = dir;
+            ui->taggerLocationTagsField->setText(tagsDir);
+        }
+     }
+}
+
+void GcomController::taggerChangeDir(const int locationType) {
+    QString dir;
+
+    if (locationType == PATH_UNTAGGED) {
+        dir = ui->taggerLocationUntaggedField->text();
+        untaggedDir = dir;
+        ui->taggerLocationUntaggedField->setModified(false);
+    }
+    else if (locationType == PATH_TAGGED) {
+        dir = ui->taggerLocationTaggedField->text();
+        taggedDir = dir;
+        ui->taggerLocationTaggedField->setModified(false);
+    }
+    else if (locationType == PATH_TAGS) {
+        dir = ui->taggerLocationTagsField->text();
+        tagsDir = dir;
+        ui->taggerLocationTagsField->setModified(false);
+    }
+}
 
 //===================================================================
 // Utility Methods

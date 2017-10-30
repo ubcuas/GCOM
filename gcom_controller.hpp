@@ -14,6 +14,7 @@
 #include "modules/uas_dcnc/dcnc.hpp"
 #include "modules/uas_message/image_message.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
+#include "modules/uas_image_tagger/image_tagger.hpp"
 
 //===================================================================
 // Namespace Declarations
@@ -58,6 +59,19 @@ private slots:
     void on_zaberConnectButton_clicked();
     void on_startTrackButton_clicked();
 
+    // Image Tagger Slots
+    void on_taggerLocationUntaggedField_returnPressed();
+    void on_taggerLocationTaggedField_returnPressed();
+    void on_taggerLocationTagsField_returnPressed();
+
+    void on_taggerLocationUntaggedField_editingFinished();
+    void on_taggerLocationTaggedField_editingFinished();
+    void on_taggerLocationTagsField_editingFinished();
+
+    void on_taggerLocationUntaggedButton_clicked();
+    void on_taggerLocationTaggedButton_clicked();
+    void on_taggerLocationTagsButton_clicked();
+
 private:
     // Private Member Variables
     Ui::GcomController *ui;
@@ -88,6 +102,27 @@ private:
     AntennaTracker *tracker;
     // Methods
     void updateStartTrackerButton();
+
+    // Image Tagger Variables
+    ImageTagger *tagger;
+    QString currentDir;
+    QString untaggedDir;
+    QString taggedDir;
+    QString tagsDir;
+
+    // Image Tagger methods
+
+    /*!
+     * \brief taggerBrowseDir, open file dialog, allow user to change directories
+     * \param locationType, type of file to save - untagged, tagged, tags
+     */
+    void taggerBrowseDir(const int locationType);
+
+    /*!
+     * \brief taggerChangeDir, changes directories when user inputs directory manually
+     * \param locationType, type of file to save - untagged, tagged, tags
+     */
+    void taggerChangeDir(const int locationType);
 };
 
 #endif // GCOMCONTROLLER_HPP

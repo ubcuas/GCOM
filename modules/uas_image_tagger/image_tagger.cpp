@@ -56,42 +56,20 @@ void ImageTagger::saveImageToDisc(QString filePath, unsigned char *data, size_t 
 }
 
 
-void ImageTagger::handleImageMessage(std::shared_ptr<ImageTaggerMessage> message)
+void ImageTagger::handleImageMessage(std::shared_ptr<ImageMessage> message)
 {
     QString filePath;
-    ImageTaggerMessage *imageMessage = message.get();
-    unsigned char uniqueSeqNum = imageMessage->getSequenceNumber();
-    std::vector<unsigned char> imageData = imageMessage->getImageData();
+    ImageMessage *imageMessage = message.get();
+    unsigned char uniqueSeqNum = imageMessage->sequenceNumber;
+    std::vector<unsigned char> imageData = imageMessage->imageData;
 
     // A pointer to the image data
     unsigned char *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
 
-    // Iterate through vector of sequence numbers
-    for (auto seqNum = seqNumArr.begin(); seqNum != seqNumArr.end(); ++seqNum) {
-        // If duplicate is found
-        if (uniqueSeqNum == *seqNum) {
-            // Change path name for duplicate
-            filePath = pathOfDuplicates + DUP + QString::number(++numOfDuplicates) + JPG;
-            saveImageToDisc(filePath, imageArray, sizeOfData);
-            if (gpsDataAvailable) {
-                while(gpsData.isEmpty())
-                    qDebug() << "No GPS data in the queue";
-                tagImage(filePath, gpsData.dequeue());
-            }
-            emit taggedImage(filePath);
-            return;
-        }
-    }
-
     // If no duplicate is found
     seqNumArr.push_back(uniqueSeqNum);
-    filePath = pathOfDir + IMG + QString::number(++numOfImages) + JPG;
+    filePath = pathOfTagged + IMG + QString::number(++numOfImages) + JPG;
     saveImageToDisc(filePath, imageArray, sizeOfData);
-    if (gpsDataAvailable) {
-        while(gpsData.isEmpty())
-            qDebug() << "No GPS data in the queue";
-        tagImage(filePath, gpsData.dequeue());
-    }
     emit taggedImage(filePath);
 }

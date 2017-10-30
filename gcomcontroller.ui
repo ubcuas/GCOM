@@ -118,7 +118,7 @@
     <item row="1" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="connectionTab">
        <attribute name="title">
@@ -544,56 +544,56 @@
          <rect>
           <x>10</x>
           <y>10</y>
-          <width>431</width>
+          <width>871</width>
           <height>371</height>
          </rect>
         </property>
         <property name="title">
          <string>Image Tagger</string>
         </property>
-        <widget class="QLineEdit" name="taggerLocationUntaggedLine">
+        <widget class="QLineEdit" name="taggerLocationUntaggedField">
          <property name="geometry">
           <rect>
-           <x>70</x>
-           <y>65</y>
-           <width>251</width>
-           <height>20</height>
+           <x>180</x>
+           <y>60</y>
+           <width>541</width>
+           <height>31</height>
           </rect>
          </property>
         </widget>
         <widget class="QLabel" name="taggerLocationLabel">
          <property name="geometry">
           <rect>
-           <x>20</x>
+           <x>10</x>
            <y>30</y>
-           <width>35</width>
-           <height>10</height>
+           <width>151</width>
+           <height>21</height>
           </rect>
          </property>
          <property name="text">
-          <string>Locations</string>
+          <string>Save Locations</string>
          </property>
         </widget>
         <widget class="QLabel" name="taggerLocationUntaggedLabel">
          <property name="geometry">
           <rect>
-           <x>20</x>
-           <y>70</y>
-           <width>35</width>
-           <height>10</height>
+           <x>10</x>
+           <y>60</y>
+           <width>151</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
-          <string>Untagged</string>
+          <string>Untagged Images</string>
          </property>
         </widget>
         <widget class="QPushButton" name="taggerLocationUntaggedButton">
          <property name="geometry">
           <rect>
-           <x>330</x>
-           <y>67</y>
-           <width>80</width>
-           <height>16</height>
+           <x>739</x>
+           <y>60</y>
+           <width>121</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
@@ -603,82 +603,82 @@
         <widget class="QPushButton" name="taggerLocationTaggedButton">
          <property name="geometry">
           <rect>
-           <x>330</x>
-           <y>115</y>
-           <width>80</width>
-           <height>16</height>
+           <x>739</x>
+           <y>130</y>
+           <width>121</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
           <string>Browse</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="taggerLocationTaggedLine">
+        <widget class="QLineEdit" name="taggerLocationTaggedField">
          <property name="geometry">
           <rect>
-           <x>70</x>
-           <y>113</y>
-           <width>251</width>
-           <height>20</height>
+           <x>180</x>
+           <y>130</y>
+           <width>541</width>
+           <height>31</height>
           </rect>
          </property>
         </widget>
         <widget class="QLabel" name="taggerLocationTaggedLabel">
          <property name="geometry">
           <rect>
-           <x>20</x>
-           <y>118</y>
-           <width>35</width>
-           <height>10</height>
+           <x>10</x>
+           <y>130</y>
+           <width>151</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
-          <string>Tagged</string>
+          <string>Tagged Images</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="taggerLocationBackupButton">
+        <widget class="QPushButton" name="taggerLocationTagsButton">
          <property name="geometry">
           <rect>
-           <x>330</x>
-           <y>162</y>
-           <width>80</width>
-           <height>16</height>
+           <x>739</x>
+           <y>200</y>
+           <width>121</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
           <string>Browse</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="taggerLocationBackupLine">
+        <widget class="QLineEdit" name="taggerLocationTagsField">
          <property name="geometry">
           <rect>
-           <x>70</x>
-           <y>160</y>
-           <width>251</width>
-           <height>20</height>
+           <x>180</x>
+           <y>200</y>
+           <width>541</width>
+           <height>31</height>
           </rect>
          </property>
         </widget>
-        <widget class="QLabel" name="taggerLocationBackupLabel">
+        <widget class="QLabel" name="taggerLocationTagsLabel">
          <property name="geometry">
           <rect>
-           <x>20</x>
-           <y>165</y>
-           <width>35</width>
-           <height>10</height>
+           <x>10</x>
+           <y>200</y>
+           <width>151</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="text">
-          <string>Backup</string>
+          <string>Tags</string>
          </property>
         </widget>
         <widget class="QPushButton" name="taggerImageRelayButton">
          <property name="geometry">
           <rect>
            <x>19</x>
-           <y>340</y>
-           <width>391</width>
-           <height>20</height>
+           <y>319</y>
+           <width>841</width>
+           <height>41</height>
           </rect>
          </property>
          <property name="text">

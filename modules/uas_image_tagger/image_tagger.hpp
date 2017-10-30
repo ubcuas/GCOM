@@ -11,7 +11,7 @@
 #include <assert.h>
 // GCOM Includes
 #include "modules/uas_dcnc/dcnc.hpp"
-#include "modules/uas_message/image_tagger_message.hpp"
+#include "modules/uas_message/image_message.hpp"
 
 //===================================================================
 // Public Class Declaration
@@ -43,17 +43,17 @@ public:
      * \brief setupTaggedDir helper function to setup path name for tagged images
      * \param dir QString path of directory for tagged images
      */
-    bool ImageTagger::setupTaggedDir(QString dir);
+    bool setupTaggedDir(QString dir);
     /*!
      * \brief setupTaggedDir helper function to setup path name for tagged images
      * \param dir QString path of directory for tagged images
      */
-    bool ImageTagger::setupUntaggedDir(QString dir);
+    bool setupUntaggedDir(QString dir);
     /*!
      * \brief setupTaggedDir helper function to setup path name for tagged images
      * \param dir QString path of directory for tagged images
      */
-    bool ImageTagger::setupTagsDir(QString dir);
+    bool setupTagsDir(QString dir);
 
     /*!
      * \brief saveImageToDisc helper function that does the saving
@@ -70,7 +70,7 @@ private slots:
      * \brief handleImageMessage saves image to disc and sends a signal with
      *        the tagged image's file name
      */
-    void handleImageMessage(std::shared_ptr<ImageTaggerMessage> message);
+    void handleImageMessage(std::shared_ptr<ImageMessage> message);
 private:
     QString pathOfTagged;
     QString pathOfUntagged;
