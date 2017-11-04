@@ -50,7 +50,7 @@ const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 
 // Image Tagger Constants
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN)
     const QRegExp PATH_REGEX(
             "^([a-zA-z]:)?"
             "/"
@@ -64,15 +64,21 @@ const QString DISCONNECTED_LABEL("Disconnected");
 #error
 #endif
 
-const QString TAGGER_READY_LABEL("<font color='#05c400'> READY </font>");
-const QString TAGGER_INVALID_LABEL("<font color='#D52D2D'> INVALID PATHS </font>");
-const QString TAGGER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
+const int PATH_IMAGES = 0;
+const int PATH_TAGS = 1;
 
-const QString START_IMAGE_RELAY("Start Image Relay");
-const QString STOP_IMAGE_RELAY("Stop Image Relay");
-const int PATH_UNTAGGED = 0;
-const int PATH_TAGGED = 1;
-const int PATH_TAGS = 2;
+const QString TAGGER_READY_LABEL("<font color='#05c400'> READY </font>");
+const QString TAGGER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
+const QString TAGGER_INVALID_IMAGES_PATH_LABEL(
+        "<font color='#D52D2D'> INVALID IMAGES PATH </font>");
+const QString TAGGER_INVALID_TAGS_PATH_LABEL(
+        "<font color='#D52D2D'> INVALID TAGS PATH </font>");
+
+const QString IMAGE_TRANSFER_START("Start Image Transfer");
+const QString IMAGE_TRANSFER_STOP("Stop Image Transfer");
+
+const int TAGGER_STATUS_READY = 0;
+const int TAGGER_STATUS_TRANSFERRING = 1;
 
 //===================================================================
 // Class Declarations
@@ -124,24 +130,10 @@ GcomController::GcomController(QWidget *parent) :
     tracker = new AntennaTracker();
     ui->antennaTrackerTab->setDisabled(true);
 
-    // Image Tagger Setup
-    QDir dir;
-    currentDir = dir.currentPath();
-    untaggedDir = taggedDir = tagsDir = currentDir;
+    tagger = nullptr;
 
-    tagger = new ImageTagger(untaggedDir, taggedDir, tagsDir, dcnc);
-
-    ui->taggerLocationUntaggedField->setText(untaggedDir);
-    ui->taggerLocationTaggedField->setText(taggedDir);
-    ui->taggerLocationTagsField->setText(tagsDir);
-
-    ui->taggerLocationUntaggedField->setValidator(new QRegExpValidator(PATH_REGEX));
-    ui->taggerLocationTaggedField->setValidator(new QRegExpValidator(PATH_REGEX));
-    ui->taggerLocationTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
-
-    ui->taggerStatusField->setText(TAGGER_READY_LABEL);
-
-    enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
+    // Disable tagger tab
+    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
 }
 
 GcomController::~GcomController()
@@ -275,6 +267,13 @@ void GcomController::resetDCNCGUI()
     // Deactivate the drop gremlin button
     ui->dcncDropGremlin->setDisabled(false);
 
+    // If currently transferring images, stop transfer and reset status
+    if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
+        taggerStatus = TAGGER_STATUS_READY;
+        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
+        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
+    }
+
     // Disable tabs
     enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
 }
@@ -376,6 +375,15 @@ void GcomController::dcncDisconnected()
     // Start the connection timeout timer.
     dcncSearchTimeoutTimer->start(ui->dcncServerTimeoutField->text().toULong() * 1000);
 
+    ui->dcncCapabilitiesField->clear();
+
+    // If currently transferring images, stop transfer and reset status
+    if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
+        taggerStatus = TAGGER_STATUS_READY;
+        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
+        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
+    }
+
     // Disable tabs
     enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
 }
@@ -390,11 +398,18 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
     // May have several capabilities, so loop through all of them
-     while (static_cast<uint32_t>(capabilities) > 0) {
-         if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::IMAGE_TAGGER))
+     while (static_cast<uint32_t>(capabilities)) {
+         if (static_cast<uint32_t>(capabilities &
+                                   CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
          {
-             ui->dcncCapabilitiesField->addItem("Image Tagger");
-             enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
+             if (tagger == nullptr)
+                setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+         }
+         if (static_cast<uint32_t>(capabilities &
+                                   CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED))
+         {
+             if (tagger == nullptr)
+                setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED);
          }
          capabilities = capabilities >> 8;
      }
@@ -510,14 +525,36 @@ void GcomController::on_startTrackButton_clicked()
 //===================================================================
 // Image Tagger Methods
 //===================================================================
-void GcomController::on_taggerLocationUntaggedButton_clicked()
-{
-    taggerBrowseDir(PATH_UNTAGGED);
+void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera) {
+    QDir dir;
+    currentDir = dir.currentPath();
+
+    // Initialize tagger with default current working directory paths
+
+    if (camera == CapabilitiesMessage::Capabilities::CAMERA_TAGGED) {
+        tagger = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
+        ui->dcncCapabilitiesField->addItem("Camera With Tags");
+    }
+    else if (camera == CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED) {
+        tagger = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
+        ui->dcncCapabilitiesField->addItem("Camera Without Tags");
+    }
+
+    ui->taggerLocationImagesField->setText(currentDir);
+    ui->taggerLocationTagsField->setText(currentDir);
+
+    ui->taggerLocationImagesField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->taggerLocationTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
+
+    ui->taggerStatusField->setText(TAGGER_READY_LABEL);
+    taggerStatus = TAGGER_STATUS_READY;
+
+    enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
 }
 
-void GcomController::on_taggerLocationTaggedButton_clicked()
+void GcomController::on_taggerLocationImagesButton_clicked()
 {
-    taggerBrowseDir(PATH_TAGGED);
+    taggerBrowseDir(PATH_IMAGES);
 }
 
 void GcomController::on_taggerLocationTagsButton_clicked()
@@ -525,14 +562,9 @@ void GcomController::on_taggerLocationTagsButton_clicked()
     taggerBrowseDir(PATH_TAGS);
 }
 
-void GcomController::on_taggerLocationUntaggedField_returnPressed()
+void GcomController::on_taggerLocationImagesField_returnPressed()
 {
-    ui->taggerLocationUntaggedField->clearFocus();
-}
-
-void GcomController::on_taggerLocationTaggedField_returnPressed()
-{
-    ui->taggerLocationTaggedField->clearFocus();
+    ui->taggerLocationImagesField->clearFocus();
 }
 
 void GcomController::on_taggerLocationTagsField_returnPressed()
@@ -540,71 +572,54 @@ void GcomController::on_taggerLocationTagsField_returnPressed()
     ui->taggerLocationTagsField->clearFocus();
 }
 
-void GcomController::on_taggerLocationUntaggedField_editingFinished()
-{
-    if (ui->taggerLocationUntaggedField->isModified())
-        taggerChangeDir(PATH_UNTAGGED);
-}
-
-void GcomController::on_taggerLocationTaggedField_editingFinished()
-{
-    if (ui->taggerLocationTaggedField->isModified())
-        taggerChangeDir(PATH_TAGGED);
-}
-
-void GcomController::on_taggerLocationTagsField_editingFinished()
-{
-    if (ui->taggerLocationTagsField->isModified())
-        taggerChangeDir(PATH_TAGS);
-}
-
 void GcomController::taggerBrowseDir(const int locationType) {
+
+    // Open file dialog, allows user to select a folder and saves the path to a string
     QString dir = QFileDialog::getExistingDirectory(
                 this,
                 "Select Folder",
                 currentDir,
                 QFileDialog::ShowDirsOnly);
 
-    if (dir.length()) {
-        if (locationType == PATH_UNTAGGED) {
-            untaggedDir = dir;
-            ui->taggerLocationUntaggedField->setText(untaggedDir);
-        }
-        else if (locationType == PATH_TAGGED) {
-            taggedDir = dir;
-            ui->taggerLocationTaggedField->setText(taggedDir);
-        }
-        else if (locationType == PATH_TAGS) {
-            tagsDir = dir;
-            ui->taggerLocationTagsField->setText(tagsDir);
-        }
-     }
-}
+    // Check if directory has been changed
+    if (!dir.length())
+        return;
 
-void GcomController::taggerChangeDir(const int locationType) {
-    QString dir;
-
-    if (locationType == PATH_UNTAGGED) {
-        dir = ui->taggerLocationUntaggedField->text();
-        untaggedDir = dir;
-        ui->taggerLocationUntaggedField->setModified(false);
+    // Update path fields
+    switch(locationType) {
+        case PATH_IMAGES:
+            ui->taggerLocationImagesField->setText(dir);
+            break;
+        case PATH_TAGS:
+            ui->taggerLocationTagsField->setText(dir);
+            break;
     }
-    else if (locationType == PATH_TAGGED) {
-        dir = ui->taggerLocationTaggedField->text();
-        taggedDir = dir;
-        ui->taggerLocationTaggedField->setModified(false);
-    }
-    else if (locationType == PATH_TAGS) {
-        dir = ui->taggerLocationTagsField->text();
-        tagsDir = dir;
-        ui->taggerLocationTagsField->setModified(false);
-    }
-    qDebug() << dir;
 }
 
 void GcomController::on_taggerImageTransferButton_clicked()
 {
-    dcnc->startImageRelay();
+    if (taggerStatus == TAGGER_STATUS_READY) {
+        // True needs to be replaced with an image tagger check directory function
+        // Show error message if paths are invalid
+        if (true) {
+            ui->taggerStatusField->setText(TAGGER_INVALID_IMAGES_PATH_LABEL);
+        }
+        else if (true) {
+            ui->taggerStatusField->setText(TAGGER_INVALID_TAGS_PATH_LABEL);
+        }
+        else {
+            dcnc->startImageTransfer();
+            ui->taggerStatusField->setText(TAGGER_TRANSFER_LABEL);
+            ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_STOP);
+            taggerStatus = TAGGER_STATUS_TRANSFERRING;
+        }
+    }
+    else if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
+        dcnc->stopImageTransfer();
+        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
+        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
+        taggerStatus = TAGGER_STATUS_READY;
+    }
 }
 
 //===================================================================

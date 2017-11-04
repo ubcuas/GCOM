@@ -60,16 +60,10 @@ private slots:
     void on_startTrackButton_clicked();
 
     // Image Tagger Slots
-    void on_taggerLocationUntaggedField_returnPressed();
-    void on_taggerLocationTaggedField_returnPressed();
+    void on_taggerLocationImagesField_returnPressed();
     void on_taggerLocationTagsField_returnPressed();
 
-    void on_taggerLocationUntaggedField_editingFinished();
-    void on_taggerLocationTaggedField_editingFinished();
-    void on_taggerLocationTagsField_editingFinished();
-
-    void on_taggerLocationUntaggedButton_clicked();
-    void on_taggerLocationTaggedButton_clicked();
+    void on_taggerLocationImagesButton_clicked();
     void on_taggerLocationTagsButton_clicked();
 
     void on_taggerImageTransferButton_clicked();
@@ -108,23 +102,22 @@ private:
     // Image Tagger Variables
     ImageTagger *tagger;
     QString currentDir;
-    QString untaggedDir;
-    QString taggedDir;
-    QString tagsDir;
+
+    int taggerStatus;
 
     // Image Tagger methods
 
     /*!
-     * \brief taggerBrowseDir, open file dialog, allow user to change directories
-     * \param locationType, type of file to save - untagged, tagged, tags
+     * \brief setupImageFetcher, initialize image fetcher based on which camera the drone has
+     * \param camera, camera type - with or without tags
      */
-    void taggerBrowseDir(const int locationType);
+    void setupImageFetcher(CapabilitiesMessage::Capabilities camera);
 
     /*!
-     * \brief taggerChangeDir, changes directories when user inputs directory manually
-     * \param locationType, type of file to save - untagged, tagged, tags
+     * \brief taggerBrowseDir, open file dialog, allow user to change directories
+     * \param locationType, type of file to save - images, tags
      */
-    void taggerChangeDir(const int locationType);
+    void taggerBrowseDir(const int locationType);
 
     /*!
      * \brief enableTabMain, enables or disables tabs in the tab group tabMain

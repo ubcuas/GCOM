@@ -164,16 +164,16 @@ bool DCNC::sendUASMessage(std::shared_ptr<UASMessage> outgoingMessage)
     return true;
 }
 
-void DCNC::startImageRelay()
+void DCNC::startImageTransfer()
 {
-    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_RELAY_START);
+    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_TRANSFER_START);
     messageFramer.frameMessage(outgoingMessage);
     connectionDataStream << messageFramer;
 }
 
-void DCNC::stopImageRelay()
+void DCNC::stopImageTransfer()
 {
-    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_RELAY_STOP);
+    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_TRANSFER_STOP);
     messageFramer.frameMessage(outgoingMessage);
     connectionDataStream << messageFramer;
 }
