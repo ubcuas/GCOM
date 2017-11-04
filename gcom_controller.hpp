@@ -12,7 +12,7 @@
 // GCOM Includes
 #include "modules/mavlink_relay/mavlink_relay_tcp.hpp"
 #include "modules/uas_dcnc/dcnc.hpp"
-#include "modules/uas_message/image_message.hpp"
+#include "modules/uas_message/image_untagged_message.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
 
 //===================================================================

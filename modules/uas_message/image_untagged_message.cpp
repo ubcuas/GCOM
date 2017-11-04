@@ -6,36 +6,41 @@
 #include <algorithm>
 #include <iterator>
 // GCOM Includes
-#include "modules/uas_message/image_message.hpp"
+#include "modules/uas_message/image_untagged_message.hpp"
 #include "modules/uas_message/uas_message.hpp"
 
 //===================================================================
 // Class Definitions
 //===================================================================
-ImageMessage::ImageMessage(uint8_t sequenceNumber,
+ImageUntaggedMessage::ImageUntaggedMessage(uint8_t sequenceNumber,
                            uint8_t* imageData, size_t dataSize)
 {
     this->sequenceNumber = sequenceNumber;
     this->imageData.assign(imageData, imageData + dataSize / sizeof(char));
 }
 
-ImageMessage::ImageMessage(const std::vector<uint8_t> &serializedMessage)
+ImageUntaggedMessage::ImageUntaggedMessage(const std::vector<uint8_t> &serializedMessage)
 {
     sequenceNumber = serializedMessage.front();
     imageData.assign(serializedMessage.begin() + 1, serializedMessage.end());
 }
 
-ImageMessage::~ImageMessage()
+ImageUntaggedMessage::ImageUntaggedMessage()
 {
 
 }
 
-UASMessage::MessageID ImageMessage::type()
+ImageUntaggedMessage::~ImageUntaggedMessage()
 {
-    return MessageID::DATA_IMAGE;
+
 }
 
-std::vector<uint8_t> ImageMessage::serialize()
+UASMessage::MessageID ImageUntaggedMessage::type()
+{
+    return MessageID::DATA_IMAGE_UNTAGGED;
+}
+
+std::vector<uint8_t> ImageUntaggedMessage::serialize()
 {
     std::vector<uint8_t> serializedMessage;
     serializedMessage.push_back(sequenceNumber);

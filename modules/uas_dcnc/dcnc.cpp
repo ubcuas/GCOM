@@ -1,4 +1,4 @@
-//===================================================================
+﻿//===================================================================
 // Includes
 //===================================================================
 // System Includes
@@ -218,11 +218,18 @@ void DCNC::handleClientMessage(std::shared_ptr<UASMessage> message)
             break;
         }
 
-        case UASMessage::MessageID::DATA_IMAGE:
+        case UASMessage::MessageID::DATA_IMAGE_UNTAGGED:
         {
-            std::shared_ptr<ImageMessage> image =
-                    std::static_pointer_cast<ImageMessage>(message);
-            emit receivedImageData(image);
+            std::shared_ptr<ImageUntaggedMessage> image =
+                    std::static_pointer_cast<ImageUntaggedMessage>(message);
+            emit receivedImageUntaggedData(image);
+        }
+
+        case UASMessage::MessageID::DATA_IMAGE_TAGGED:
+        {
+            std::shared_ptr<ImageTaggedMessage> image =
+                    std::static_pointer_cast<ImageTaggedMessage>(message);
+            emit receivedImageTaggedData(image);
         }
 
         default:
