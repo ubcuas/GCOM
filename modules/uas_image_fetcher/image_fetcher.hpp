@@ -32,7 +32,7 @@ public:
      * \param TagsDir QString path of directory for Tags text file
      * \param DCNC pointer to constant data indicating sender of signal
      */
-    ImageFetcher(QString Dir, const DCNC *sender);
+    ImageFetcher(QString imageDir,QString tagDir, const DCNC *sender);
 
     /*!
      *  \brief ImageFetcher deconstructor
@@ -46,11 +46,18 @@ public:
     bool checkDir(QString dir);
 
     /*!
-     * \brief Checks to see if the new directory exists, if it is writable, and if it is readable
-     * \brief updates the working directory for tagged images
-     * \param dir QString path of the new tagged images directory
+     * \brief Checks to see if the directory exists, if it is writable, and if it is readable
+     * \brief updates the working directory for images
+     * \param imageDir QString path of the images directory
      */
-    bool changeDir(QString dir);
+    bool changeImageDir(QString imageDir);
+
+    /*!
+     * \brief Checks to see if the directory exists, if it is writable, and if it is readable
+     * \brief updates the working directory for image tags
+     * \param tagDir QString path of the tag directory
+     */
+    bool changeTagDir(QString tagDir);
 
     /*!
      * \brief saveImageToDisc helper function that does the saving
@@ -58,7 +65,7 @@ public:
      * \param data unsigned char pointer to image data
      * \param size size_t the number of bytes to write to the file
      */
-    void saveImageToDisc(QString filePath, unsigned char *data, size_t size);
+    void saveToDisc(QString filePath, unsigned char *data, size_t size);
 signals:
     // Data Signals
     void taggedImage(QString filePath);
@@ -69,9 +76,8 @@ private slots:
      */
     void handleImageMessage(std::shared_ptr<ImageMessage> message);
 private:
-    QString pathOfTagged, pathOfUntagged, pathOfTags;
-    bool err;
-    int numTagged, numUntagged, numTags;
+    QString imagePath, tagPath;
+    int imageNum;
     uint8_t prevSeqNum;
 };
 

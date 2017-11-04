@@ -6,31 +6,41 @@
 #include <QFile>
 #include <QDirIterator>
 // GCOM Includes
-#include "image_tagger.hpp"
+#include "image_fetcher.hpp"
 //===================================================================
 // Constants
 //===================================================================
-const QString TIMG = "/TAGGED_IMG_";
+const QString IMG = "/IMG_";
 const QString JPG = ".jpg";
 
 //===================================================================
 // Public Class Declaration
 //===================================================================
-ImageFetcher::ImageFetcher(QString Dir, const DCNC *sender)
+ImageFetcher::ImageFetcher(QString imageDir, QString tagDir, const DCNC *sender)
 {
-    if(!changeDir(Dir))
-        throw "Invalid directory";
+    if(!changeImageDir(imageDir))
+        throw "Invalid image directory";
+    if(!changeImageDir(tagDir))
+        throw "Invalid tag directory";
     connect(sender, &DCNC::receivedImageData,
-            this, &ImageFetcher::handleImageMessage);
+        this, &ImageFetcher::handleImageMessage);
 }
 
 ImageFetcher::~ImageFetcher() { }
 
-inline bool ImageFetcher::changeDir(QString dir)
+inline bool ImageFetcher::changeImageDir(QString imageDir)
 {
-    if(!checkDir(dir))
+    if(!checkDir(imageDir))
         return false;
-    pathOfTagged = dir;
+    imagePath = imageDir;
+    return true;
+}
+
+inline bool ImageFetcher::changeTagDir(QString tagDir)
+{
+    if(!checkDir(tagDir))
+        return false;
+    tagPath = tagDir;
     return true;
 }
 
@@ -40,12 +50,12 @@ inline bool ImageFetcher::checkDir(QString dir)
     return (fileInfo.exists() && fileInfo.isReadable() && fileInfo.isWritable());
 }
 
-void ImageFetcher::saveImageToDisc(QString filePath, unsigned char *data, size_t size)
+void ImageFetcher::saveToDisc(QString filePath, unsigned char *data, size_t size)
 {
-    QFile image(filePath);
-    if (image.open(QIODevice::ReadWrite))
-        image.write(reinterpret_cast<const char *>(data), size);
-    image.close();
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadWrite))
+        file.write(reinterpret_cast<const char *>(data), size);
+    file.close();
 }
 
 void ImageFetcher::handleImageMessage(std::shared_ptr<ImageMessage> message)
@@ -59,8 +69,8 @@ void ImageFetcher::handleImageMessage(std::shared_ptr<ImageMessage> message)
     uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
     if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
-        filePath = pathOfTagged + TIMG + QString::number(++numTagged) + JPG;
-        saveImageToDisc(filePath, imageArray, sizeOfData);
+        filePath = imagePath + IMG + QString::number(++imageNum) + JPG;
+        saveToDisc(filePath, imageArray, sizeOfData);
         emit taggedImage(filePath);
         prevSeqNum = uniqueSeqNum;
     }
