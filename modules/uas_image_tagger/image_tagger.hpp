@@ -1,5 +1,5 @@
-#ifndef IMAGETAGGER_HPP
-#define IMAGETAGGER_HPP
+#ifndef IMAGEFETCHER_HPP
+#define IMAGEFETCHER_HPP
 
 //===================================================================
 // Includes
@@ -11,49 +11,46 @@
 #include <assert.h>
 // GCOM Includes
 #include "modules/uas_dcnc/dcnc.hpp"
-#include "modules/uas_message/image_tagger_message.hpp"
+#include "modules/uas_message/image_message.hpp"
 
 //===================================================================
 // Public Class Declaration
 //===================================================================
 /*!
- * \brief The ImageTagger class is designed to tag images and save them to disk
+ * \brief The ImageFetcher class is designed to tag images and save them to disk
  * \details Current implementation receives signals and saves images to disk
  */
-class ImageTagger : public QObject
+class ImageFetcher : public QObject
 {
     Q_OBJECT
 
 public:
     /*!
-     * \brief ImageTagger constructor that takes in the directory names for tagged images, untagged images and Tags
+     * \brief ImageFetcher constructor that takes in the directory names for tagged images, untagged images and Tags
      * \param TaggedDir QString path of directory for tagged images
      * \param UntaggedDir QString path of directory for untagged images
      * \param TagsDir QString path of directory for Tags text file
      * \param DCNC pointer to constant data indicating sender of signal
      */
-    ImageTagger(QString taggedDir, QString untaggedDir, QString TagsDir, const DCNC *sender);
+    ImageFetcher(QString Dir, const DCNC *sender);
 
     /*!
-     *  \brief ImageTagger deconstructor
+     *  \brief ImageFetcher deconstructor
      */
-    ~ImageTagger();
+    ~ImageFetcher();
 
     /*!
-     * \brief setupTaggedDir helper function to setup path name for tagged images
-     * \param dir QString path of directory for tagged images
+     * \brief Checks to see if the directory exists, if it is writable, and if it is readable
+     * \param dir QString path of directory
      */
-    bool ImageTagger::setupTaggedDir(QString dir);
+    bool checkDir(QString dir);
+
     /*!
-     * \brief setupTaggedDir helper function to setup path name for tagged images
-     * \param dir QString path of directory for tagged images
+     * \brief Checks to see if the new directory exists, if it is writable, and if it is readable
+     * \brief updates the working directory for tagged images
+     * \param dir QString path of the new tagged images directory
      */
-    bool ImageTagger::setupUntaggedDir(QString dir);
-    /*!
-     * \brief setupTaggedDir helper function to setup path name for tagged images
-     * \param dir QString path of directory for tagged images
-     */
-    bool ImageTagger::setupTagsDir(QString dir);
+    bool changeDir(QString dir);
 
     /*!
      * \brief saveImageToDisc helper function that does the saving
@@ -68,17 +65,14 @@ signals:
 private slots:
     /*!
      * \brief handleImageMessage saves image to disc and sends a signal with
-     *        the tagged image's file name
+     *        the tagged image's file namer
      */
-    void handleImageMessage(std::shared_ptr<ImageTaggerMessage> message);
+    void handleImageMessage(std::shared_ptr<ImageMessage> message);
 private:
-    QString pathOfTagged;
-    QString pathOfUntagged;
-    QString pathOfTags;
-    int numOfImages;
-    int numOfDuplicates;
-    int gpsDataAvailable;
-    std::vector<unsigned char> seqNumArr;
+    QString pathOfTagged, pathOfUntagged, pathOfTags;
+    bool err;
+    int numTagged, numUntagged, numTags;
+    uint8_t prevSeqNum;
 };
 
-#endif // IMAGETAGGER_HPP
+#endif // IMAGEFETCHER_HPP

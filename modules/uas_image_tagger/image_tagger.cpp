@@ -10,44 +10,37 @@
 //===================================================================
 // Constants
 //===================================================================
-const QString DUP = "/DUP_";
-const QString IMG = "/IMG_";
+const QString TIMG = "/TAGGED_IMG_";
 const QString JPG = ".jpg";
 
 //===================================================================
 // Public Class Declaration
 //===================================================================
-ImageTagger::ImageTagger(QString taggedDir, QString untaggedDir, QString TagsDir, const DCNC *sender)
+ImageFetcher::ImageFetcher(QString Dir, const DCNC *sender)
 {
-    setupTaggedDir(taggedDir);
-    setupUntaggedDir(untaggedDir);
-    setupTagsDir(TagsDir);
+    if(!changeDir(Dir))
+        throw "Invalid directory";
     connect(sender, &DCNC::receivedImageData,
-            this, &ImageTagger::handleImageMessage);
+            this, &ImageFetcher::handleImageMessage);
 }
 
-ImageTagger::~ImageTagger() { }
+ImageFetcher::~ImageFetcher() { }
 
-bool ImageTagger::setupTaggedDir(QString dir)
+inline bool ImageFetcher::changeDir(QString dir)
 {
-    // QDir homeDirectory(QDir::homePath());
-    //if (!homeDirectory.mkdir(dir))
-    //     qDebug() << "Can't create taggedDir folder";
-    // pathOfDir = QDir::homePath() + "/" + dir;
+    if(!checkDir(dir))
+        return false;
+    pathOfTagged = dir;
     return true;
 }
 
-bool ImageTagger::setupUntaggedDir(QString dir)
+inline bool ImageFetcher::checkDir(QString dir)
 {
-    return true;
+    QFileInfo fileInfo{QFile{dir}};
+    return (fileInfo.exists() && fileInfo.isReadable() && fileInfo.isWritable());
 }
 
-bool ImageTagger::setupTagsDir(QString dir)
-{
-    return true;
-}
-
-void ImageTagger::saveImageToDisc(QString filePath, unsigned char *data, size_t size)
+void ImageFetcher::saveImageToDisc(QString filePath, unsigned char *data, size_t size)
 {
     QFile image(filePath);
     if (image.open(QIODevice::ReadWrite))
@@ -55,43 +48,20 @@ void ImageTagger::saveImageToDisc(QString filePath, unsigned char *data, size_t 
     image.close();
 }
 
-
-void ImageTagger::handleImageMessage(std::shared_ptr<ImageTaggerMessage> message)
+void ImageFetcher::handleImageMessage(std::shared_ptr<ImageMessage> message)
 {
     QString filePath;
-    ImageTaggerMessage *imageMessage = message.get();
-    unsigned char uniqueSeqNum = imageMessage->getSequenceNumber();
-    std::vector<unsigned char> imageData = imageMessage->getImageData();
+    ImageMessage *imageMessage = message.get();
+    uint8_t uniqueSeqNum = imageMessage->sequenceNumber;
+    std::vector<uint8_t> imageData = imageMessage->imageData;
 
     // A pointer to the image data
-    unsigned char *imageArray = &imageData[0];
+    uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
-
-    // Iterate through vector of sequence numbers
-    for (auto seqNum = seqNumArr.begin(); seqNum != seqNumArr.end(); ++seqNum) {
-        // If duplicate is found
-        if (uniqueSeqNum == *seqNum) {
-            // Change path name for duplicate
-            filePath = pathOfDuplicates + DUP + QString::number(++numOfDuplicates) + JPG;
-            saveImageToDisc(filePath, imageArray, sizeOfData);
-            if (gpsDataAvailable) {
-                while(gpsData.isEmpty())
-                    qDebug() << "No GPS data in the queue";
-                tagImage(filePath, gpsData.dequeue());
-            }
-            emit taggedImage(filePath);
-            return;
-        }
+    if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
+        filePath = pathOfTagged + TIMG + QString::number(++numTagged) + JPG;
+        saveImageToDisc(filePath, imageArray, sizeOfData);
+        emit taggedImage(filePath);
+        prevSeqNum = uniqueSeqNum;
     }
-
-    // If no duplicate is found
-    seqNumArr.push_back(uniqueSeqNum);
-    filePath = pathOfDir + IMG + QString::number(++numOfImages) + JPG;
-    saveImageToDisc(filePath, imageArray, sizeOfData);
-    if (gpsDataAvailable) {
-        while(gpsData.isEmpty())
-            qDebug() << "No GPS data in the queue";
-        tagImage(filePath, gpsData.dequeue());
-    }
-    emit taggedImage(filePath);
 }
