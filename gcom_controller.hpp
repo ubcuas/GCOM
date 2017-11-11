@@ -59,14 +59,17 @@ private slots:
     void on_zaberConnectButton_clicked();
     void on_startTrackButton_clicked();
 
-    // Image Tagger Slots
-    void on_taggerLocationImagesField_returnPressed();
-    void on_taggerLocationTagsField_returnPressed();
+    // Image Fetcher Slots
+    void on_fetcherPathImagesField_returnPressed();
+    void on_fetcherPathTagsField_returnPressed();
 
-    void on_taggerLocationImagesButton_clicked();
-    void on_taggerLocationTagsButton_clicked();
+    void on_fetcherPathImagesField_editingFinished();
+    void on_fetcherPathTagsField_editingFinished();
 
-    void on_taggerImageTransferButton_clicked();
+    void on_fetcherPathImagesButton_clicked();
+    void on_fetcherPathTagsButton_clicked();
+
+    void on_fetcherImageTransferButton_clicked();
 
 private:
     // Private Member Variables
@@ -99,13 +102,11 @@ private:
     // Methods
     void updateStartTrackerButton();
 
-    // Image Tagger Variables
-    ImageTagger *tagger;
-    QString currentDir;
+    // Image Fetcher Variables
+    ImageTagger *fetcher;
+    int fetcherStatus;
 
-    int taggerStatus;
-
-    // Image Tagger methods
+    // Image Fetcher methods
 
     /*!
      * \brief setupImageFetcher, initialize image fetcher based on which camera the drone has
@@ -114,17 +115,27 @@ private:
     void setupImageFetcher(CapabilitiesMessage::Capabilities camera);
 
     /*!
-     * \brief taggerBrowseDir, open file dialog, allow user to change directories
-     * \param locationType, type of file to save - images, tags
+     * \brief fetcherBrowseDir, open file dialog, allow user to change directories
+     * \param pathType, path for type of file - either images or backup tags
      */
-    void taggerBrowseDir(const int locationType);
+    void fetcherBrowseDir(const int pathType);
 
+    /*!
+     * \brief validatePath, validate path against regex
+     * \details If path is invalid, show error message, if path is valid and
+     *          error message is still showing, hide error message
+     * \param path, path to validate
+     * \param pathType, path for type of file - either images or backup tags
+     */
+    void validatePath(QString path, const int pathType);
+
+    // Utility Methods
     /*!
      * \brief enableTabMain, enables or disables tabs in the tab group tabMain
      * \param tab, tab to enable or disable
      * \param enable, true to enable, false to disable
      */
-    void enableTabMain(const int tab, bool enable);
+    void enableTabMain(const int tab, const bool enable);
 };
 
 #endif // GCOMCONTROLLER_HPP

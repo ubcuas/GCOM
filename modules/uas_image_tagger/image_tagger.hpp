@@ -55,6 +55,9 @@ public:
      */
     bool setupTagsDir(QString dir);
 
+    bool checkImagesDir(QString dir);
+    bool checkTagsDir(QString dir);
+
     /*!
      * \brief saveImageToDisc helper function that does the saving
      * \param filePath QString path of directory with filename

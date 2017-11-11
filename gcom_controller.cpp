@@ -33,9 +33,9 @@ const QString SEARCHING_LABEL("<font color='#EED202'> SEARCHING </font>"
 const QRegExp IP_REGEX("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$");
 
 // tabMain Constants
-bool TAB_ENABLE = true;
-bool TAB_DISABLE = false;
-const int TAB_IMAGE_TAGGER = 2;
+const bool TAB_ENABLE = true;
+const bool TAB_DISABLE = false;
+const int TAB_IMAGE_FETCHER = 2;
 
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
@@ -49,7 +49,12 @@ const QString STOP_SERVER_BUTTON_TEXT("Stop Server");
 const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 
-// Image Tagger Constants
+// Capabilities Constants
+const int SIZE_CAPABILITY = 8;
+const QString CAMERA_TAGGED_TEXT("Camera with tags");
+const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
+
+// Image Fetcher Constants
 #if defined(Q_OS_WIN)
     const QRegExp PATH_REGEX(
             "^([a-zA-z]:)?"
@@ -57,7 +62,7 @@ const QString DISCONNECTED_LABEL("Disconnected");
             "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/)*"
             "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*)*$");
 #elif defined(Q_OS_MACOS)
-    const QRegExp PATH_REGEX("^([~])?/([^.:][^:]*/)*([^.:][^:]*)*$");
+    const QRegExp PATH_REGEX("^([~])?/([^.:/][^:/]*/)*([^.:/][^:/]*)*$");
 #elif defined(Q_OS_LINUX)
     const QRegExp PATH_REGEX("^([~])?/([^/]+/)*([^/]+)*$");
 #else
@@ -67,18 +72,15 @@ const QString DISCONNECTED_LABEL("Disconnected");
 const int PATH_IMAGES = 0;
 const int PATH_TAGS = 1;
 
-const QString TAGGER_READY_LABEL("<font color='#05c400'> READY </font>");
-const QString TAGGER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
-const QString TAGGER_INVALID_IMAGES_PATH_LABEL(
-        "<font color='#D52D2D'> INVALID IMAGES PATH </font>");
-const QString TAGGER_INVALID_TAGS_PATH_LABEL(
-        "<font color='#D52D2D'> INVALID TAGS PATH </font>");
+const QString FETCHER_READY_LABEL("<font color='#05c400'> READY </font>");
+const QString FETCHER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
+const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path </font>");
 
-const QString IMAGE_TRANSFER_START("Start Image Transfer");
-const QString IMAGE_TRANSFER_STOP("Stop Image Transfer");
+const QString IMAGE_TRANSER_START_TEXT("Start Image Transfer");
+const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
 
-const int TAGGER_STATUS_READY = 0;
-const int TAGGER_STATUS_TRANSFERRING = 1;
+const int FETCHER_STATUS_READY = 0;
+const int FETCHER_STATUS_TRANSFERRING = 1;
 
 //===================================================================
 // Class Declarations
@@ -130,10 +132,10 @@ GcomController::GcomController(QWidget *parent) :
     tracker = new AntennaTracker();
     ui->antennaTrackerTab->setDisabled(true);
 
-    tagger = nullptr;
+    // Set fetcher to nullptr so it is only initialized once
+    fetcher = nullptr;
 
-    // Disable tagger tab
-    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 }
 
 GcomController::~GcomController()
@@ -144,7 +146,7 @@ GcomController::~GcomController()
     delete mavlinkConnectingMovie;
     delete dcnc;
     delete tracker;
-    delete tagger;
+    delete fetcher;
 }
 
 //===================================================================
@@ -267,15 +269,14 @@ void GcomController::resetDCNCGUI()
     // Deactivate the drop gremlin button
     ui->dcncDropGremlin->setDisabled(false);
 
-    // If currently transferring images, stop transfer and reset status
-    if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
-        taggerStatus = TAGGER_STATUS_READY;
-        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
-        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
+    // If currently transferring images, reset status
+    if (fetcherStatus == FETCHER_STATUS_TRANSFERRING) {
+        fetcherStatus = FETCHER_STATUS_READY;
+        ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+        ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
     }
 
-    // Disable tabs
-    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 }
 
 void GcomController::on_dcncConnectionButton_clicked()
@@ -377,15 +378,14 @@ void GcomController::dcncDisconnected()
 
     ui->dcncCapabilitiesField->clear();
 
-    // If currently transferring images, stop transfer and reset status
-    if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
-        taggerStatus = TAGGER_STATUS_READY;
-        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
-        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
+    // If currently transferring images, reset status
+    if (fetcherStatus == FETCHER_STATUS_TRANSFERRING) {
+        fetcherStatus = FETCHER_STATUS_READY;
+        ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+        ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
     }
 
-    // Disable tabs
-    enableTabMain(TAB_IMAGE_TAGGER, TAB_DISABLE);
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 }
 
 void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped)
@@ -402,16 +402,21 @@ void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capab
          if (static_cast<uint32_t>(capabilities &
                                    CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
          {
-             if (tagger == nullptr)
+             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+             if (fetcher == nullptr)
                 setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+             ui->dcncCapabilitiesField->addItem(CAMERA_TAGGED_TEXT);
          }
-         if (static_cast<uint32_t>(capabilities &
+         else if (static_cast<uint32_t>(capabilities &
                                    CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED))
          {
-             if (tagger == nullptr)
+             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+             if (fetcher == nullptr)
                 setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED);
+             ui->dcncCapabilitiesField->addItem(CAMERA_UNTAGGED_TEXT);
          }
-         capabilities = capabilities >> 8;
+         // Remove capabilities that have already been used
+         capabilities = capabilities >> SIZE_CAPABILITY;
      }
 }
 
@@ -523,102 +528,168 @@ void GcomController::on_startTrackButton_clicked()
 }
 
 //===================================================================
-// Image Tagger Methods
+// Image Fetcher Methods
 //===================================================================
 void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera) {
     QDir dir;
-    currentDir = dir.currentPath();
+    QString currentDir = dir.currentPath();
 
-    // Initialize tagger with default current working directory paths
+    // Initialize fetcher with default current working directory paths
+    switch(camera) {
+        case CapabilitiesMessage::Capabilities::CAMERA_TAGGED:
+            fetcher = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
+            break;
 
-    if (camera == CapabilitiesMessage::Capabilities::CAMERA_TAGGED) {
-        tagger = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
-        ui->dcncCapabilitiesField->addItem("Camera With Tags");
+        case CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED:
+            fetcher = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
     }
-    else if (camera == CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED) {
-        tagger = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
-        ui->dcncCapabilitiesField->addItem("Camera Without Tags");
-    }
 
-    ui->taggerLocationImagesField->setText(currentDir);
-    ui->taggerLocationTagsField->setText(currentDir);
+    ui->fetcherPathImagesField->setText(currentDir);
+    ui->fetcherPathTagsField->setText(currentDir);
 
-    ui->taggerLocationImagesField->setValidator(new QRegExpValidator(PATH_REGEX));
-    ui->taggerLocationTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->fetcherPathImagesField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->fetcherPathTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
 
-    ui->taggerStatusField->setText(TAGGER_READY_LABEL);
-    taggerStatus = TAGGER_STATUS_READY;
+    ui->fetcherPathImagesInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathImagesInvalidLabel->hide();
+    ui->fetcherPathTagsInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathTagsInvalidLabel->hide();
 
-    enableTabMain(TAB_IMAGE_TAGGER, TAB_ENABLE);
+    ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+    fetcherStatus = FETCHER_STATUS_READY;
 }
 
-void GcomController::on_taggerLocationImagesButton_clicked()
+void GcomController::on_fetcherPathImagesButton_clicked()
 {
-    taggerBrowseDir(PATH_IMAGES);
+    fetcherBrowseDir(PATH_IMAGES);
 }
 
-void GcomController::on_taggerLocationTagsButton_clicked()
+void GcomController::on_fetcherPathTagsButton_clicked()
 {
-    taggerBrowseDir(PATH_TAGS);
+    fetcherBrowseDir(PATH_TAGS);
 }
 
-void GcomController::on_taggerLocationImagesField_returnPressed()
+void GcomController::on_fetcherPathImagesField_returnPressed()
 {
-    ui->taggerLocationImagesField->clearFocus();
+    ui->fetcherPathImagesField->clearFocus();
 }
 
-void GcomController::on_taggerLocationTagsField_returnPressed()
+void GcomController::on_fetcherPathTagsField_returnPressed()
 {
-    ui->taggerLocationTagsField->clearFocus();
+    ui->fetcherPathTagsField->clearFocus();
 }
 
-void GcomController::taggerBrowseDir(const int locationType) {
+void GcomController::on_fetcherPathImagesField_editingFinished()
+{
+    // If path field has not been modified, do not need to validate
+    if (!ui->fetcherPathImagesField->isModified())
+        return;
+
+    validatePath(ui->fetcherPathImagesField->text(), PATH_IMAGES);
+    // Reset field to not modified
+    ui->fetcherPathImagesField->setModified(false);
+}
+
+void GcomController::on_fetcherPathTagsField_editingFinished()
+{
+    // If path field has not been modified, do not need to validate
+    if (!ui->fetcherPathTagsField->isModified())
+        return;
+
+    validatePath(ui->fetcherPathTagsField->text(), PATH_TAGS);
+    // Reset field to not modified
+    ui->fetcherPathTagsField->setModified(false);
+}
+
+void GcomController::fetcherBrowseDir(const int pathType) {
+    QDir dir;
+    QString currentDir = dir.currentPath();
 
     // Open file dialog, allows user to select a folder and saves the path to a string
-    QString dir = QFileDialog::getExistingDirectory(
+    QString folderPath = QFileDialog::getExistingDirectory(
                 this,
                 "Select Folder",
                 currentDir,
                 QFileDialog::ShowDirsOnly);
 
     // Check if directory has been changed
-    if (!dir.length())
+    if (!folderPath.length())
         return;
 
     // Update path fields
-    switch(locationType) {
-        case PATH_IMAGES:
-            ui->taggerLocationImagesField->setText(dir);
-            break;
-        case PATH_TAGS:
-            ui->taggerLocationTagsField->setText(dir);
-            break;
+    switch(pathType) {
+        case PATH_IMAGES: {
+            ui->fetcherPathImagesField->setText(folderPath);
+            validatePath(folderPath, PATH_IMAGES);
+        }
+        break;
+        case PATH_TAGS: {
+            ui->fetcherPathTagsField->setText(folderPath);
+            validatePath(folderPath, PATH_TAGS);
+        }
     }
 }
 
-void GcomController::on_taggerImageTransferButton_clicked()
-{
-    if (taggerStatus == TAGGER_STATUS_READY) {
-        // True needs to be replaced with an image tagger check directory function
-        // Show error message if paths are invalid
-        if (true) {
-            ui->taggerStatusField->setText(TAGGER_INVALID_IMAGES_PATH_LABEL);
+void GcomController::validatePath(QString path, const int pathType) {
+    switch(pathType) {
+        case PATH_IMAGES: {
+            if(!PATH_REGEX.exactMatch(path))
+                ui->fetcherPathImagesInvalidLabel->show();
+            else if (ui->fetcherPathImagesInvalidLabel->isVisible())
+                ui->fetcherPathImagesInvalidLabel->hide();
         }
-        else if (true) {
-            ui->taggerStatusField->setText(TAGGER_INVALID_TAGS_PATH_LABEL);
-        }
-        else {
-            dcnc->startImageTransfer();
-            ui->taggerStatusField->setText(TAGGER_TRANSFER_LABEL);
-            ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_STOP);
-            taggerStatus = TAGGER_STATUS_TRANSFERRING;
+        break;
+        case PATH_TAGS: {
+            if(!PATH_REGEX.exactMatch(path))
+                ui->fetcherPathTagsInvalidLabel->show();
+            else if (ui->fetcherPathTagsInvalidLabel->isVisible())
+                ui->fetcherPathTagsInvalidLabel->hide();
         }
     }
-    else if (taggerStatus == TAGGER_STATUS_TRANSFERRING) {
-        dcnc->stopImageTransfer();
-        ui->taggerStatusField->setText(TAGGER_READY_LABEL);
-        ui->taggerImageTransferButton->setText(IMAGE_TRANSFER_START);
-        taggerStatus = TAGGER_STATUS_READY;
+}
+
+void GcomController::on_fetcherImageTransferButton_clicked()
+{
+    switch(fetcherStatus) {
+        case FETCHER_STATUS_READY: {
+            // Show error message if paths are invalid, hide if paths are valid and
+            // messages are still showing
+            if (!fetcher->checkImagesDir(ui->fetcherPathImagesField->text()))
+            {
+                ui->fetcherPathImagesInvalidLabel->show();
+            }
+            else if (ui->fetcherPathImagesInvalidLabel->isVisible())
+            {
+                ui->fetcherPathImagesInvalidLabel->hide();
+            }
+
+            if (!fetcher->checkTagsDir(ui->fetcherPathTagsField->text()))
+            {
+                ui->fetcherPathTagsInvalidLabel->show();
+            }
+            else if (ui->fetcherPathTagsInvalidLabel->isVisible())
+            {
+                ui->fetcherPathTagsInvalidLabel->hide();
+            }
+
+            // If either path is invalid, do not start image transfer
+            if (ui->fetcherPathImagesInvalidLabel->isVisible() ||
+                ui->fetcherPathTagsInvalidLabel->isVisible())
+                return;
+
+            dcnc->startImageTransfer();
+            ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_STOP_TEXT);
+            fetcherStatus = FETCHER_STATUS_TRANSFERRING;
+        }
+        break;
+
+        case FETCHER_STATUS_TRANSFERRING: {
+            dcnc->stopImageTransfer();
+            ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
+            fetcherStatus = FETCHER_STATUS_READY;
+        }
     }
 }
 
@@ -645,6 +716,6 @@ void GcomController::on_tabMain_tabBarClicked(int index)
     }
 }
 
-void GcomController::enableTabMain(const int tab, bool enable) {
+void GcomController::enableTabMain(const int tab, const bool enable) {
      ui->tabMain->setTabEnabled(tab, enable);
 }

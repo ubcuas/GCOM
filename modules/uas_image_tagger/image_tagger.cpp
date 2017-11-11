@@ -47,6 +47,14 @@ bool ImageTagger::setupTagsDir(QString dir)
     return true;
 }
 
+bool ImageTagger::checkImagesDir(QString dir) {
+    return true;
+}
+
+bool ImageTagger::checkTagsDir(QString dir) {
+    return true;
+}
+
 void ImageTagger::saveImageToDisc(QString filePath, unsigned char *data, size_t size)
 {
     QFile image(filePath);
