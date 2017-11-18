@@ -22,8 +22,8 @@ ImageFetcher::ImageFetcher(QString imageDir, QString tagDir, const DCNC *sender)
         throw "Invalid image directory";
     if(!changeImageDir(tagDir))
         throw "Invalid tag directory";
-    connect(sender, &DCNC::receivedImageData,
-        this, &ImageFetcher::handleImageMessage);
+    connect(sender, &DCNC::receivedImageTaggedData,
+        this, &ImageFetcher::handleImageTaggedMessage);
 }
 
 ImageFetcher::~ImageFetcher() { }
@@ -58,12 +58,12 @@ void ImageFetcher::saveToDisc(QString filePath, unsigned char *data, size_t size
     file.close();
 }
 
-void ImageFetcher::handleImageMessage(std::shared_ptr<ImageMessage> message)
+void ImageFetcher::handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> message)
 {
     QString filePath;
-    ImageMessage *imageMessage = message.get();
-    uint8_t uniqueSeqNum = imageMessage->sequenceNumber;
-    std::vector<uint8_t> imageData = imageMessage->imageData;
+    ImageTaggedMessage *imageTaggedMessage = message.get();
+    uint8_t uniqueSeqNum = imageTaggedMessage->sequenceNumber;
+    std::vector<uint8_t> imageData = imageTaggedMessage->imageData;
 
     // A pointer to the image data
     uint8_t *imageArray = &imageData[0];

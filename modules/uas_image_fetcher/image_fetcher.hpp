@@ -11,7 +11,7 @@
 #include <assert.h>
 // GCOM Includes
 #include "modules/uas_dcnc/dcnc.hpp"
-#include "modules/uas_message/image_message.hpp"
+#include "modules/uas_message/image_tagged_message.hpp"
 
 //===================================================================
 // Public Class Declaration
@@ -71,10 +71,10 @@ signals:
     void taggedImage(QString filePath);
 private slots:
     /*!
-     * \brief handleImageMessage saves image to disc and sends a signal with
+     * \brief handleImageTaggedMessage saves image to disc and sends a signal with
      *        the tagged image's file namer
      */
-    void handleImageMessage(std::shared_ptr<ImageMessage> message);
+    void handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> message);
 private:
     QString imagePath, tagPath;
     int imageNum;
