@@ -10,8 +10,8 @@
 //===================================================================
 // Constants
 //===================================================================
-const QString IMG = "/IMG_";
-const QString JPG = ".jpg";
+const QString imagePathTemplate = "%1/IMG_%2.jpg";
+const QString tagPathTemplate = "%1/TAGS.txt";
 
 //===================================================================
 // Public Class Declaration
@@ -22,6 +22,9 @@ ImageFetcher::ImageFetcher(QString imageDir, QString tagDir, const DCNC *sender)
         throw "Invalid image directory";
     if(!changeImageDir(tagDir))
         throw "Invalid tag directory";
+    tagFile = new QFile(QString(tagPathTemplate).arg(tagPath));
+    tagFile->open(QIODevice::ReadWrite);
+
     connect(sender, &DCNC::receivedImageTaggedData,
         this, &ImageFetcher::handleImageTaggedMessage);
 }
@@ -40,7 +43,11 @@ inline bool ImageFetcher::changeTagDir(QString tagDir)
 {
     if(!checkDir(tagDir))
         return false;
+    tagFile->close();
+    delete tagFile;
     tagPath = tagDir;
+    tagFile = new QFile(QString(tagPathTemplate).arg(tagPath));
+    tagFile->open(QIODevice::ReadWrite);
     return true;
 }
 
@@ -63,15 +70,26 @@ void ImageFetcher::handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> 
     QString filePath;
     ImageTaggedMessage *imageTaggedMessage = message.get();
     uint8_t uniqueSeqNum = imageTaggedMessage->sequenceNumber;
-    std::vector<uint8_t> imageData = imageTaggedMessage->imageData;
 
-    // A pointer to the image data
+    std::vector<uint8_t> imageData = imageTaggedMessage->imageData;
     uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
     if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
-        filePath = imagePath + IMG + QString::number(++imageNum) + JPG;
+        filePath = QString(imagePathTemplate).arg(imagePath).arg(QString::number(++imageNum));
         saveToDisc(filePath, imageArray, sizeOfData);
-        emit taggedImage(filePath);
+        emit taggedImage(filePath,
+                         imageTaggedMessage->latitude(),
+                         imageTaggedMessage->longitude(),
+                         imageTaggedMessage->altitude_abs(),
+                         imageTaggedMessage->altitude_rel(),
+                         imageTaggedMessage->heading());
         prevSeqNum = uniqueSeqNum;
     }
+    QString tagData = QString::number(imageTaggedMessage->latitude()) + ',' +
+                      QString::number(imageTaggedMessage->longitude()) + ',' +
+                      QString::number(imageTaggedMessage->altitude_abs()) + ',' +
+                      QString::number(imageTaggedMessage->altitude_rel()) + ',' +
+                      QString::number(imageTaggedMessage->heading());
+    tagFile->write(qPrintable(tagData),tagData.length());
+
 }

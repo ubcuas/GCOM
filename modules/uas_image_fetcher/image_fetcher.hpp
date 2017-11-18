@@ -7,6 +7,7 @@
 // System Includes
 #include <QString>
 #include <QObject>
+#include <QFile>
 #include <QQueue>
 #include <assert.h>
 // GCOM Includes
@@ -68,7 +69,7 @@ public:
     void saveToDisc(QString filePath, unsigned char *data, size_t size);
 signals:
     // Data Signals
-    void taggedImage(QString filePath);
+    void taggedImage(QString filePath, double latitude, double longitude, float altitude_abs, float altitude_rel, float heading);
 private slots:
     /*!
      * \brief handleImageTaggedMessage saves image to disc and sends a signal with
@@ -77,6 +78,7 @@ private slots:
     void handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> message);
 private:
     QString imagePath, tagPath;
+    QFile* tagFile;
     int imageNum;
     uint8_t prevSeqNum;
 };

@@ -13,7 +13,7 @@
 //===================================================================
 const QString IMG = "/IMG_";
 const QString JPG = ".jpg";
-const QString TAG = "/TAG_";
+const QString TAG = "/TAGS";
 const QString TXT = ".txt";
 
 MavlinkImageFetcher::MavlinkImageFetcher(QString imageDir, QString tagDir,
@@ -32,9 +32,8 @@ void MavlinkImageFetcher::handleImageUntaggedMessage(std::shared_ptr<ImageUntagg
     QString filePath;
     ImageUntaggedMessage *imageUntaggedMessage = message.get();
     uint8_t uniqueSeqNum = imageUntaggedMessage->sequenceNumber;
-    std::vector<uint8_t> imageData = imageUntaggedMessage->imageData;
 
-    // A pointer to the image data
+    std::vector<uint8_t> imageData = imageUntaggedMessage->imageData;
     uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
     if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
