@@ -163,11 +163,12 @@ QDataStream& operator>>(QDataStream& inputStream, UASMessageTCPFramer& uasMessag
     qDebug() << messageSize;
 
     // Change the message buffer to the appropriate size
-    uasMessageTCPFramer.messageData.resize(FRAMED_MESG_HEADER_FIELD_SIZE + messageSize);
+
     uasMessageTCPFramer.messageData.insert(uasMessageTCPFramer.messageData.begin(), messageHeader,
                                            messageHeader + FRAMED_MESG_HEADER_FIELD_SIZE);
+    uasMessageTCPFramer.messageData.resize(FRAMED_MESG_HEADER_FIELD_SIZE + messageSize);
 
-
+    //appebd actual message
     int readLength = inputStream.readRawData((char *)uasMessageTCPFramer.messageData.data() +
                                              FRAMED_MESG_HEADER_FIELD_SIZE,
                                              messageSize);

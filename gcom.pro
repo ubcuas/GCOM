@@ -57,4 +57,11 @@ HEADERS  += \
     modules/uas_image_fetcher/image_fetcher.hpp \
     modules/uas_image_fetcher/mavlink_image_fetcher.hpp
 
-FORMS    += gcomcontroller.ui
+FORMS += \
+    gcomcontroller.ui
+
+INCLUDEPATH += Mavlink
+
+CONFIG += c++14
+
+RESOURCES = resources.qrc
