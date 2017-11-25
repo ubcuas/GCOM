@@ -618,12 +618,14 @@ void GcomController::fetcherBrowseDir(const int pathType) {
 
     // Update path fields
     switch(pathType) {
-        case PATH_IMAGES: {
+        case PATH_IMAGES:
+        {
             ui->fetcherPathImagesField->setText(folderPath);
             validatePath(folderPath, PATH_IMAGES);
         }
         break;
-        case PATH_TAGS: {
+        case PATH_TAGS:
+        {
             ui->fetcherPathTagsField->setText(folderPath);
             validatePath(folderPath, PATH_TAGS);
         }
@@ -631,27 +633,54 @@ void GcomController::fetcherBrowseDir(const int pathType) {
 }
 
 void GcomController::validatePath(QString path, const int pathType) {
-    switch(pathType) {
-        case PATH_IMAGES: {
+    // If the path is invalid, show error message and disable the start image transfer button
+    // If the path is valid and the error message is showing, hide the error message
+    switch(pathType)
+    {
+        case PATH_IMAGES:
+        {
             if(!PATH_REGEX.exactMatch(path))
+            {
                 ui->fetcherPathImagesInvalidLabel->show();
+                ui->fetcherImageTransferButton->setEnabled(false);
+            }
             else if (ui->fetcherPathImagesInvalidLabel->isVisible())
+            {
                 ui->fetcherPathImagesInvalidLabel->hide();
+            }
         }
         break;
-        case PATH_TAGS: {
+        case PATH_TAGS:
+        {
             if(!PATH_REGEX.exactMatch(path))
+            {
                 ui->fetcherPathTagsInvalidLabel->show();
+                ui->fetcherImageTransferButton->setEnabled(false);
+            }
             else if (ui->fetcherPathTagsInvalidLabel->isVisible())
+            {
                 ui->fetcherPathTagsInvalidLabel->hide();
+            }
         }
+    }
+
+    if (ui->fetcherImageTransferButton->isEnabled())
+        return;
+
+    // If the start image transfer button is disabled and path errors have been fixed, enable it
+    if (!ui->fetcherPathImagesInvalidLabel->isVisible() &&
+        !ui->fetcherPathTagsInvalidLabel->isVisible())
+    {
+        ui->fetcherImageTransferButton->setEnabled(true);
     }
 }
 
 void GcomController::on_fetcherImageTransferButton_clicked()
 {
-    switch(fetcherStatus) {
-        case FETCHER_STATUS_READY: {
+    switch(fetcherStatus)
+    {
+        case FETCHER_STATUS_READY:
+        {
             // Show error message if paths are invalid, hide if paths are valid and
             // messages are still showing
             if (!fetcher->checkImagesDir(ui->fetcherPathImagesField->text()))
@@ -684,7 +713,8 @@ void GcomController::on_fetcherImageTransferButton_clicked()
         }
         break;
 
-        case FETCHER_STATUS_TRANSFERRING: {
+        case FETCHER_STATUS_TRANSFERRING:
+        {
             dcnc->stopImageTransfer();
             ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);

@@ -122,8 +122,10 @@ private:
 
     /*!
      * \brief validatePath, validate path against regex
-     * \details If path is invalid, show error message, if path is valid and
-     *          error message is still showing, hide error message
+     * \details If path is invalid, show error message and disable start image transfer button
+     *          If path is valid and error message is still showing, hide error message
+     *          If start image transfer button is disabled and no error messages are showing,
+     *          enable it
      * \param path, path to validate
      * \param pathType, path for type of file - either images or backup tags
      */
