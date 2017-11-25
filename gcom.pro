@@ -32,7 +32,7 @@ SOURCES += main.cpp\
     modules/uas_message/capabilities_message.cpp \
     modules/uas_message/image_untagged_message.cpp \
     modules/uas_utility/uas_utility.cpp \
-    modules/uas_image_fetcher/mavlink_image_fetcher.cpp
+    modules/uas_image_fetcher/mavlink_image_fetcher.cpp \
     modules/uas_image_fetcher/image_fetcher.cpp \
     modules/uas_message/image_tagged_message.cpp
 
