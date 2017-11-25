@@ -29,7 +29,10 @@ ImageFetcher::ImageFetcher(QString imageDir, QString tagDir, const DCNC *sender)
         this, &ImageFetcher::handleImageTaggedMessage);
 }
 
-ImageFetcher::~ImageFetcher() { }
+ImageFetcher::~ImageFetcher() {
+    if(tagFile)
+        delete tagFile;
+}
 
 inline bool ImageFetcher::changeImageDir(QString imageDir)
 {

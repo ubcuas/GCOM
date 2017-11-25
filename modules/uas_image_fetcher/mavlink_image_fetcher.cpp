@@ -11,10 +11,8 @@
 //===================================================================
 // Constants
 //===================================================================
-const QString IMG = "/IMG_";
-const QString JPG = ".jpg";
-const QString TAG = "/TAGS";
-const QString TXT = ".txt";
+const QString imagePathTemplate = "%1/IMG_%2.jpg";
+const QString tagPathTemplate = "%1/TAGS.txt";
 
 MavlinkImageFetcher::MavlinkImageFetcher(QString imageDir, QString tagDir,
                                          const DCNC *dcnc, const MAVLinkRelay *relay)
@@ -25,11 +23,15 @@ MavlinkImageFetcher::MavlinkImageFetcher(QString imageDir, QString tagDir,
         this, &MavlinkImageFetcher::handleImageUntaggedMessage);
 }
 
-MavlinkImageFetcher::~MavlinkImageFetcher() { }
+MavlinkImageFetcher::~MavlinkImageFetcher() {
+    if(tagFile)
+        delete tagFile;
+    if(mavlinkRelay)
+        delete mavlinkRelay;
+}
 
 void MavlinkImageFetcher::handleImageUntaggedMessage(std::shared_ptr<ImageUntaggedMessage> message)
 {
-    QString filePath;
     ImageUntaggedMessage *imageUntaggedMessage = message.get();
     uint8_t uniqueSeqNum = imageUntaggedMessage->sequenceNumber;
 
@@ -37,13 +39,33 @@ void MavlinkImageFetcher::handleImageUntaggedMessage(std::shared_ptr<ImageUntagg
     uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
     if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
-        filePath = imagePath + IMG + QString::number(++imageNum) + JPG;
+        filePath = QString(imagePathTemplate).arg(imagePath).arg(QString::number(++imageNum));
         saveToDisc(filePath, imageArray, sizeOfData);
-        emit untaggedImage(filePath);
         prevSeqNum = uniqueSeqNum;
+        imageQueue.enqueue(message);
+        handleQueue();
     }
 }
+void MavlinkImageFetcher::imageGPSTagReceived(std::shared_ptr<mavlink_camera_feedback_t>message){
+    tagQueue.enqueue(message);
+    QString tagData = QString::number(tagQueue.head()->lat) + ',' +
+                      QString::number(tagQueue.head()->lng) + ',' +
+                      QString::number(tagQueue.head()->alt_msl) + ',' +
+                      QString::number(tagQueue.head()->alt_rel) + ',' +
+                      QString::number(tagQueue.head()->yaw);
+    tagFile->write(qPrintable(tagData),tagData.length());
+    handleQueue();
+}
 
-void MavlinkImageFetcher::imageGPSTagReceived() {
-
+void MavlinkImageFetcher::handleQueue(){
+    if(!imageQueue.isEmpty() && !tagQueue.isEmpty()){
+        imageQueue.dequeue();
+        emit untaggedImage(filePath,
+                          tagQueue.head()->lat,
+                          tagQueue.head()->lng,
+                          tagQueue.head()->alt_msl,
+                          tagQueue.head()->alt_rel,
+                          tagQueue.head()->yaw);
+        tagQueue.dequeue();
+    }
 }
