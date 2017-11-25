@@ -7,6 +7,8 @@
 // System Includes
 #include <vector>
 
+#include <QDebug>
+
 //===================================================================
 // Defines
 //===================================================================
@@ -29,8 +31,8 @@ GPSMessage::GPSMessage(const std::vector<uint8_t> &serializedMessage)
     // TODO Size Check
 
     // Reconstruct the latitude and longitude
-    uint32_t packedLat = 0;
-    uint32_t packedLon = 0;
+    int32_t packedLat = 0;
+    int32_t packedLon = 0;
     for (int byte_index = 0; byte_index < SIZE_LAT_LON; byte_index++)
     {
         packedLat |= (serializedMessage[byte_index] << (8*(SIZE_LAT_LON - byte_index - 1)));
@@ -52,8 +54,8 @@ std::vector<uint8_t> GPSMessage::serialize()
     std::vector<uint8_t> serializedMessage;
     serializedMessage.resize(SIZE_LAT_LON * 2);
     // Pack the latitude and longitude
-    uint32_t packedLat = PACK_LAT_LON(lat);
-    uint32_t packedLon = PACK_LAT_LON(lon);
+    int32_t packedLat = PACK_LAT_LON(lat);
+    int32_t packedLon = PACK_LAT_LON(lon);
 
     for (int byte_index = 0; byte_index < SIZE_LAT_LON; byte_index++)
     {
