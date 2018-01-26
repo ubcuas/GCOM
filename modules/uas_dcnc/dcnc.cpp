@@ -56,6 +56,7 @@ bool DCNC::startServer(QString address, int port)
     this->port = port;
     this->address = address;
     hostAddress = QHostAddress(address);
+    qDebug () << address;
     bool startStatus = server->listen(hostAddress, port);
     if (startStatus)
         serverStatus = DCNCStatus::SEARCHING;
@@ -92,10 +93,13 @@ void DCNC::cancelConnection()
     }
 
     // Restart listening for connections
-    bool listenStatus = server->listen(QHostAddress(this->address), this->port);
+    if (!server->isListening())
+    {
+        bool listenStatus = server->listen(QHostAddress(this->address), this->port);
 
-    if (!listenStatus)
-        serverStatus = DCNCStatus::OFFLINE;
+        if (!listenStatus)
+            serverStatus = DCNCStatus::OFFLINE;
+    }
 }
 
 DCNC::DCNCStatus DCNC::status()
