@@ -56,7 +56,7 @@ bool DCNC::startServer(QString address, int port)
     this->port = port;
     this->address = address;
     hostAddress = QHostAddress(address);
-    qDebug () << address;
+
     bool startStatus = server->listen(hostAddress, port);
     if (startStatus)
         serverStatus = DCNCStatus::SEARCHING;
