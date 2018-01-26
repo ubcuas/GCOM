@@ -272,8 +272,10 @@ void GcomController::on_dcncConnectionButton_clicked()
                         ui->dcncServerPortField->text().toInt());
 
             // TODO Add a warning message
-            if (status == false)
+            if (status == false) {
                 resetDCNCGUI();
+                return;
+            }
 
             // Update UI text to indicate searching
             ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
