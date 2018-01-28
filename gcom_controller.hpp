@@ -29,6 +29,8 @@ namespace Ui
 //===================================================================
 class GcomController : public QMainWindow
 {
+    friend class TestGcomControllerImageFetcher;
+
     Q_OBJECT
 
 public:

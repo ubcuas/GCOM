@@ -47,6 +47,7 @@ bool DCNC::startServer(QString address, int port)
     this->address = address;
     hostAddress = QHostAddress(address);
     bool startStatus = server->listen(hostAddress, port);
+
     if (startStatus == true)
         serverStatus = DCNCStatus::SEARCHING;
 
@@ -164,16 +165,16 @@ bool DCNC::sendUASMessage(std::shared_ptr<UASMessage> outgoingMessage)
     return true;
 }
 
-void DCNC::startImageTransfer()
+void DCNC::startImageRelay()
 {
-    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_TRANSFER_START);
+    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_RELAY_START);
     messageFramer.frameMessage(outgoingMessage);
     connectionDataStream << messageFramer;
 }
 
-void DCNC::stopImageTransfer()
+void DCNC::stopImageRelay()
 {
-    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_TRANSFER_STOP);
+    CommandMessage outgoingMessage = CommandMessage(CommandMessage::Commands::IMAGE_RELAY_STOP);
     messageFramer.frameMessage(outgoingMessage);
     connectionDataStream << messageFramer;
 }

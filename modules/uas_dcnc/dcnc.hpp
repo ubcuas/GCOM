@@ -105,8 +105,8 @@ public:
 
     // Data Methods
     bool sendUASMessage(std::shared_ptr<UASMessage> outgoingMessage);
-    void startImageTransfer();
-    void stopImageTransfer();
+    void startImageRelay();
+    void stopImageRelay();
 
 signals:
     // DCNC Control Signals

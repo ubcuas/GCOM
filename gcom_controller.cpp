@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileDialog>
+#include <QMessageBox>
 // GCOM Includes
 #include "gcom_controller.hpp"
 #include "ui_gcomcontroller.h"
@@ -48,6 +49,7 @@ const QString STOP_SEARCHING_BUTTON_TEXT("Stop Searching");
 const QString STOP_SERVER_BUTTON_TEXT("Stop Server");
 const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
+const QString START_SERVER_FAIL_TEXT("Cannot listen on the given server ip address and port.");
 
 // Capabilities Constants
 const int SIZE_CAPABILITY = 8;
@@ -81,6 +83,7 @@ const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
 
 const int FETCHER_STATUS_READY = 0;
 const int FETCHER_STATUS_TRANSFERRING = 1;
+const int FETCHER_STATUS_UNAVAILABLE = 3;
 
 //===================================================================
 // Class Declarations
@@ -134,6 +137,7 @@ GcomController::GcomController(QWidget *parent) :
 
     // Set fetcher to nullptr so it is only initialized once
     fetcher = nullptr;
+    fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 }
@@ -297,8 +301,14 @@ void GcomController::on_dcncConnectionButton_clicked()
                         ui->dcncServerPortField->text().toInt());
 
             // TODO Add a warning message
-            if (status == false)
+            if (status == false) {
+                QMessageBox::information(
+                            this,
+                            GcomController::objectName().toStdString().c_str(),
+                            START_SERVER_FAIL_TEXT.toStdString().c_str());
                 resetDCNCGUI();
+                return;
+            }
 
             // Update UI text to indicate searching
             ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
@@ -539,9 +549,8 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
         case CapabilitiesMessage::Capabilities::CAMERA_TAGGED:
             fetcher = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
             break;
-
-        case CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED:
-            fetcher = new ImageTagger(currentDir, currentDir, currentDir, dcnc);
+        default:
+            break;
     }
 
     ui->fetcherPathImagesField->setText(currentDir);
@@ -607,10 +616,10 @@ void GcomController::fetcherBrowseDir(const int pathType) {
 
     // Open file dialog, allows user to select a folder and saves the path to a string
     QString folderPath = QFileDialog::getExistingDirectory(
-                this,
-                "Select Folder",
-                currentDir,
-                QFileDialog::ShowDirsOnly);
+                            this,
+                            "Select Folder",
+                            currentDir,
+                            QFileDialog::ShowDirsOnly);
 
     // Check if directory has been changed
     if (!folderPath.length())
@@ -706,7 +715,7 @@ void GcomController::on_fetcherImageTransferButton_clicked()
                 ui->fetcherPathTagsInvalidLabel->isVisible())
                 return;
 
-            dcnc->startImageTransfer();
+            dcnc->startImageRelay();
             ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_STOP_TEXT);
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
@@ -715,7 +724,7 @@ void GcomController::on_fetcherImageTransferButton_clicked()
 
         case FETCHER_STATUS_TRANSFERRING:
         {
-            dcnc->stopImageTransfer();
+            dcnc->stopImageRelay();
             ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
             fetcherStatus = FETCHER_STATUS_READY;
