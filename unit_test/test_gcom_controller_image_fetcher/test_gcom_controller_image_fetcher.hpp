@@ -12,6 +12,8 @@
 #include "gcom_controller.hpp"
 #include "modules/uas_message/uas_message_tcp_framer.hpp"
 
+Q_DECLARE_METATYPE(CapabilitiesMessage::Capabilities)
+
 class TestGcomControllerImageFetcher : public QObject
 {
     Q_OBJECT
@@ -24,18 +26,27 @@ private Q_SLOTS:
     void cleanupTestCase();
 
 private slots:
-
+    void testConnection();
 
 public slots:
-    // Socket slots
-    void socketConnected();
-    void socketDisconnected();
 
     // Receive handlers
     void handleClientData();
     void handleClientMessage(std::shared_ptr<UASMessage> message);
 
 private:
+    void checkInitialStatus();
+    void startServer();
+    void stopServer();
+    void connectSocket();
+    void disconnectSocket();
+    /*!
+     * \brief Sends capabilities to dcnc
+     * \param capabilities, the bit field of capabilities
+     * \param num, number of capabilities sent
+     */
+    void sendCapabilities(CapabilitiesMessage::Capabilities capabilities, int num);
+
     GcomController gcom;
     QDataStream connectionDataStream;
     UASMessageTCPFramer messageFramer;

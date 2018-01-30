@@ -293,8 +293,8 @@ void GcomController::on_dcncConnectionButton_clicked()
         {
             // Lock the input fields
             ui->dcncServerIPField->setDisabled(true);
-            ui->dcncServerIPField->setDisabled(false);
-            ui->dcncServerTimeoutField->setDisabled(false);
+            ui->dcncServerPortField->setDisabled(true);
+            ui->dcncServerTimeoutField->setDisabled(true);
 
             status = dcnc->startServer(
                         ui->dcncServerIPField->text(),
