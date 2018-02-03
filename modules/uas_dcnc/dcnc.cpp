@@ -183,8 +183,7 @@ void DCNC::stopImageRelay()
 void DCNC::handleClientData()
 {
     messageFramer.clearMessage();
-    while (messageFramer.status() != UASMessageTCPFramer::TCPFramerStatus::INCOMPLETE_MESSAGE)
-    {
+    do{
         connectionDataStream.startTransaction();
         connectionDataStream >> messageFramer;
         if (messageFramer.status() == UASMessageTCPFramer::TCPFramerStatus::SUCCESS)
@@ -200,7 +199,7 @@ void DCNC::handleClientData()
         {
             connectionDataStream.abortTransaction();
         }
-    }
+    }while (messageFramer.status() != UASMessageTCPFramer::TCPFramerStatus::INCOMPLETE_MESSAGE);
     connectionDataStream.resetStatus();
 }
 
@@ -261,10 +260,10 @@ void DCNC::handleClientMessage(std::shared_ptr<UASMessage> message)
     if (outgoingMessage == nullptr)
         return;
 
+
     messageFramer.frameMessage(*outgoingMessage);
     // TODO: that the message is successfully sent
     connectionDataStream << messageFramer;
-    // qDebug() << ((int)messageFramer.status());
     delete outgoingMessage;
 }
 
