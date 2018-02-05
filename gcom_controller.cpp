@@ -81,9 +81,10 @@ const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path <
 const QString IMAGE_TRANSER_START_TEXT("Start Image Transfer");
 const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
 
-const int FETCHER_STATUS_READY = 0;
-const int FETCHER_STATUS_TRANSFERRING = 1;
-const int FETCHER_STATUS_UNAVAILABLE = 3;
+const int FETCHER_STATUS_UNAVAILABLE = 0;
+const int FETCHER_STATUS_READY = 1;
+const int FETCHER_STATUS_TRANSFERRING = 2;
+
 
 //===================================================================
 // Class Declarations
@@ -653,7 +654,7 @@ void GcomController::validatePath(QString path, const int pathType) {
                 ui->fetcherPathImagesInvalidLabel->show();
                 ui->fetcherImageTransferButton->setEnabled(false);
             }
-            else if (ui->fetcherPathImagesInvalidLabel->isVisible())
+            else if (!ui->fetcherPathImagesInvalidLabel->isHidden())
             {
                 ui->fetcherPathImagesInvalidLabel->hide();
             }
@@ -666,7 +667,7 @@ void GcomController::validatePath(QString path, const int pathType) {
                 ui->fetcherPathTagsInvalidLabel->show();
                 ui->fetcherImageTransferButton->setEnabled(false);
             }
-            else if (ui->fetcherPathTagsInvalidLabel->isVisible())
+            else if (!ui->fetcherPathTagsInvalidLabel->isHidden())
             {
                 ui->fetcherPathTagsInvalidLabel->hide();
             }
@@ -677,8 +678,8 @@ void GcomController::validatePath(QString path, const int pathType) {
         return;
 
     // If the start image transfer button is disabled and path errors have been fixed, enable it
-    if (!ui->fetcherPathImagesInvalidLabel->isVisible() &&
-        !ui->fetcherPathTagsInvalidLabel->isVisible())
+    if (ui->fetcherPathImagesInvalidLabel->isHidden() &&
+        ui->fetcherPathTagsInvalidLabel->isHidden())
     {
         ui->fetcherImageTransferButton->setEnabled(true);
     }
@@ -690,8 +691,8 @@ void GcomController::on_fetcherImageTransferButton_clicked()
     {
         case FETCHER_STATUS_READY:
         {
-            // Show error message if paths are invalid, hide if paths are valid and
-            // messages are still showing
+            // Show error message if paths are invalid,
+            // Hide if paths are valid and messages are still showing
             if (!fetcher->checkImagesDir(ui->fetcherPathImagesField->text()))
             {
                 ui->fetcherPathImagesInvalidLabel->show();

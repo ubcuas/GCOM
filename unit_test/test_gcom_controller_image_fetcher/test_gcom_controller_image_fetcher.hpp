@@ -13,6 +13,7 @@
 #include "modules/uas_message/uas_message_tcp_framer.hpp"
 
 Q_DECLARE_METATYPE(CapabilitiesMessage::Capabilities)
+Q_DECLARE_METATYPE(CommandMessage::Commands)
 
 class TestGcomControllerImageFetcher : public QObject
 {
@@ -27,27 +28,40 @@ private Q_SLOTS:
 
 private slots:
     void testConnection();
+    void testRegexValidPaths_data();
+    void testRegexValidPaths();
+    void testRegexInvalidPaths_data();
+    void testRegexInvalidPaths();
+    void testImageTransfer();
 
 public slots:
-
     // Receive handlers
     void handleClientData();
     void handleClientMessage(std::shared_ptr<UASMessage> message);
 
+    void compareStartImageTransfer(CommandMessage::Commands command);
+    void compareStopImageTransfer(CommandMessage::Commands command);
+
 private:
-    void checkInitialStatus();
+    void checkDCNCInitialStatus();
     void startServer();
     void stopServer();
     void connectSocket();
     void disconnectSocket();
+    void connectSocketNoCapabilities();
+    void checkFetcherStatus(bool transferButtonEnabled, bool imagesInvalidHidden,
+                            bool tagsInvalidHidden);
+    void fetcherSetPaths(QString imagesPath, QString tagsPath);
     /*!
      * \brief Sends capabilities to dcnc
      * \param capabilities, the bit field of capabilities
      * \param num, number of capabilities sent
      */
     void sendCapabilities(CapabilitiesMessage::Capabilities capabilities, int num);
+    void startImageTransfer();
+    void stopImageTransfer();
 
-    GcomController gcom;
+    GcomController* gcom;
     QDataStream connectionDataStream;
     UASMessageTCPFramer messageFramer;
     QTcpSocket* socket;

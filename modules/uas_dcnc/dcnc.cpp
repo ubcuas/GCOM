@@ -141,6 +141,8 @@ void DCNC::handleClientData()
             connectionDataStream.abortTransaction();
         }
     }
+
+    connectionDataStream.resetStatus();
 }
 
 void DCNC::changeAutoResume(bool autoResume)
