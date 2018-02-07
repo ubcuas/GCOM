@@ -44,8 +44,21 @@ const int FETCHER_STATUS_TRANSFERRING = 2;
 const int PATH_IMAGES = 0;
 const int PATH_TAGS = 1;
 
-const QString INVALID_PATH_TEST[] = {":"};
-const QString VALID_PATH_TEST[] = {"C:/"};
+#if defined(Q_OS_WIN)
+    const QString INVALID_PATH_TEST[] = {
+        "C:", "path", "D:/.path", "E://", "/ path here", "C:/DATA*\"\\:?/"};
+    const QString VALID_PATH_TEST[] = {
+        "C:/", "C:/data/TEST_PATH", "/Im-a-relative-path",
+        "f:/im@path2^()!with spaces #$%&[]{}.,'~-=_+/",
+        "C:/a/b/c/d/e/f/g/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z",
+        "/"};
+#elif defined(Q_OS_MACOS)
+#elif defined(Q_OS_LINUX)
+#else
+#endif
+
+const int TEST_START_INDEX = 0;
+const int TEST_STOP_INDEX = 5;
 
 const bool VISIBLE = false;
 const bool HIDDEN = true;
@@ -264,22 +277,44 @@ void TestGcomControllerImageFetcher::testConnection()
 
 void TestGcomControllerImageFetcher::testRegexValidPaths_data()
 {
+    QTest::addColumn<QString>("validPath");
 
+    for (int i = TEST_START_INDEX; i <= TEST_STOP_INDEX; i++)
+    {
+        QTest::newRow(qPrintable(QString::number(i))) << VALID_PATH_TEST[i];
+    }
 }
 
 void TestGcomControllerImageFetcher::testRegexValidPaths()
 {
+    QFETCH(QString, validPath);
 
+    gcom->validatePath(validPath, PATH_IMAGES);
+    gcom->validatePath(validPath, PATH_TAGS);
+
+    QVERIFY(gcom->ui->fetcherPathImagesInvalidLabel->isHidden());
+    QVERIFY(gcom->ui->fetcherPathTagsInvalidLabel->isHidden());
 }
 
 void TestGcomControllerImageFetcher::testRegexInvalidPaths_data()
 {
+    QTest::addColumn<QString>("invalidPath");
 
+    for (int i = TEST_START_INDEX; i <= TEST_STOP_INDEX; i++)
+    {
+        QTest::newRow(qPrintable(QString::number(i))) << INVALID_PATH_TEST[i];
+    }
 }
 
 void TestGcomControllerImageFetcher::testRegexInvalidPaths()
 {
+    QFETCH(QString, invalidPath);
 
+    gcom->validatePath(invalidPath, PATH_IMAGES);
+    gcom->validatePath(invalidPath, PATH_TAGS);
+
+    QVERIFY(!gcom->ui->fetcherPathImagesInvalidLabel->isHidden());
+    QVERIFY(!gcom->ui->fetcherPathTagsInvalidLabel->isHidden());
 }
 
 void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabled,
@@ -296,18 +331,8 @@ void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabl
 
 void TestGcomControllerImageFetcher::fetcherSetPaths(QString imagesPath, QString tagsPath)
 {
-    // Emulate path changes and return presses
     gcom->ui->fetcherPathImagesField->setText(imagesPath);
-    gcom->on_fetcherPathImagesField_returnPressed();
-    QVERIFY(!gcom->ui->fetcherPathImagesField->hasFocus());
-    gcom->ui->fetcherPathImagesField->setModified(true);
-    gcom->on_fetcherPathImagesField_editingFinished();
-
     gcom->ui->fetcherPathTagsField->setText(tagsPath);
-    gcom->on_fetcherPathTagsField_returnPressed();
-    QVERIFY(!gcom->ui->fetcherPathTagsField->hasFocus());
-    gcom->ui->fetcherPathTagsField->setModified(true);
-    gcom->on_fetcherPathTagsField_editingFinished();
 }
 
 void TestGcomControllerImageFetcher::startImageTransfer()

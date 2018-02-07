@@ -65,8 +65,8 @@ private slots:
     void on_fetcherPathImagesField_returnPressed();
     void on_fetcherPathTagsField_returnPressed();
 
-    void on_fetcherPathImagesField_editingFinished();
-    void on_fetcherPathTagsField_editingFinished();
+    void on_fetcherPathImagesField_textChanged();
+    void on_fetcherPathTagsField_textChanged();
 
     void on_fetcherPathImagesButton_clicked();
     void on_fetcherPathTagsButton_clicked();
