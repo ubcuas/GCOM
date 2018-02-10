@@ -33,6 +33,7 @@ const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
 const QString FETCHER_READY_LABEL("<font color='#05c400'> READY </font>");
 const QString FETCHER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
 const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path </font>");
+const QString FETCHER_NONREAL_PATH_LABEL("<font color='#D52D2D'> *Path does not exist</font>");
 
 const QString IMAGE_TRANSER_START_TEXT("Start Image Transfer");
 const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
@@ -46,19 +47,74 @@ const int PATH_TAGS = 1;
 
 #if defined(Q_OS_WIN)
     const QString INVALID_PATH_TEST[] = {
-        "C:", "path", "D:/.path", "E://", "/ path here", "C:/DATA*\"\\:?/"};
+        "C:",               // forward slash needed
+        "path",             // not an absolute path
+        "D:/.path",         // cannot begin name with period
+        "E://",             // cannot begin name with forward slash
+        "/ path here",      // cannot begin name with space
+        "AC:/",             // cannot have two letters as root directory
+        "1:/",              // number not allowed as directory
+        "C/",               // colon needed
+        "C:/DATA*\"\\:?/",  // invalid characters
+        "",                 // cannot have blank directory
+        "/path",            // cannot have relative path
+    };
     const QString VALID_PATH_TEST[] = {
-        "C:/", "C:/data/TEST_PATH", "/Im-a-relative-path",
-        "f:/im@path2^()!with spaces #$%&[]{}.,'~-=_+/",
-        "C:/a/b/c/d/e/f/g/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z",
-        "/"};
+        "C:/",                          // root directory
+        "C:/data/TEST_PATH",            // caps allowed
+        "C:/path path",                 // space allowed in middle of name
+        "C:/path.path",                 // period allowed in middle of name
+        "C:/path/",                     // forward slash allowed at end of name
+        "c:/path",                      // lower case root directory
+        "F:/path",                      // different directory
+        "C:/1234567890",                // numbers allowed
+        "C:/!@#$%^&()_+-={}[];',.`~",   // valid characters
+        "C:/a",                         // single char folder
+        "C:/a/b/c/d/e/f/g/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z"};
+                                        // long path
+
+    const int TEST_START_INDEX = 0;
+    const int TEST_STOP_INDEX = 10;
+
 #elif defined(Q_OS_MACOS)
+    const QString INVALID_PATH_TEST[] = {
+        "~",
+        "/.path",
+        "/path:",
+        "/asdf//",
+        "",
+        "path"
+    };
+    const QString VALID_PATH_TEST[] = {
+        "/",
+        "~/",
+        "/Users/Home",
+        "/\!@#$%^&*()/",
+        "~/ PATH_HERE",
+        "~/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/"
+    };
 #elif defined(Q_OS_LINUX)
+    const QString INVALID_PATH_TEST[] = {
+        "//",
+        "~//",
+        "",
+        "path",
+        "/home//",
+        "~/home//"
+    };
+    const QString VALID_PATH_TEST[] = {
+        "/home/user",
+        "/home/user/",
+        "~/",
+        "~/a/b/c/e/d/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/",
+        "/",
+        "/home/!@#$%^&*()_+{}|:\"<>?1234567890-=[]\\;',."
+    };
 #else
 #endif
 
-const int TEST_START_INDEX = 0;
-const int TEST_STOP_INDEX = 5;
+const QString REAL_PATH = "C:/DATA";
+const QString NONREAL_PATH = "D:/DATA/PATH/";
 
 const bool VISIBLE = false;
 const bool HIDDEN = true;
@@ -315,11 +371,16 @@ void TestGcomControllerImageFetcher::testRegexInvalidPaths()
 
     QVERIFY(!gcom->ui->fetcherPathImagesInvalidLabel->isHidden());
     QVERIFY(!gcom->ui->fetcherPathTagsInvalidLabel->isHidden());
+    QCOMPARE(gcom->ui->fetcherPathImagesInvalidLabel->text(),
+             FETCHER_INVALID_PATH_LABEL);
+    QCOMPARE(gcom->ui->fetcherPathTagsInvalidLabel->text(),
+             FETCHER_INVALID_PATH_LABEL);
 }
 
 void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabled,
                                                         bool imagesInvalidHidden,
-                                                        bool tagsInvalidHidden)
+                                                        bool tagsInvalidHidden,
+                                                        QString invalidLabel)
 {
     QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_READY);
     QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_READY_LABEL);
@@ -327,6 +388,12 @@ void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabl
     QVERIFY(gcom->ui->fetcherImageTransferButton->isEnabled() == transferButtonEnabled);
     QVERIFY(gcom->ui->fetcherPathImagesInvalidLabel->isHidden() == imagesInvalidHidden);
     QVERIFY(gcom->ui->fetcherPathTagsInvalidLabel->isHidden() == tagsInvalidHidden);
+    if (!imagesInvalidHidden)
+        QCOMPARE(gcom->ui->fetcherPathImagesInvalidLabel->text(),
+                 invalidLabel);
+    if (!tagsInvalidHidden)
+        QCOMPARE(gcom->ui->fetcherPathTagsInvalidLabel->text(),
+                 invalidLabel);
 }
 
 void TestGcomControllerImageFetcher::fetcherSetPaths(QString imagesPath, QString tagsPath)
@@ -335,7 +402,7 @@ void TestGcomControllerImageFetcher::fetcherSetPaths(QString imagesPath, QString
     gcom->ui->fetcherPathTagsField->setText(tagsPath);
 }
 
-void TestGcomControllerImageFetcher::startImageTransfer()
+void TestGcomControllerImageFetcher::startImageTransferSuccess()
 {
     connect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
             this, SLOT(compareStartImageTransfer(CommandMessage::Commands)));
@@ -350,6 +417,23 @@ void TestGcomControllerImageFetcher::startImageTransfer()
 
     QVERIFY(receivedCommandSpy.wait());
     QCOMPARE(receivedCommandSpy.count(), 1);
+}
+
+void TestGcomControllerImageFetcher::startImageTransferFail(bool imagesInvalidHidden,
+                                                            bool tagsInvalidHidden)
+{
+    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
+            this, SLOT(compareStartImageTransfer(CommandMessage::Commands)));
+
+    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands)));
+    QVERIFY(receivedCommandSpy.isValid());
+
+    gcom->on_fetcherImageTransferButton_clicked();
+    checkFetcherStatus(DISABLED, imagesInvalidHidden, tagsInvalidHidden,
+                       FETCHER_NONREAL_PATH_LABEL);
+
+    QVERIFY(receivedCommandSpy.wait(500));
+    QCOMPARE(receivedCommandSpy.count(), 0);
 }
 
 void TestGcomControllerImageFetcher::stopImageTransfer()
@@ -395,34 +479,45 @@ void TestGcomControllerImageFetcher::testImageTransfer()
     // Setup connection and check for initial statuses
     startServer();
     connectSocket();
-    checkFetcherStatus(ENABLED, HIDDEN, HIDDEN);
+    checkFetcherStatus(ENABLED, HIDDEN, HIDDEN, FETCHER_INVALID_PATH_LABEL);
 
     // Set an invalid images path and check that user is unable to start image transfer
     fetcherSetPaths(INVALID_PATH_TEST[0], VALID_PATH_TEST[0]);
-    checkFetcherStatus(DISABLED, VISIBLE, HIDDEN);
+    checkFetcherStatus(DISABLED, VISIBLE, HIDDEN, FETCHER_INVALID_PATH_LABEL);
 
     // Set an invalid tags path and check that user is unable to start image transfer
     fetcherSetPaths(VALID_PATH_TEST[0], INVALID_PATH_TEST[0]);
-    checkFetcherStatus(DISABLED, HIDDEN, VISIBLE);
+    checkFetcherStatus(DISABLED, HIDDEN, VISIBLE, FETCHER_INVALID_PATH_LABEL);
 
     // Set both invalid paths and check that user is unable to start image transfer
     fetcherSetPaths(INVALID_PATH_TEST[0], INVALID_PATH_TEST[0]);
-    checkFetcherStatus(DISABLED, VISIBLE, VISIBLE);
+    checkFetcherStatus(DISABLED, VISIBLE, VISIBLE, FETCHER_INVALID_PATH_LABEL);
 
     // Set both valid paths and check that user is able to start image transfer
     fetcherSetPaths(VALID_PATH_TEST[0], VALID_PATH_TEST[0]);
-    checkFetcherStatus(ENABLED, HIDDEN, HIDDEN);
+    checkFetcherStatus(ENABLED, HIDDEN, HIDDEN, FETCHER_INVALID_PATH_LABEL);
 
-    // TODO check for valid but non existent paths
-
-    startImageTransfer();
+    startImageTransferSuccess();
 
     // Drop connection, restart, and check statuses
     disconnectSocket();
     connectSocket();
 
     // Restart image transfer
-    startImageTransfer();
+    startImageTransferSuccess();
 
     stopImageTransfer();
+
+//    // Test valid, but non-existent paths
+//    fetcherSetPaths(NONREAL_PATH, REAL_PATH);
+//    startImageTransferFail(VISIBLE, HIDDEN);
+
+//    fetcherSetPaths(REAL_PATH, NONREAL_PATH);
+//    startImageTransferFail(HIDDEN, VISIBLE);
+
+//    fetcherSetPaths(NONREAL_PATH, NONREAL_PATH);
+//    startImageTransferFail(VISIBLE, VISIBLE);
+
+//    fetcherSetPaths(REAL_PATH, REAL_PATH);
+//    startImageTransferSuccess();
 }

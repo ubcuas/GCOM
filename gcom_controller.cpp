@@ -49,7 +49,8 @@ const QString STOP_SEARCHING_BUTTON_TEXT("Stop Searching");
 const QString STOP_SERVER_BUTTON_TEXT("Stop Server");
 const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
-const QString START_SERVER_FAIL_TEXT("Cannot listen on the given server ip address and port.");
+const QString START_SERVER_FAIL_TEXT(
+        "Cannot listen on the given server ip address and port.");
 
 // Capabilities Constants
 const int SIZE_CAPABILITY = 8;
@@ -59,8 +60,7 @@ const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
 // Image Fetcher Constants
 #if defined(Q_OS_WIN)
     const QRegExp PATH_REGEX(
-            "^([a-zA-z]:)?"
-            "/"
+            "^([a-zA-Z]:/)"
             "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/)*"
             "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*)*$");
 #elif defined(Q_OS_MACOS)

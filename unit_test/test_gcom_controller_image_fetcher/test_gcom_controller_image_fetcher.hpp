@@ -50,7 +50,7 @@ private:
     void disconnectSocket();
     void connectSocketNoCapabilities();
     void checkFetcherStatus(bool transferButtonEnabled, bool imagesInvalidHidden,
-                            bool tagsInvalidHidden);
+                            bool tagsInvalidHidden, QString invalidLabel);
     void fetcherSetPaths(QString imagesPath, QString tagsPath);
     /*!
      * \brief Sends capabilities to dcnc
@@ -58,7 +58,8 @@ private:
      * \param num, number of capabilities sent
      */
     void sendCapabilities(CapabilitiesMessage::Capabilities capabilities, int num);
-    void startImageTransfer();
+    void startImageTransferSuccess();
+    void startImageTransferFail(bool imagesInvalidHidden, bool tagsInvalidHidden);
     void stopImageTransfer();
 
     GcomController* gcom;
