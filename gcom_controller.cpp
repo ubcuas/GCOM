@@ -60,13 +60,11 @@ const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
 // Image Fetcher Constants
 #if defined(Q_OS_WIN)
     const QRegExp PATH_REGEX(
-            "^([a-zA-Z]:/)"
-            "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/)*"
-            "([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*)*$");
+            "^([a-zA-Z]:/)([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/?)*$");
 #elif defined(Q_OS_MACOS)
-    const QRegExp PATH_REGEX("^([~])?/([^.:/][^:/]*/)*([^.:/][^:/]*)*$");
+    const QRegExp PATH_REGEX("^/([^.:/][^:/]*/?)+$");
 #elif defined(Q_OS_LINUX)
-    const QRegExp PATH_REGEX("^([~])?/([^/]+/)*([^/]+)*$");
+    const QRegExp PATH_REGEX("^/([^/]+/?)*$");
 #else
 #error
 #endif
@@ -554,61 +552,42 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
             break;
     }
 
-    ui->fetcherPathImagesField->setText(currentDir);
-    ui->fetcherPathTagsField->setText(currentDir);
+    //ui->fetcherPathField->setText(currentDir);
 
-    ui->fetcherPathImagesField->setValidator(new QRegExpValidator(PATH_REGEX));
-    ui->fetcherPathTagsField->setValidator(new QRegExpValidator(PATH_REGEX));
+    ui->fetcherPathField->setValidator(new QRegExpValidator(PATH_REGEX));
 
     // Prevent layout from changing when labels are hidden
-    QSizePolicy retainSize = ui->fetcherPathTagsInvalidLabel->sizePolicy();
+    QSizePolicy retainSize = ui->fetcherPathInvalidLabel->sizePolicy();
     retainSize.setRetainSizeWhenHidden(true);
-    ui->fetcherPathImagesInvalidLabel->setSizePolicy(retainSize);
-    ui->fetcherPathTagsInvalidLabel->setSizePolicy(retainSize);
+    ui->fetcherPathInvalidLabel->setSizePolicy(retainSize);
 
-    ui->fetcherPathImagesInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->fetcherPathImagesInvalidLabel->hide();
-    ui->fetcherPathTagsInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->fetcherPathTagsInvalidLabel->hide();
+    ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathInvalidLabel->hide();
 
     ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
     fetcherStatus = FETCHER_STATUS_READY;
 }
 
-void GcomController::on_fetcherPathImagesButton_clicked()
+void GcomController::on_fetcherPathButton_clicked()
 {
-    fetcherBrowseDir(PATH_IMAGES);
+    fetcherBrowseDir();
 }
 
-void GcomController::on_fetcherPathTagsButton_clicked()
+void GcomController::on_fetcherPathField_returnPressed()
 {
-    fetcherBrowseDir(PATH_TAGS);
+    ui->fetcherPathField->clearFocus();
 }
 
-void GcomController::on_fetcherPathImagesField_returnPressed()
+void GcomController::on_fetcherPathField_textChanged()
 {
-    ui->fetcherPathImagesField->clearFocus();
+    validatePath(ui->fetcherPathField->text());
 }
 
-void GcomController::on_fetcherPathTagsField_returnPressed()
-{
-    ui->fetcherPathTagsField->clearFocus();
-}
-
-void GcomController::on_fetcherPathImagesField_textChanged()
-{
-    validatePath(ui->fetcherPathImagesField->text(), PATH_IMAGES);
-}
-
-void GcomController::on_fetcherPathTagsField_textChanged()
-{
-    validatePath(ui->fetcherPathTagsField->text(), PATH_TAGS);
-}
-
-void GcomController::fetcherBrowseDir(const int pathType) {
+void GcomController::fetcherBrowseDir() {
     QString currentDir = QDir::currentPath();
 
-    // Open file dialog, allows user to select a folder and saves the path to a string
+    // Open file dialog, allows user to select a folder
+    // and saves the path to a string
     QString folderPath = QFileDialog::getExistingDirectory(
                             this,
                             "Select Folder",
@@ -619,56 +598,32 @@ void GcomController::fetcherBrowseDir(const int pathType) {
     if (!folderPath.length())
         return;
 
-    // Update path fields
-    switch(pathType) {
-        case PATH_IMAGES:
-            ui->fetcherPathImagesField->setText(folderPath);
-            break;
-        case PATH_TAGS:
-            ui->fetcherPathTagsField->setText(folderPath);
-    }
+    // Update path field
+    ui->fetcherPathField->setText(folderPath);
 }
 
-void GcomController::validatePath(QString path, const int pathType) {
-    // If the path is invalid, show error message and disable the start image transfer button
-    // If the path is valid and the error message is showing, hide the error message
-    switch(pathType)
+void GcomController::validatePath(QString path) {
+    // If the path is invalid, show error message and
+    // disable the start image transfer button
+    // If the path is valid and the error message is showing,
+    // hide the error message
+    if(!PATH_REGEX.exactMatch(path) || path.length() == 0)
     {
-        case PATH_IMAGES:
-        {
-            if(!PATH_REGEX.exactMatch(path))
-            {
-                ui->fetcherPathImagesInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->fetcherPathImagesInvalidLabel->show();
-                ui->fetcherImageTransferButton->setEnabled(false);
-            }
-            else if (!ui->fetcherPathImagesInvalidLabel->isHidden())
-            {
-                ui->fetcherPathImagesInvalidLabel->hide();
-            }
-        }
-        break;
-        case PATH_TAGS:
-        {
-            if(!PATH_REGEX.exactMatch(path))
-            {
-                ui->fetcherPathTagsInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->fetcherPathTagsInvalidLabel->show();
-                ui->fetcherImageTransferButton->setEnabled(false);
-            }
-            else if (!ui->fetcherPathTagsInvalidLabel->isHidden())
-            {
-                ui->fetcherPathTagsInvalidLabel->hide();
-            }
-        }
+        ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+        ui->fetcherPathInvalidLabel->show();
+        ui->fetcherImageTransferButton->setEnabled(false);
+    }
+    else if (!ui->fetcherPathInvalidLabel->isHidden())
+    {
+        ui->fetcherPathInvalidLabel->hide();
     }
 
     if (ui->fetcherImageTransferButton->isEnabled())
         return;
 
-    // If the start image transfer button is disabled and path errors have been fixed, enable it
-    if (ui->fetcherPathImagesInvalidLabel->isHidden() &&
-        ui->fetcherPathTagsInvalidLabel->isHidden())
+    // If the start image transfer button is disabled and
+    // path errors have been fixed, enable it
+    if (ui->fetcherPathInvalidLabel->isHidden())
     {
         ui->fetcherImageTransferButton->setEnabled(true);
     }
@@ -680,27 +635,17 @@ void GcomController::on_fetcherImageTransferButton_clicked()
     {
         case FETCHER_STATUS_READY:
         {
-            if (!fetcher->checkImagesDir(ui->fetcherPathImagesField->text()))
+            if (!fetcher->checkDir(ui->fetcherPathField->text()))
             {
-                ui->fetcherPathImagesInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
-                ui->fetcherPathImagesInvalidLabel->show();
+                ui->fetcherPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
+                ui->fetcherPathInvalidLabel->show();
 
                 if (ui->fetcherImageTransferButton->isEnabled())
                     ui->fetcherImageTransferButton->setEnabled(false);
             }
 
-            if (!fetcher->checkTagsDir(ui->fetcherPathTagsField->text()))
-            {
-                ui->fetcherPathTagsInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
-                ui->fetcherPathTagsInvalidLabel->show();
-
-                if (ui->fetcherImageTransferButton->isEnabled())
-                    ui->fetcherImageTransferButton->setEnabled(false);
-            }
-
-            // If either path is invalid, do not start image transfer
-            if (ui->fetcherPathImagesInvalidLabel->isVisible() ||
-                ui->fetcherPathTagsInvalidLabel->isVisible())
+            // If  path is invalid, do not start image transfer
+            if (ui->fetcherPathInvalidLabel->isVisible())
                 return;
 
             dcnc->startImageRelay();

@@ -62,14 +62,11 @@ private slots:
     void on_startTrackButton_clicked();
 
     // Image Fetcher Slots
-    void on_fetcherPathImagesField_returnPressed();
-    void on_fetcherPathTagsField_returnPressed();
+    void on_fetcherPathField_returnPressed();
 
-    void on_fetcherPathImagesField_textChanged();
-    void on_fetcherPathTagsField_textChanged();
+    void on_fetcherPathField_textChanged();
 
-    void on_fetcherPathImagesButton_clicked();
-    void on_fetcherPathTagsButton_clicked();
+    void on_fetcherPathButton_clicked();
 
     void on_fetcherImageTransferButton_clicked();
 
@@ -118,9 +115,8 @@ private:
 
     /*!
      * \brief fetcherBrowseDir, open file dialog, allow user to change directories
-     * \param pathType, path for type of file - either images or backup tags
      */
-    void fetcherBrowseDir(const int pathType);
+    void fetcherBrowseDir();
 
     /*!
      * \brief validatePath, validate path against regex
@@ -129,9 +125,8 @@ private:
      *          If start image transfer button is disabled and no error messages are showing,
      *          enable it
      * \param path, path to validate
-     * \param pathType, path for type of file - either images or backup tags
      */
-    void validatePath(QString path, const int pathType);
+    void validatePath(QString path);
 
     // Utility Methods
     /*!

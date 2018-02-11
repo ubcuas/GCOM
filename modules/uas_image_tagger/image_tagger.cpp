@@ -47,11 +47,7 @@ bool ImageTagger::setupTagsDir(QString dir)
     return true;
 }
 
-bool ImageTagger::checkImagesDir(QString dir) {
-    return true;
-}
-
-bool ImageTagger::checkTagsDir(QString dir) {
+bool ImageTagger::checkDir(QString dir) {
     return true;
 }
 

@@ -28,10 +28,10 @@ private Q_SLOTS:
 
 private slots:
     void testConnection();
-    void testRegexValidPaths_data();
-    void testRegexValidPaths();
-    void testRegexInvalidPaths_data();
-    void testRegexInvalidPaths();
+    void testRegexValidPath_data();
+    void testRegexValidPath();
+    void testRegexInvalidPath_data();
+    void testRegexInvalidPath();
     void testImageTransfer();
 
 public slots:
@@ -49,9 +49,8 @@ private:
     void connectSocket();
     void disconnectSocket();
     void connectSocketNoCapabilities();
-    void checkFetcherStatus(bool transferButtonEnabled, bool imagesInvalidHidden,
-                            bool tagsInvalidHidden, QString invalidLabel);
-    void fetcherSetPaths(QString imagesPath, QString tagsPath);
+    void checkFetcherStatus(bool transferButtonEnabled, bool invalidLabelHidden,
+                            QString invalidLabel);
     /*!
      * \brief Sends capabilities to dcnc
      * \param capabilities, the bit field of capabilities
@@ -59,14 +58,13 @@ private:
      */
     void sendCapabilities(CapabilitiesMessage::Capabilities capabilities, int num);
     void startImageTransferSuccess();
-    void startImageTransferFail(bool imagesInvalidHidden, bool tagsInvalidHidden);
+    void startImageTransferFail(bool invalidLabelHidden);
     void stopImageTransfer();
 
     GcomController* gcom;
     QDataStream connectionDataStream;
     UASMessageTCPFramer messageFramer;
     QTcpSocket* socket;
-
 };
 
 #endif // TEST_GCOM_CONTROLLER_IMAGE_FETCHER_HPP
