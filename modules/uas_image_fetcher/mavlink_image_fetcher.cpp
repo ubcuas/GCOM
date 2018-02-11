@@ -14,9 +14,9 @@
 const QString imagePathTemplate = "%1/IMG_%2.jpg";
 const QString tagPathTemplate = "%1/TAGS.txt";
 
-MavlinkImageFetcher::MavlinkImageFetcher(QString imageDir, QString tagDir,
+MavlinkImageFetcher::MavlinkImageFetcher(QString dir,
                                          const DCNC *dcnc, const MAVLinkRelay *relay)
-                                        : ImageFetcher(imageDir, tagDir, dcnc)
+                                        : ImageFetcher(dir, dcnc)
 {
     this->mavlinkRelay = relay;
     connect(dcnc, &DCNC::receivedImageUntaggedData,
@@ -39,7 +39,7 @@ void MavlinkImageFetcher::handleImageUntaggedMessage(std::shared_ptr<ImageUntagg
     uint8_t *imageArray = &imageData[0];
     size_t sizeOfData = imageData.size();
     if ((uniqueSeqNum == 0 && prevSeqNum == 255) || (uniqueSeqNum > prevSeqNum)){
-        filePath = QString(imagePathTemplate).arg(imagePath).arg(QString::number(++imageNum));
+        filePath = QString(imagePathTemplate).arg(fileDirectory).arg(QString::number(++imageNum));
         saveToDisc(filePath, imageArray, sizeOfData);
         prevSeqNum = uniqueSeqNum;
         imageQueue.enqueue(message);

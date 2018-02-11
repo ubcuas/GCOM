@@ -8,7 +8,15 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets network serialport
 
 TARGET = gcom
-TEMPLATE = app
+
+test {
+    TEMPLATE = subdirs
+    SUBDIRS += \
+        unit_test/test_image_fetcher
+}
+else {
+    TEMPLATE = app
+}
 
 INCLUDEPATH += Mavlink
 

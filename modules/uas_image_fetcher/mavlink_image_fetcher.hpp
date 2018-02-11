@@ -10,7 +10,7 @@ class MavlinkImageFetcher : public ImageFetcher
     Q_OBJECT
 
 public:
-    MavlinkImageFetcher(QString imageDir, QString tagDir, const DCNC *dcnc, const MAVLinkRelay *relay);
+    MavlinkImageFetcher(QString dir, const DCNC *dcnc, const MAVLinkRelay *relay);
 
     ~MavlinkImageFetcher();
 
