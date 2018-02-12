@@ -552,7 +552,7 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
             break;
     }
 
-    //ui->fetcherPathField->setText(currentDir);
+    ui->fetcherPathField->setText(currentDir);
 
     ui->fetcherPathField->setValidator(new QRegExpValidator(PATH_REGEX));
 
@@ -603,7 +603,7 @@ void GcomController::fetcherBrowseDir() {
 }
 
 void GcomController::validatePath(QString path) {
-    // If the path is invalid, show error message and
+    // If the path is invalid or is empty, show error message and
     // disable the start image transfer button
     // If the path is valid and the error message is showing,
     // hide the error message
@@ -652,6 +652,8 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_STOP_TEXT);
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
+            ui->fetcherPathField->setEnabled(false);
+            ui->fetcherPathButton->setEnabled(false);
         }
         break;
 
@@ -661,6 +663,8 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
             fetcherStatus = FETCHER_STATUS_READY;
+            ui->fetcherPathField->setEnabled(true);
+            ui->fetcherPathButton->setEnabled(true);
         }
     }
 }

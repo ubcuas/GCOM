@@ -400,6 +400,8 @@ void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabl
     QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_START_TEXT);
     QVERIFY(gcom->ui->fetcherImageTransferButton->isEnabled() == transferButtonEnabled);
     QVERIFY(gcom->ui->fetcherPathInvalidLabel->isHidden() == invalidLabelHidden);
+    QVERIFY(gcom->ui->fetcherPathField->isEnabled());
+    QVERIFY(gcom->ui->fetcherPathButton->isEnabled());
     if (!invalidLabelHidden)
         QCOMPARE(gcom->ui->fetcherPathInvalidLabel->text(), invalidLabel);
 }
@@ -416,6 +418,8 @@ void TestGcomControllerImageFetcher::startImageTransferSuccess()
     QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_TRANSFERRING);
     QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_TRANSFER_LABEL);
     QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_STOP_TEXT);
+    QVERIFY(!gcom->ui->fetcherPathField->isEnabled());
+    QVERIFY(!gcom->ui->fetcherPathButton->isEnabled());
 
     QVERIFY(receivedCommandSpy.wait());
     QCOMPARE(receivedCommandSpy.count(), 1);
@@ -448,6 +452,8 @@ void TestGcomControllerImageFetcher::stopImageTransfer()
     QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_READY);
     QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_READY_LABEL);
     QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_START_TEXT);
+    QVERIFY(gcom->ui->fetcherPathField->isEnabled());
+    QVERIFY(gcom->ui->fetcherPathButton->isEnabled());
 
     QVERIFY(receivedCommandSpy.wait());
     QCOMPARE(receivedCommandSpy.count(), 1);
