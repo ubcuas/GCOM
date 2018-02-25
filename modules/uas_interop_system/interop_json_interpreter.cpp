@@ -212,7 +212,7 @@ InteropMission* InteropJsonInterpreter::parseMission(QJsonObject obj)
                 InteropMission::Waypoint{altMsl, lat, lon, order};
         searchGridPtsList.append(searchGridPt);
     }
-    parsedMission->setMissionWaypoints(searchGridPtsList);
+    parsedMission->setSearchGridPoints(searchGridPtsList);
 
     return parsedMission;
 }

@@ -129,9 +129,10 @@ void Interop::finishRequest(QNetworkReply *reply)
 void Interop::finishLogin(QNetworkReply *reply)
 {
     QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-    qDebug() << statusCode.toString();
-    QByteArray replyBody = reply->readAll();
-    qDebug() << QString(replyBody);
+    RequestStatus requestStatus = interpretHttpStatus(statusCode);
+
+    emit loginResponse(interpretHttpStatus(statusCode));
+    reply->deleteLater();
 }
 
 void Interop::finishGetObstacles(QNetworkReply *reply)
@@ -143,15 +144,45 @@ void Interop::finishGetObstacles(QNetworkReply *reply)
         QJsonDocument jsonDoc = QJsonDocument::fromJson(replyBody);
         InteropJsonInterpreter::ObstacleSet* obsSet = jsonInterpreter->parseObstacles(jsonDoc);
     }
+
+    reply->deleteLater();
 }
 
 void Interop::finishGetMissions(QNetworkReply *reply)
 {
     QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QList<InteropMission*> missions;
     if(statusCode == 200)
     {
         QByteArray replyBody = reply->readAll();
         QJsonDocument jsonDoc = QJsonDocument::fromJson(replyBody);
-        QList<InteropMission*> missions = jsonInterpreter->parseMultipleMissions(jsonDoc);
+        missions = jsonInterpreter->parseMultipleMissions(jsonDoc);
+    }
+
+    emit getMissionResponse(interpretHttpStatus(statusCode), missions);
+    reply->deleteLater();
+}
+
+Interop::RequestStatus Interop::interpretHttpStatus(QVariant status)
+{
+    if(status >= 100 && status < 200)
+    {
+        return RequestStatus::INFORMATION;
+    }
+    else if(status >= 200 && status < 300)
+    {
+        return RequestStatus::SUCCESS;
+    }
+    else if(status >= 300 && status < 400)
+    {
+        return RequestStatus::REDIRECTED;
+    }
+    else if(status >= 400 && status < 500)
+    {
+        return RequestStatus::CLIENT_ERROR;
+    }
+    else if(status >= 500 && status < 600)
+    {
+        return RequestStatus::INVALID;
     }
 }

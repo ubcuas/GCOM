@@ -121,6 +121,16 @@ GcomController::GcomController(QWidget *parent) :
 
     // Interop Setup
     interop = new Interop();
+
+    connect(interop,
+            SIGNAL(loginResponse(Interop::RequestStatus)),
+            this,
+            SLOT(interopLoginHandler(Interop::RequestStatus)));
+
+    connect(interop,
+            SIGNAL(getMissionResponse(Interop::RequestStatus, QList<InteropMission*>)),
+            this,
+            SLOT(interopGetMissionHandler(Interop::RequestStatus, QList<InteropMission*>)));
 }
 
 GcomController::~GcomController()
@@ -593,6 +603,36 @@ void GcomController::on_interopConnectButton_clicked()
     QString password = ui->interopPwField->text();
 
     interop->login(url, username, password);
+}
+
+void GcomController::interopLoginHandler(Interop::RequestStatus reqStatus)
+{
+    if(reqStatus == Interop::RequestStatus::SUCCESS)
+    {
+        qDebug() << "Login was successful!!!";
+    }
+    else
+    {
+        qDebug() << "Login failed! Please try again!";
+    }
+}
+
+void GcomController::on_testPushButton_clicked()
+{
+    interop->getMissions();
+}
+
+void GcomController::interopGetMissionHandler(Interop::RequestStatus reqStatus, QList<InteropMission*> missions)
+{
+    if(reqStatus == Interop::RequestStatus::SUCCESS)
+    {
+        QList<InteropMission*> testMissions = missions;
+        qDebug() << "Get mission successful!!!";
+    }
+    else
+    {
+        qDebug() << "Get mission failed! Please try again!";
+    }
 }
 
 //===================================================================

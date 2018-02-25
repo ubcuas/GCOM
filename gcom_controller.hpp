@@ -68,6 +68,10 @@ private slots:
     void disableAntennaTrackingGUI(bool toggle);
     // AUVSI Interop Slots
     void on_interopConnectButton_clicked();
+    void interopLoginHandler(Interop::RequestStatus reqStatus);
+    void interopGetMissionHandler(Interop::RequestStatus reqStatus, QList<InteropMission*> missions);
+
+    void on_testPushButton_clicked();
 
 private:
     // Private Member Variables
@@ -100,6 +104,7 @@ private:
     // Methods
     void updateStartTrackerButton();
 
+    // Interop
     Interop *interop;
 };
 

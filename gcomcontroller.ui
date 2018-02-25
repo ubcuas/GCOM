@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>910</width>
-    <height>573</height>
+    <height>656</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -219,8 +219,8 @@
              <property name="geometry">
               <rect>
                <x>120</x>
-               <y>47</y>
-               <width>381</width>
+               <y>50</y>
+               <width>161</width>
                <height>24</height>
               </rect>
              </property>
@@ -229,7 +229,7 @@
              <property name="geometry">
               <rect>
                <x>10</x>
-               <y>200</y>
+               <y>180</y>
                <width>80</width>
                <height>25</height>
               </rect>
@@ -255,8 +255,8 @@
              <property name="geometry">
               <rect>
                <x>120</x>
-               <y>97</y>
-               <width>381</width>
+               <y>100</y>
+               <width>161</width>
                <height>24</height>
               </rect>
              </property>
@@ -291,10 +291,23 @@
              <property name="geometry">
               <rect>
                <x>120</x>
-               <y>147</y>
-               <width>381</width>
+               <y>150</y>
+               <width>161</width>
                <height>24</height>
               </rect>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="testPushButton">
+             <property name="geometry">
+              <rect>
+               <x>120</x>
+               <y>180</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Test Button</string>
              </property>
             </widget>
            </widget>
@@ -818,7 +831,7 @@
      <x>0</x>
      <y>0</y>
      <width>910</width>
-     <height>17</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -840,7 +853,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
   </widget>
  </widget>

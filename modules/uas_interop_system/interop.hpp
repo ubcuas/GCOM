@@ -6,7 +6,7 @@
 
 #include "interop_json_interpreter.hpp"
 
-class Interop : QObject
+class Interop : public QObject
 {
     Q_OBJECT
 
@@ -14,11 +14,25 @@ public:
     Interop();
     ~Interop();
 
+    enum class RequestStatus
+    {
+        INFORMATION,
+        SUCCESS,
+        REDIRECTED,
+        CLIENT_ERROR,
+        SERVER_ERROR,
+        INVALID
+    };
+
     void login(const QString url, const QString userName, const QString password);
     void getMissions();
     void getMissions(int missionId);
     void getObstacles();
     void postTelemetry();
+
+signals:
+    void loginResponse(Interop::RequestStatus status);
+    void getMissionResponse(Interop::RequestStatus status, QList<InteropMission*> missions);
 
 protected:
 
@@ -49,6 +63,8 @@ private:
     void finishLogin(QNetworkReply *reply);
     void finishGetObstacles(QNetworkReply *reply);
     void finishGetMissions(QNetworkReply *reply);
+
+    RequestStatus interpretHttpStatus(QVariant status);
 
 private slots:
     void finishRequest(QNetworkReply* reply);
