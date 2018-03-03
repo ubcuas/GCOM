@@ -57,6 +57,7 @@ bool DCNC::startServer(QString address, int port)
     this->address = address;
     hostAddress = QHostAddress(address);
     bool startStatus = server->listen(hostAddress, port);
+
     if (startStatus)
         serverStatus = DCNCStatus::SEARCHING;
 
@@ -89,13 +90,17 @@ void DCNC::cancelConnection()
         clientConnection->deleteLater();
         clientConnection = nullptr;
         emit droppedConnection();
+
+        // Restart listening for connections
+        if (!server->isListening()) {
+            bool listenStatus = server->listen(QHostAddress(this->address), this->port);
+
+            if (!listenStatus)
+                serverStatus = DCNCStatus::OFFLINE;
+        }
     }
 
-    // Restart listening for connections
-    bool listenStatus = server->listen(QHostAddress(this->address), this->port);
 
-    if (!listenStatus)
-        serverStatus = DCNCStatus::OFFLINE;
 }
 
 DCNC::DCNCStatus DCNC::status()
@@ -140,7 +145,6 @@ void DCNC::handleClientDisconnected()
 {
     cancelConnection();
 }
-
 
 void DCNC::changeAutoResume(bool autoResume)
 {
@@ -199,7 +203,7 @@ void DCNC::handleClientData()
         {
             connectionDataStream.abortTransaction();
         }
-    }while (messageFramer.status() != UASMessageTCPFramer::TCPFramerStatus::INCOMPLETE_MESSAGE);
+    } while (messageFramer.status() != UASMessageTCPFramer::TCPFramerStatus::INCOMPLETE_MESSAGE);
     connectionDataStream.resetStatus();
 }
 

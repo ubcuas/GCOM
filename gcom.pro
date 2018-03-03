@@ -12,7 +12,8 @@ TARGET = gcom
 test {
     TEMPLATE = subdirs
     SUBDIRS += \
-        unit_test/test_dcnc
+        unit_test/test_image_fetcher \
+        unit_test/test_gcom_controller_image_fetcher
 }
 else {
     TEMPLATE = app
@@ -39,6 +40,8 @@ SOURCES += main.cpp\
     modules/uas_message/imu_message.cpp \
     modules/uas_message/capabilities_message.cpp \
     modules/uas_message/image_untagged_message.cpp \
+    modules/uas_image_fetcher/mavlink_image_fetcher.cpp \
+    modules/uas_image_fetcher/image_fetcher.cpp \
     modules/uas_message/image_tagged_message.cpp \
     modules/uas_utility/uas_utility.cpp \
     modules/uas_interop_system/InteropObjects/interop_mission.cpp \
@@ -68,7 +71,10 @@ HEADERS  += \
     modules/uas_message/imu_message.hpp \
     modules/uas_message/capabilities_message.hpp \
     modules/uas_message/image_untagged_message.hpp \
+    modules/uas_utility/uas_utility.h \
+    modules/uas_image_fetcher/image_fetcher.hpp \
     modules/uas_message/image_tagged_message.hpp \
+    modules/uas_image_fetcher/mavlink_image_fetcher.hpp \
     modules/uas_utility/uas_utility.h \
     modules/uas_interop_system/InteropObjects/interop_mission.hpp \
     modules/uas_interop_system/InteropObjects/interop_telemetry.hpp \
