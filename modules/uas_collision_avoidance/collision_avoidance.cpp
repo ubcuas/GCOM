@@ -35,12 +35,12 @@ CollisionAvoidance::~CollisionAvoidance() {
 // Methods
 //===================================================================
 
-void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> waypoints) {
+void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> waypoints, QString fileNameTag) {
     // waypoint file format:
     // QGC WPL <VERSION>
     // <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE>
 
-    QString filename = "missionplanwaypoints.waypoints";
+    QString filename = fileNameTag + ".waypoints";
     QFile file(filename);
 
     if(file.open(QFile::ReadWrite)) {

@@ -27,7 +27,7 @@ public:
     CollisionAvoidance();
     ~CollisionAvoidance();
 
-    void generateWaypointFile(QList<InteropMission::Waypoint> waypoints);
+    void generateWaypointFile(QList<InteropMission::Waypoint> waypoints, QString fileNameTag);
 
 private:
     QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);

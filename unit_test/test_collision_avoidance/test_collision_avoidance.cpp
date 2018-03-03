@@ -24,13 +24,13 @@ void TestCollisionAvoidance::cleanupTestCase()
 void TestCollisionAvoidance::testCase1()
 {
     // setup mock waypoint simulation
-    QList<InteropMission::Waypoint> mockWaypoints = this->getMockWaypoints();
+    QList<InteropMission::Waypoint> mockWaypoints = this->getMockWaypointsOrdered();
 
-    collisionAvoidanceInstance->generateWaypointFile(mockWaypoints);
+    collisionAvoidanceInstance->generateWaypointFile(mockWaypoints, "missionplanwaypoints1");
     QVERIFY2(true, "Failure");
 }
 
-QList<InteropMission::Waypoint> TestCollisionAvoidance::getMockWaypoints()
+QList<InteropMission::Waypoint> TestCollisionAvoidance::getMockWaypointsOrdered()
 {
     QList<InteropMission::Waypoint> missionWaypoints = {};
 

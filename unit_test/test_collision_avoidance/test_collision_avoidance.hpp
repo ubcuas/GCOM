@@ -21,7 +21,7 @@ private:
 
 private slots:
     void testCase1();
-    QList<InteropMission::Waypoint> getMockWaypoints();
+    QList<InteropMission::Waypoint> getMockWaypointsOrdered();
 
 private Q_SLOTS:
     void initTestCase();
