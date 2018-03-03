@@ -2,5 +2,5 @@
 
 image_processing::image_processing()
 {
-
+    std::cout << "Hello" << endl;
 }
