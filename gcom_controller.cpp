@@ -152,6 +152,7 @@ GcomController::GcomController(QWidget *parent) :
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+
     ui->startTrackButton->setEnabled(false);
     ui->antennaTrackerCalibrateIMUButton->setEnabled(false);
 
@@ -427,18 +428,7 @@ void GcomController::dcncDisconnected()
 
     ui->dcncCapabilitiesField->clear();
 
-    // If currently transferring images, reset status
-    if (fetcherStatus == FETCHER_STATUS_TRANSFERRING) {
-        fetcherStatus = FETCHER_STATUS_READY;
-        ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
-        ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
-    }
-
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
-
-    // Clear capabilities field
-    ui->dcncCapabilitiesField->clear();
-
 }
 
 void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped)
