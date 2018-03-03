@@ -5,6 +5,8 @@
 #include <QString>
 #include <QProcess>
 #include <QDebug>
+#include <QDir>
+#include <QFileInfo>
 class ImageProcessing
 {
 public:

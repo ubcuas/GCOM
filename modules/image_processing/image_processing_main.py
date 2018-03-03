@@ -4,3 +4,4 @@
 file =open("C:/Users/yanyi/Documents/GitHub/realGCOM/GCOM/modules/image_processing/test.txt", "w")
 file.write("Hello World")
 file.close()
+print "Hello from the other side"
