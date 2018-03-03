@@ -118,7 +118,7 @@
     <item row="1" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="connectionTab">
        <attribute name="title">
@@ -808,6 +808,53 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="imageProcessingTab">
+       <attribute name="title">
+        <string>Image Processing</string>
+       </attribute>
+       <widget class="QPushButton" name="runScriptButton">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>30</y>
+          <width>91</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Run Script</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>70</y>
+          <width>91</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="scriptPath">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>31</y>
+          <width>261</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>patthhthajadhiawuda</string>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -840,7 +887,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
   </widget>
  </widget>

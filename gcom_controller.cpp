@@ -121,6 +121,7 @@ GcomController::GcomController(QWidget *parent) :
 
     // Interop Setup
     interop = new Interop();
+    //connect(ui->runScriptButton, SIGNAL(clicked(bool)), this, SLOT(on_runScriptButton_clicked()));
 }
 
 GcomController::~GcomController()
@@ -600,6 +601,17 @@ void GcomController::on_interopConnectButton_clicked()
 
     interop->login(url, username, password);
 }
+
+//===================================================================
+// Image Processing Methods
+//===================================================================
+
+
+void GcomController::on_runScriptButton_clicked(){
+    qDebug() << "Button pushed";
+    imp.excuteScript();
+}
+
 
 //===================================================================
 // Utility Methods

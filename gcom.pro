@@ -77,7 +77,7 @@ HEADERS  += \
     modules/uas_interop_system/interop.hpp \
     modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
     modules/uas_interop_system/interop_json_interpreter.hpp \
-    modules/image_processing/image_processing.h
+    modules/image_processing/image_processing.hpp
 
 FORMS += \
     gcomcontroller.ui
@@ -87,3 +87,6 @@ INCLUDEPATH += Mavlink
 CONFIG += c++14
 
 RESOURCES = resources.qrc
+
+DISTFILES += \
+    modules/image_processing/image_processing_main.py
