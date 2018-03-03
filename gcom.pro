@@ -12,7 +12,7 @@ TARGET = gcom
 test {
     TEMPLATE = subdirs
     SUBDIRS += \
-        unit_test/test_gcom_controller_image_fetcher
+        unit_test/test_image_fetcher
 }
 else {
     TEMPLATE = app
@@ -38,8 +38,11 @@ SOURCES += main.cpp\
     modules/uas_message/gps_message.cpp \
     modules/uas_message/imu_message.cpp \
     modules/uas_message/capabilities_message.cpp \
-    modules/uas_message/image_message.cpp \
-    modules/uas_image_tagger/image_tagger.cpp
+    modules/uas_message/image_untagged_message.cpp \
+    modules/uas_utility/uas_utility.cpp \
+    modules/uas_image_fetcher/mavlink_image_fetcher.cpp \
+    modules/uas_image_fetcher/image_fetcher.cpp \
+    modules/uas_message/image_tagged_message.cpp
 
 HEADERS  += \
     modules/uas_message/uas_message.hpp \
@@ -58,7 +61,17 @@ HEADERS  += \
     modules/uas_message/gps_message.hpp \
     modules/uas_message/imu_message.hpp \
     modules/uas_message/capabilities_message.hpp \
-    modules/uas_message/image_message.hpp \
-    modules/uas_image_tagger/image_tagger.hpp
+    modules/uas_message/image_untagged_message.hpp \
+    modules/uas_utility/uas_utility.h \
+    modules/uas_image_fetcher/image_fetcher.hpp \
+    modules/uas_message/image_tagged_message.hpp \
+    modules/uas_image_fetcher/mavlink_image_fetcher.hpp
 
-FORMS    += gcomcontroller.ui
+FORMS += \
+    gcomcontroller.ui
+
+INCLUDEPATH += Mavlink
+
+CONFIG += c++14
+
+RESOURCES = resources.qrc

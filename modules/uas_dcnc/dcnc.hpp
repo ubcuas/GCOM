@@ -17,7 +17,8 @@
 #include "modules/uas_message/capabilities_message.hpp"
 #include "modules/uas_message/response_message.hpp"
 #include "modules/uas_message/command_message.hpp"
-#include "modules/uas_message/image_message.hpp"
+#include "modules/uas_message/image_untagged_message.hpp"
+#include "modules/uas_message/image_tagged_message.hpp"
 
 //===================================================================
 // Public Class Declaration
@@ -113,7 +114,8 @@ signals:
     void receivedConnection();
     void droppedConnection();
     // Data Signals
-    void receivedImageData(std::shared_ptr<ImageMessage> imageMessage);
+    void receivedImageUntaggedData(std::shared_ptr<ImageUntaggedMessage> imageUntaggedMessage);
+    void receivedImageTaggedData(std::shared_ptr<ImageTaggedMessage> imageTaggedMessage);
     void receivedGremlinInfo(QString systemId, uint16_t versionNumber, bool dropped);
     void receivedGremlinCapabilities(CapabilitiesMessage::Capabilities capabilities);
     void receivedGremlinResponse(CommandMessage::Commands command,
@@ -148,8 +150,10 @@ private slots:
      */
     void handleClientMessage(std::shared_ptr<UASMessage> message);
 
-    UASMessage* handleResponse(CommandMessage::Commands command,
+    void handleResponse(CommandMessage::Commands command,
                                ResponseMessage::ResponseCodes responses);
+    UASMessage* handleInfo(std::string systemId, bool dropped, bool autoResume);
+
 
 private:
     // Private Member Variables
@@ -163,6 +167,7 @@ private:
     std::unique_ptr<UASMessage> message;
     DCNCStatus serverStatus;
     bool autoResume;
+    std::string preSysID; // store previous id to check when resume
 };
 
 #endif // DCNC_HPP

@@ -8,7 +8,8 @@
 #include "system_info_message.hpp"
 #include "capabilities_message.hpp"
 #include "command_message.hpp"
-#include "image_message.hpp"
+#include "image_untagged_message.hpp"
+#include "image_tagged_message.hpp"
 #include "response_message.hpp"
 // Qt Includes
 #include <QDataStream>
@@ -104,9 +105,14 @@ std::shared_ptr<UASMessage> UASMessageTCPFramer::generateMessage()
             std::shared_ptr<UASMessage> message(new CommandMessage(serialMessagePayload));
             return message;
         }
-        case UASMessage::MessageID::DATA_IMAGE:
+        case UASMessage::MessageID::DATA_IMAGE_UNTAGGED:
         {
-            std::shared_ptr<UASMessage> message(new ImageMessage(serialMessagePayload));
+            std::shared_ptr<UASMessage> message(new ImageUntaggedMessage(serialMessagePayload));
+            return message;
+        }
+        case UASMessage::MessageID::DATA_IMAGE_TAGGED:
+        {
+            std::shared_ptr<UASMessage> message(new ImageTaggedMessage(serialMessagePayload));
             return message;
         }
         default:
@@ -157,11 +163,12 @@ QDataStream& operator>>(QDataStream& inputStream, UASMessageTCPFramer& uasMessag
     // qDebug() << messageSize;
 
     // Change the message buffer to the appropriate size
-    uasMessageTCPFramer.messageData.resize(FRAMED_MESG_HEADER_FIELD_SIZE + messageSize);
+
     uasMessageTCPFramer.messageData.insert(uasMessageTCPFramer.messageData.begin(), messageHeader,
                                            messageHeader + FRAMED_MESG_HEADER_FIELD_SIZE);
+    uasMessageTCPFramer.messageData.resize(FRAMED_MESG_HEADER_FIELD_SIZE + messageSize);
 
-
+    //appebd actual message
     int readLength = inputStream.readRawData((char *)uasMessageTCPFramer.messageData.data() +
                                              FRAMED_MESG_HEADER_FIELD_SIZE,
                                              messageSize);
