@@ -27,9 +27,10 @@ public:
     CollisionAvoidance();
     ~CollisionAvoidance();
 
-    void generateWaypointFile();
+    void generateWaypointFile(QList<InteropMission::Waypoint> waypoints);
 
 private:
+    QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);
 
     float longitudeToX(float);
     float latitudeToY(float);
@@ -43,4 +44,4 @@ private:
 };
 
 
-#endif COLLISION_AVOIDANCE_H
+#endif // COLLISION_AVOIDANCE_H

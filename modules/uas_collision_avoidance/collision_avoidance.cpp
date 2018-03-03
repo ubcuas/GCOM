@@ -35,7 +35,7 @@ CollisionAvoidance::~CollisionAvoidance() {
 // Methods
 //===================================================================
 
-void CollisionAvoidance::generateWaypointFile() {
+void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> waypoints) {
     // waypoint file format:
     // QGC WPL <VERSION>
     // <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE>
@@ -47,10 +47,21 @@ void CollisionAvoidance::generateWaypointFile() {
         QTextStream stream(&file);
         stream << QGC_VERISON << endl;
         stream << "0	1	0	0	0	0	0	0	0	0	0	1" << endl;
-        stream << "1	0	3	16	0.000000	0.000000	0.000000	0.000000	49.037868	-81.562500	100.000000	1" << endl;
+        for (int waypointIndex = 0; waypointIndex < waypoints.length(); ++waypointIndex) {
+            stream << this->generateMissionPlannerCommand(waypoints[waypointIndex]) << endl;
+        }
     }
 }
 
+QString CollisionAvoidance::generateMissionPlannerCommand(InteropMission::Waypoint waypoint) {
+    return QString::number(waypoint.order) +
+            "\t0\t3\t16\t0.000000\t0.000000\t0.000000\t0.000000\t" +
+            QString::number(waypoint.latitude) + "\t" +
+            QString::number(waypoint.longitude) + "\t" +
+            QString::number(waypoint.altitudeMsl) + "\t1";
+}
+
+// COLLISION DETECTION RELATED
 bool CollisionAvoidance::collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
                                            InteropMission::Waypoint waypointB,
                                            QList<StationaryObstacle> obstacles) {
