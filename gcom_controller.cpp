@@ -166,6 +166,9 @@ GcomController::GcomController(QWidget *parent) :
             SIGNAL(antennaTrackerCurrentlyTracking(bool)),
             this,
             SLOT(disableAntennaTrackingGUI(bool)));
+
+    // Interop Setup
+    interop = new Interop();
 }
 
 GcomController::~GcomController()
@@ -177,6 +180,7 @@ GcomController::~GcomController()
     delete dcnc;
     delete tracker;
     delete fetcher;
+    delete interop;
 }
 
 //===================================================================
@@ -401,6 +405,12 @@ void GcomController::dcncConnected()
 
 void GcomController::dcncDisconnected()
 {
+    if (dcnc->status() == DCNC::DCNCStatus::OFFLINE)
+    {
+        resetDCNCGUI();
+        return;
+    }
+
     // Update the UI
     ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
     ui->dcncStatusField->setText(SEARCHING_LABEL);
@@ -667,6 +677,15 @@ void GcomController::on_antennaTrackerCalibrateIMUButton_clicked()
 {
     // start IMU calibration method
     tracker->calibrateIMU();
+}
+
+void GcomController::on_interopConnectButton_clicked()
+{
+    QString url = ui->interopUrlField->text();
+    QString username = ui->interopUserField->text();
+    QString password = ui->interopPwField->text();
+
+    interop->login(url, username, password);
 }
 
 //===================================================================

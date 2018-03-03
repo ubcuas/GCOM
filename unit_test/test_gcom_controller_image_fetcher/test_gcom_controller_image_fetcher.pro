@@ -32,10 +32,20 @@ HEADERS += \
         ../../modules/mavlink_relay/mavlink_relay_tcp.hpp \
         ../../modules/uas_antenna_tracker/antennatracker.hpp \
         ../../modules/uas_message/uas_message_serial_framer.hpp \
-        ../../modules/uas_image_tagger/image_tagger.hpp \
+        ../../modules/uas_image_fetcher/image_fetcher.hpp \
         ../../modules/uas_message/gps_message.hpp \
         ../../modules/uas_message/imu_message.hpp \
         ../../modules/uas_message/image_message.hpp \
+        ../../modules/uas_message/image_untagged_message.hpp \
+        ../../modules/uas_message/image_tagged_message.hpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_mission.hpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_telemetry.hpp \
+        ../../modules/uas_interop_system/InteropObjects/moving_obstacle.hpp \
+        ../../modules/uas_interop_system/InteropObjects/stationary_obstacle.hpp \
+        ../../modules/uas_interop_system/interop.hpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
+        ../../modules/uas_interop_system/interop_json_interpreter.hpp \
+        ../../modules/uas_utility/uas_utility.h \
 
 
 SOURCES += \
@@ -51,8 +61,17 @@ SOURCES += \
         ../../modules/mavlink_relay/mavlink_relay_tcp.cpp \
         ../../modules/uas_antenna_tracker/antennatracker.cpp \
         ../../modules/uas_message/uas_message_serial_framer.cpp \
-        ../../modules/uas_image_tagger/image_tagger.cpp \
+        ../../modules/uas_image_fetcher/image_fetcher.cpp \
         ../../modules/uas_message/gps_message.cpp \
         ../../modules/uas_message/imu_message.cpp \
-        ../../modules/uas_message/image_message.cpp \
+        ../../modules/uas_message/image_untagged_message.cpp \
+        ../../modules/uas_message/image_tagged_message.cpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_mission.cpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_telemetry.cpp \
+        ../../modules/uas_interop_system/InteropObjects/moving_obstacle.cpp \
+        ../../modules/uas_interop_system/InteropObjects/stationary_obstacle.cpp \
+        ../../modules/uas_interop_system/interop.cpp \
+        ../../modules/uas_interop_system/InteropObjects/interop_odlc.cpp \
+        ../../modules/uas_interop_system/interop_json_interpreter.cpp \
+        ../../modules/uas_utility/uas_utility.cpp \
 

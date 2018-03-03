@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets network serialport
 
 TARGET = gcom
@@ -12,13 +12,14 @@ TARGET = gcom
 test {
     TEMPLATE = subdirs
     SUBDIRS += \
-        unit_test/test_image_fetcher
+        unit_test/test_image_fetcher \
+        unit_test/test_gcom_controller_image_fetcher
 }
 else {
     TEMPLATE = app
 }
 
-INCLUDEPATH += Mavlink
+INCLUDEPATH += Mavlink auvsi_suas_interop
 
 CONFIG += c++14
 
@@ -39,10 +40,17 @@ SOURCES += main.cpp\
     modules/uas_message/imu_message.cpp \
     modules/uas_message/capabilities_message.cpp \
     modules/uas_message/image_untagged_message.cpp \
-    modules/uas_utility/uas_utility.cpp \
     modules/uas_image_fetcher/mavlink_image_fetcher.cpp \
     modules/uas_image_fetcher/image_fetcher.cpp \
-    modules/uas_message/image_tagged_message.cpp
+    modules/uas_message/image_tagged_message.cpp \
+    modules/uas_utility/uas_utility.cpp \
+    modules/uas_interop_system/InteropObjects/interop_mission.cpp \
+    modules/uas_interop_system/InteropObjects/interop_telemetry.cpp \
+    modules/uas_interop_system/InteropObjects/moving_obstacle.cpp \
+    modules/uas_interop_system/InteropObjects/stationary_obstacle.cpp \
+    modules/uas_interop_system/interop.cpp \
+    modules/uas_interop_system/InteropObjects/interop_odlc.cpp \
+    modules/uas_interop_system/interop_json_interpreter.cpp
 
 HEADERS  += \
     modules/uas_message/uas_message.hpp \
@@ -65,7 +73,15 @@ HEADERS  += \
     modules/uas_utility/uas_utility.h \
     modules/uas_image_fetcher/image_fetcher.hpp \
     modules/uas_message/image_tagged_message.hpp \
-    modules/uas_image_fetcher/mavlink_image_fetcher.hpp
+    modules/uas_image_fetcher/mavlink_image_fetcher.hpp \
+    modules/uas_utility/uas_utility.h \
+    modules/uas_interop_system/InteropObjects/interop_mission.hpp \
+    modules/uas_interop_system/InteropObjects/interop_telemetry.hpp \
+    modules/uas_interop_system/InteropObjects/moving_obstacle.hpp \
+    modules/uas_interop_system/InteropObjects/stationary_obstacle.hpp \
+    modules/uas_interop_system/interop.hpp \
+    modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
+    modules/uas_interop_system/interop_json_interpreter.hpp
 
 FORMS += \
     gcomcontroller.ui

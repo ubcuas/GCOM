@@ -15,6 +15,7 @@
 #include "modules/uas_message/image_untagged_message.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
 #include "modules/uas_image_fetcher/image_fetcher.hpp"
+#include "modules/uas_interop_system/interop.hpp"
 
 //===================================================================
 // Namespace Declarations
@@ -68,6 +69,8 @@ private slots:
     void on_antennaTrackerOverrideHeadingField_editingFinished();
     void antennaTrackerUpdateStatusGUI(float latitude, float longitude, float elevation, float heading);
     void disableAntennaTrackingGUI(bool toggle);
+    // AUVSI Interop Slots
+    void on_interopConnectButton_clicked();
 
     // Image Fetcher Slots
     void on_fetcherPathField_returnPressed();
@@ -143,6 +146,8 @@ private:
      * \param enable, true to enable, false to disable
      */
     void enableTabMain(const int tab, const bool enable);
+
+    Interop *interop;
 };
 
 #endif // GCOMCONTROLLER_HPP

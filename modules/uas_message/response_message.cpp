@@ -20,7 +20,7 @@ const int RESPONSE_FIELD_INDEX = 1;
 ResponseMessage::ResponseMessage(CommandMessage::Commands command, ResponseCodes responseCode)
 {
     this->command = command;
-    response = responseCode;
+    this->response = responseCode;
 }
 
 ResponseMessage::ResponseMessage(const std::vector<uint8_t> &serializedMessage)
@@ -43,6 +43,6 @@ std::vector<uint8_t> ResponseMessage::serialize()
 {
     std::vector<uint8_t> serializedMessage;
     serializedMessage.push_back((uint8_t)command);
-    serializedMessage.push_back((uint8_t)command);
+    serializedMessage.push_back((uint8_t)response);
     return serializedMessage;
 }
