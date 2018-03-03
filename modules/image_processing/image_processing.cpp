@@ -1,14 +1,16 @@
 #include "image_processing.hpp"
+#include "gcom_controller.hpp"
+
 
 ImageProcessing::ImageProcessing()
 {
-    path = "?";
+    ImageScriptPath = "?";
 
 }
-void ImageProcessing::excuteScript(){
+void ImageProcessing::excuteScript(QString scriptPath){
     qDebug() << "Start script";
 
-    QStringList  args = QStringList() << "C:/Users/yanyi/Documents/GitHub/realGCOM/GCOM/modules/image_processing/image_processing_main.py";
+    QStringList  args = QStringList() << scriptPath;
     int exitCode = QProcess::execute( "python", args );
-        qDebug() << exitCode << " ENd script";
+        qDebug() << exitCode << " End script";
 }

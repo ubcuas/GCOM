@@ -11,10 +11,12 @@ class ImageProcessing
 {
 public:
     ImageProcessing();
-    void excuteScript();
+    void excuteScript(QString scriptPath);
 
 private:
-    QString path;
+    QString ImageScriptPath;
+    QString OutputPath;
+    float rejectionRange;
 
 
 

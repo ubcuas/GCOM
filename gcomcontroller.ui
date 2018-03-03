@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>910</width>
-    <height>573</height>
+    <height>656</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -843,12 +843,12 @@
          <rect>
           <x>130</x>
           <y>31</y>
-          <width>261</width>
+          <width>581</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>patthhthajadhiawuda</string>
+         <string>C:\Users\Igor\Documents\UAS\GCOM\modules\image_processing\image_processing_main.py</string>
         </property>
         <property name="clearButtonEnabled">
          <bool>true</bool>
@@ -865,7 +865,7 @@
      <x>0</x>
      <y>0</y>
      <width>910</width>
-     <height>17</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -609,7 +609,7 @@ void GcomController::on_interopConnectButton_clicked()
 
 void GcomController::on_runScriptButton_clicked(){
     qDebug() << "Button pushed";
-    imp.excuteScript();
+    imp.excuteScript(ui->scriptPath->text());
 }
 
 
