@@ -55,7 +55,7 @@ void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> wa
 
 QString CollisionAvoidance::generateMissionPlannerCommand(InteropMission::Waypoint waypoint) {
     return QString::number(waypoint.order) +
-            "\t0\t3\t16\t0.000000\t0.000000\t0.000000\t0.000000\t" +
+            "\t0\t3\t16\t0.000000\t-0.000000\t0.000000\t0.000000\t" +
             QString::number(waypoint.latitude) + "\t" +
             QString::number(waypoint.longitude) + "\t" +
             QString::number(waypoint.altitudeMsl) + "\t1";
