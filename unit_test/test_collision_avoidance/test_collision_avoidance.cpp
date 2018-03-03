@@ -36,18 +36,18 @@ QList<InteropMission::Waypoint> TestCollisionAvoidance::getMockWaypoints()
 
     double waypoints[8][2] =
     {
-        {49.037868, -81.562500},
-        {49.267805,	-82.617188},
-        {49.267805,	-78.750000},
-        {33.431441,	-81.914063},
-        {32.546813,	-90.000000},
-        {32.842674,	-104.765625},
-        {29.993002,	-141.679688},
-        {22.593726,	-147.128906}
+        {-81.823794, 90.000000},
+        {-78.750000, 49.267800},
+        {-83.676943, 27.421875},
+        {-82.765373, 4.218750},
+        {-80.532071, -11.953125},
+        {-78.349411, -6.328125},
+        {-74.211983, 3.515625},
+        {-74.211983, 28.828125}
     };
 
     for (int i = 0; i < 8; i++) {
-        InteropMission::Waypoint tempPoint {100, waypoints[i][0], waypoints[i][1], i+1};
+        InteropMission::Waypoint tempPoint {100, waypoints[i][1], waypoints[i][0], i+1};
         missionWaypoints.push_back(tempPoint);
     }
     return missionWaypoints;

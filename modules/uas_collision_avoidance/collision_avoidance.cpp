@@ -54,14 +54,24 @@ void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> wa
 }
 
 QString CollisionAvoidance::generateMissionPlannerCommand(InteropMission::Waypoint waypoint) {
-    return QString::number(waypoint.order) +
-            "\t0\t3\t16\t0.000000\t-0.000000\t0.000000\t0.000000\t" +
-            QString::number(waypoint.latitude) + "\t" +
+    return QString::number(waypoint.order) + "\t"
+            "0" + "\t" + // current wp (true/false)
+            "3" + "\t" + // coord frame
+            "16" + "\t" + // command
+            "0" + "\t" + // param1
+            "0" + "\t" + // param2
+            "0" + "\t" + // param3
+            "0" + "\t" + // param4
             QString::number(waypoint.longitude) + "\t" +
-            QString::number(waypoint.altitudeMsl) + "\t1";
+            QString::number(waypoint.latitude) + "\t" +
+            QString::number(waypoint.altitudeMsl) + "\t" +
+            "1";
 }
 
+//===================================================================
 // COLLISION DETECTION RELATED
+//===================================================================
+
 bool CollisionAvoidance::collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
                                            InteropMission::Waypoint waypointB,
                                            QList<StationaryObstacle> obstacles) {
