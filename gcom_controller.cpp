@@ -56,6 +56,8 @@ const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
 const QString START_SERVER_FAIL_TEXT(
         "Cannot listen on the given server ip address and port.");
+const QString SYSTEM_RESUME_FAIL_TEXT(
+        "Cannot resume previous connection.");
 
 // Capabilities Constants
 const int SIZE_CAPABILITY = 8;
@@ -82,8 +84,8 @@ const QString FETCHER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font
 const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path </font>");
 const QString FETCHER_NONREAL_PATH_LABEL("<font color='#D52D2D'> *Path does not exist</font>");
 
-const QString IMAGE_TRANSER_START_TEXT("Start Image Transfer");
-const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
+const QString IMAGE_TRANSFER_START_TEXT("Start Image Transfer");
+const QString IMAGE_TRANSFER_STOP_TEXT("Stop Image Transfer");
 
 const int FETCHER_STATUS_UNAVAILABLE = 0;
 const int FETCHER_STATUS_READY = 1;
@@ -131,6 +133,10 @@ GcomController::GcomController(QWidget *parent) :
     dcnc = new DCNC();
     connect(dcnc, SIGNAL(receivedConnection()), this, SLOT(dcncConnected()));
     connect(dcnc, SIGNAL(droppedConnection()), this, SLOT(dcncDisconnected()));
+    connect(dcnc, SIGNAL(reestablishedConnection(CommandMessage::Commands,
+                                                 ResponseMessage::ResponseCodes)),
+            this, SLOT(dcncReestablishedConnection(CommandMessage::Commands,
+                                                   ResponseMessage::ResponseCodes)));
     connect(dcnc, SIGNAL(receivedGremlinInfo(QString,uint16_t,bool)),
             this, SLOT(gremlinInfo(QString,uint16_t,bool)));
     connect(dcnc, SIGNAL(receivedGremlinCapabilities(CapabilitiesMessage::Capabilities)),
@@ -291,8 +297,6 @@ void GcomController::resetDCNCGUI()
     ui->dcncIPVersionField->setText(DISCONNECTED_LABEL);
     ui->dcncVersionNumberField->setText(DISCONNECTED_LABEL);
     ui->dcncDeviceIDField->setText(DISCONNECTED_LABEL);
-    // Clear Capabilities
-    ui->dcncCapabilitiesField->clear();
     // Enable all input input fields
     ui->dcncServerIPField->setDisabled(false);
     ui->dcncServerPortField->setDisabled(false);
@@ -300,21 +304,12 @@ void GcomController::resetDCNCGUI()
     // Reset the animations
     dcncConnectedMovie->stop();
     dcncConnectingMovie->stop();
+    dcncConnectionTimer->stop();
     ui->dcncStatusMovie->setText(" ");
     // Deactivate the drop gremlin button
     ui->dcncDropGremlin->setDisabled(false);
 
-    // If currently transferring images, reset status
-    if (fetcherStatus == FETCHER_STATUS_TRANSFERRING) {
-        fetcherStatus = FETCHER_STATUS_READY;
-        ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
-        ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
-    }
-
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
-
-    // Clear capabilities field
-    ui->dcncCapabilitiesField->clear();
 }
 
 void GcomController::on_dcncConnectionButton_clicked()
@@ -426,9 +421,40 @@ void GcomController::dcncDisconnected()
     // Start the connection timeout timer.
     dcncSearchTimeoutTimer->start(ui->dcncServerTimeoutField->text().toULong() * 1000);
 
-    ui->dcncCapabilitiesField->clear();
-
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+}
+
+void GcomController::dcncReestablishedConnection(CommandMessage::Commands command,
+                                                 ResponseMessage::ResponseCodes response)
+{
+    switch(command)
+    {
+        case CommandMessage::Commands::SYSTEM_RESUME:
+        {
+            // If there is an error, show an error popup
+            if (response != ResponseMessage::ResponseCodes::NO_ERROR)
+            {
+                QMessageBox::information(
+                        this,
+                        GcomController::objectName().toStdString().c_str(),
+                        SYSTEM_RESUME_FAIL_TEXT.toStdString().c_str());
+                return;
+            }
+
+            // If Gremlin previously had camera capabilities, activate fetcher tab
+            if (ui->dcncCapabilitiesField->findItems(
+                CAMERA_TAGGED_TEXT, Qt::MatchExactly).length() > 0 ||
+                ui->dcncCapabilitiesField->findItems(
+                CAMERA_UNTAGGED_TEXT, Qt::MatchExactly).length() > 0)
+            {
+                enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+            }
+        }
+        break;
+
+        default:
+        break;
+    }
 }
 
 void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped)
@@ -440,23 +466,17 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
+    if (ui->dcncCapabilitiesField->count() != 0)
+        ui->dcncCapabilitiesField->clear();
+
     // May have several capabilities, so loop through all of them
      while (static_cast<uint32_t>(capabilities)) {
          if (static_cast<uint32_t>(capabilities &
                                    CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
          {
              enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
-             if (fetcher == nullptr)
-                setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+             setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
              ui->dcncCapabilitiesField->addItem(CAMERA_TAGGED_TEXT);
-         }
-         else if (static_cast<uint32_t>(capabilities &
-                                   CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED))
-         {
-             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
-             if (fetcher == nullptr)
-                setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED);
-             ui->dcncCapabilitiesField->addItem(CAMERA_UNTAGGED_TEXT);
          }
          // Remove capabilities that have already been used
          capabilities = capabilities >> SIZE_CAPABILITY;
@@ -682,6 +702,15 @@ void GcomController::on_interopConnectButton_clicked()
 // Image Fetcher Methods
 //===================================================================
 void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera) {
+    fetcherStatus = FETCHER_STATUS_READY;
+    ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+    ui->fetcherPathField->setEnabled(true);
+    ui->fetcherPathButton->setEnabled(true);
+    ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_START_TEXT);
+
+    if (fetcher != nullptr)
+        return;
+
     QString currentDir = QDir::currentPath();
 
     // Initialize fetcher with default current working directory paths
@@ -704,9 +733,6 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
 
     ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
     ui->fetcherPathInvalidLabel->hide();
-
-    ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
-    fetcherStatus = FETCHER_STATUS_READY;
 }
 
 void GcomController::on_fetcherPathButton_clicked()
@@ -759,15 +785,13 @@ void GcomController::validatePath(QString path) {
         ui->fetcherPathInvalidLabel->hide();
     }
 
-    if (ui->fetcherImageTransferButton->isEnabled())
+    if (ui->fetcherImageTransferButton->isEnabled() ||
+        !ui->fetcherPathInvalidLabel->isHidden())
         return;
 
     // If the start image transfer button is disabled and
     // path errors have been fixed, enable it
-    if (ui->fetcherPathInvalidLabel->isHidden())
-    {
-        ui->fetcherImageTransferButton->setEnabled(true);
-    }
+    ui->fetcherImageTransferButton->setEnabled(true);
 }
 
 void GcomController::on_fetcherImageTransferButton_clicked()
@@ -781,17 +805,16 @@ void GcomController::on_fetcherImageTransferButton_clicked()
                 ui->fetcherPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
                 ui->fetcherPathInvalidLabel->show();
 
-                if (ui->fetcherImageTransferButton->isEnabled())
-                    ui->fetcherImageTransferButton->setEnabled(false);
-            }
-
-            // If  path is invalid, do not start image transfer
-            if (ui->fetcherPathInvalidLabel->isVisible())
+                if (ui->fetcherImageTransferButton->isEnabled()) {
+                    ui->fetcherImageTransferButton->clearFocus();
+                    ui->fetcherImageTransferButton->setEnabled(false);  
+                }
                 return;
+            }
 
             dcnc->startImageRelay();
             ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
-            ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_STOP_TEXT);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_STOP_TEXT);
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
             ui->fetcherPathField->setEnabled(false);
             ui->fetcherPathButton->setEnabled(false);
@@ -802,7 +825,7 @@ void GcomController::on_fetcherImageTransferButton_clicked()
         {
             dcnc->stopImageRelay();
             ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
-            ui->fetcherImageTransferButton->setText(IMAGE_TRANSER_START_TEXT);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_START_TEXT);
             fetcherStatus = FETCHER_STATUS_READY;
             ui->fetcherPathField->setEnabled(true);
             ui->fetcherPathButton->setEnabled(true);

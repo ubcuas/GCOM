@@ -52,6 +52,8 @@ private slots:
     // DCNC Slots
     void dcncConnected();
     void dcncDisconnected();
+    void dcncReestablishedConnection(CommandMessage::Commands command,
+                                     ResponseMessage::ResponseCodes response);
     void dcncTimerTimeout();
     void dcncSearchTimeout();
     void gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped);
