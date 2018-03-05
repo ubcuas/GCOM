@@ -73,9 +73,6 @@ private slots:
     // AUVSI Interop Slots
     void on_interopConnectButton_clicked();
 
-    // IMP Slots
-    void on_runScriptButton_clicked();
-
     // Image Fetcher Slots
     void on_fetcherPathField_returnPressed();
 
@@ -84,6 +81,10 @@ private slots:
     void on_fetcherPathButton_clicked();
 
     void on_fetcherImageTransferButton_clicked();
+
+    void on_imageScriptPathButton_clicked();
+
+    void on_outputPathButton_clicked();
 
 private:
     // Private Member Variables
@@ -131,7 +132,7 @@ private:
     /*!
      * \brief fetcherBrowseDir, open file dialog, allow user to change directories
      */
-    void fetcherBrowseDir();
+    void fetcherBrowseDir(const int mode);
 
     /*!
      * \brief validatePath, validate path against regex

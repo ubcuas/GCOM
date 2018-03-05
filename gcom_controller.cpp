@@ -89,6 +89,9 @@ const int FETCHER_STATUS_UNAVAILABLE = 0;
 const int FETCHER_STATUS_READY = 1;
 const int FETCHER_STATUS_TRANSFERRING = 2;
 
+const int SAVE_IMAGE = 0;
+const int IMAGE_SCRIPT = 1;
+const int OUTPUT = 2;
 
 // Antenna Tracker Constants
 const QString START_TRACKING_BUTTON_TEXT("Start Tracking");
@@ -151,7 +154,7 @@ GcomController::GcomController(QWidget *parent) :
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
-    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
 
     ui->startTrackButton->setEnabled(false);
     ui->antennaTrackerCalibrateIMUButton->setEnabled(false);
@@ -170,7 +173,6 @@ GcomController::GcomController(QWidget *parent) :
 
     // Interop Setup
     interop = new Interop();
-    //connect(ui->runScriptButton, SIGNAL(clicked(bool)), this, SLOT(on_runScriptButton_clicked()));
 }
 
 GcomController::~GcomController()
@@ -680,17 +682,6 @@ void GcomController::on_interopConnectButton_clicked()
 }
 
 //===================================================================
-// Image Processing Methods
-//===================================================================
-
-
-void GcomController::on_runScriptButton_clicked(){
-    qDebug() << "Button pushed";
-    imp.excuteScript(ui->scriptPath->text());
-}
-
-
-//===================================================================
 // Image Fetcher Methods
 //===================================================================
 void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera) {
@@ -723,7 +714,17 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
 
 void GcomController::on_fetcherPathButton_clicked()
 {
-    fetcherBrowseDir();
+    fetcherBrowseDir(SAVE_IMAGE);
+}
+
+void GcomController::on_imageScriptPathButton_clicked()
+{
+    fetcherBrowseDir(IMAGE_SCRIPT);
+}
+
+void GcomController::on_outputPathButton_clicked()
+{
+    fetcherBrowseDir(OUTPUT);
 }
 
 void GcomController::on_fetcherPathField_returnPressed()
@@ -736,7 +737,7 @@ void GcomController::on_fetcherPathField_textChanged()
     validatePath(ui->fetcherPathField->text());
 }
 
-void GcomController::fetcherBrowseDir() {
+void GcomController::fetcherBrowseDir(const int mode) {
     QString currentDir = QDir::currentPath();
 
     // Open file dialog, allows user to select a folder
@@ -750,9 +751,19 @@ void GcomController::fetcherBrowseDir() {
     // Check if directory has been changed
     if (!folderPath.length())
         return;
-
     // Update path field
-    ui->fetcherPathField->setText(folderPath);
+    switch(mode)
+    {
+        case SAVE_IMAGE:
+            ui->fetcherPathField->setText(folderPath);
+        break;
+        case IMAGE_SCRIPT:
+            ui->imageScriptField->setText(folderPath);
+        break;
+        case OUTPUT:
+            ui->outputField->setText(folderPath);
+        break;
+    }
 }
 
 void GcomController::validatePath(QString path) {
