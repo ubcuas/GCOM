@@ -47,7 +47,13 @@ QList<InteropMission::Waypoint> TestCollisionAvoidance::getMockWaypointsOrdered(
     };
 
     for (int i = 0; i < 8; i++) {
-        InteropMission::Waypoint tempPoint {100, waypoints[i][1], waypoints[i][0], i+1};
+        InteropMission::Waypoint tempPoint {
+            100,
+            waypoints[i][1],
+            waypoints[i][0],
+            i+1,
+            MissionPlannerCommand::WAYPOINT
+        };
         missionWaypoints.push_back(tempPoint);
     }
     return missionWaypoints;

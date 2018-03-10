@@ -46,16 +46,16 @@ void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> wa
         stream << QGC_VERISON << endl;
         stream << "0	1	0	0	0	0	0	0	0	0	0	1" << endl;
         for (int waypointIndex = 0; waypointIndex < waypoints.length(); ++waypointIndex) {
-            stream << this->generateMissionPlannerCommand(waypoints[waypointIndex]) << endl;
+            stream << this->generateMissionPlannerPlan(waypoints[waypointIndex]) << endl;
         }
     }
 }
 
-QString CollisionAvoidance::generateMissionPlannerCommand(InteropMission::Waypoint waypoint) {
+QString CollisionAvoidance::generateMissionPlannerPlan(InteropMission::Waypoint waypoint) {
     return QString::number(waypoint.order) + "\t"
             "0" + "\t" + // current wp (true/false)
             "3" + "\t" + // coord frame
-            QString::number(MissionPlannerCommand::WAYPOINT) + "\t" + // command
+            QString::number(waypoint.command) + "\t" + // command
             "0" + "\t" + // param1
             "0" + "\t" + // param2
             "0" + "\t" + // param3
