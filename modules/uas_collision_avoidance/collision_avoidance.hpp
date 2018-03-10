@@ -13,7 +13,7 @@ public:
     void generateWaypointFile(QList<InteropMission::Waypoint> waypoints, QString fileNameTag);
 
 private:
-    QString generateMissionPlannerPlan(InteropMission::Waypoint waypoint);
+    QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);
 
     float longitudeToX(float);
     float latitudeToY(float);
