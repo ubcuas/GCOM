@@ -2,6 +2,7 @@
 #define INTEROP_MISSION_HPP
 
 #include <QList>
+#include "modules/uas_collision_avoidance/mission_planner_command.hpp"
 
 class InteropMission
 {
@@ -23,6 +24,7 @@ public:
         double latitude;
         double longitude;
         int order;
+        MissionPlannerCommand command;
     };
 
     struct BoundaryPoint

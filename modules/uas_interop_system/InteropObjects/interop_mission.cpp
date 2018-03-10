@@ -1,4 +1,5 @@
 #include "interop_mission.hpp"
+#include "../../uas_collision_avoidance/collision_avoidance.hpp"
 
 InteropMission::InteropMission() {
     //do nothing

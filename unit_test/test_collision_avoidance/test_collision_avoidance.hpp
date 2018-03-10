@@ -9,8 +9,8 @@
 #include <QtTest>
 
 // GCOM Includes
-#include "test_collision_avoidance.hpp";
-#include "modules/uas_collision_avoidance/collision_avoidance.hpp";
+#include "test_collision_avoidance.hpp"
+#include "modules/uas_collision_avoidance/collision_avoidance.hpp"
 
 class TestCollisionAvoidance : public QObject
 {

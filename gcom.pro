@@ -77,7 +77,8 @@ HEADERS  += \
     modules/uas_interop_system/interop.hpp \
     modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
     modules/uas_interop_system/interop_json_interpreter.hpp \
-    modules/uas_collision_avoidance/collision_avoidance.hpp
+    modules/uas_collision_avoidance/collision_avoidance.hpp \
+    modules/uas_collision_avoidance/mission_planner_command.hpp
 
 FORMS += \
     gcomcontroller.ui

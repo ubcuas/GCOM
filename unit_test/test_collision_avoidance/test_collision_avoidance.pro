@@ -21,6 +21,7 @@ DEFINES += SRCDIR=\\\"$$PWD/\\\"
 HEADERS += \
         test_collision_avoidance.hpp \
         ../../modules/uas_collision_avoidance/collision_avoidance.hpp \
+        ../../modules/uas_collision_avoidance/mission_planner_command.hpp \
         ../../modules/uas_interop_system/InteropObjects/stationary_obstacle.hpp \
         ../../modules/uas_interop_system/InteropObjects/interop_mission.hpp \
 

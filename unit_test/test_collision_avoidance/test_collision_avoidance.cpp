@@ -6,8 +6,8 @@
 #include <QtTest>
 
 // GCOM Includes
-#include "test_collision_avoidance.hpp";
-#include "../../modules/uas_interop_system/InteropObjects/interop_mission.hpp";
+#include "test_collision_avoidance.hpp"
+#include "modules/uas_interop_system/InteropObjects/interop_mission.hpp"
 
 QTEST_MAIN(TestCollisionAvoidance)
 

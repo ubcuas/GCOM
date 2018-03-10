@@ -8,45 +8,10 @@
 
 // GCOM Includes
 #include "collision_avoidance.hpp"
-#include "modules/uas_interop_system/InteropObjects/stationary_obstacle.hpp"
-#include "modules/uas_interop_system/InteropObjects/interop_mission.hpp"
-#include "modules/uas_collision_avoidance/collision_avoidance.hpp";
+#include "mission_planner_command.hpp"
 
 // Strings
 const QString QGC_VERISON = "QGC WPL 110";
-
-// commands
-enum MissionPlannerCommand {
-    WAYPOINT = 16,
-    SPLINE_WAYPOINT = 82,
-    LOITER_TURNS = 18,
-    LOITER_TIME = 19,
-    LOITER_UNLIM = 17,
-    RETURN_TO_LAUNCH = 20,
-    LAND = 21,
-    TAKEOFF = 22,
-    DELAY = 93,
-    GUIDED_ENABLED = 92,
-    PAYLOAD_PLACE = 94,
-    DO_GUIDED_LIMITS = 222,
-    DO_SET_ROI = 201,
-    CONDITION_DELAY = 112,
-    CONDITION_CHANGE_ALT = 113,
-    CONDITION_DISTANCE = 114,
-    CONDITION_YAW = 115,
-    DO_JUMP = 177,
-    DO_CHANGE_SPEED = 178,
-    DO_GRIPPER = 211,
-    DO_PARACHUTE = 208,
-    DO_SET_CAM_TRIGG_DIST = 206,
-    DO_SET_RELAY = 181,
-    DO_REPEAT_RELAY = 182,
-    DO_SET_SERVO = 183,
-    DO_REPEAT_SERVO = 184,
-    DO_DIGICAM_CONFIGURE = 202,
-    DO_DIGICAM_CONTROL = 203,
-    DO_MOUNT_CONTROL = 205
-};
 
 //===================================================================
 // Constructor / Deconstructor
@@ -90,7 +55,7 @@ QString CollisionAvoidance::generateMissionPlannerCommand(InteropMission::Waypoi
     return QString::number(waypoint.order) + "\t"
             "0" + "\t" + // current wp (true/false)
             "3" + "\t" + // coord frame
-            "16" + "\t" + // command
+            QString::number(MissionPlannerCommand::WAYPOINT) + "\t" + // command
             "0" + "\t" + // param1
             "0" + "\t" + // param2
             "0" + "\t" + // param3
@@ -126,17 +91,3 @@ double distanceBetweenTwoPoints(double Ax, double Ay, double Bx, double By) {
 
 // def is_between(a,c,b):
 //    return distance(a,c) + distance(c,b) == distance(a,b)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
