@@ -78,7 +78,15 @@ private slots:
     // Image Fetcher Slots
     void on_fetcherPathField_returnPressed();
 
+    void on_imageScriptField_returnPressed();
+
+    void on_outputField_returnPressed();
+
     void on_fetcherPathField_textChanged();
+
+    void on_imageScriptField_textChanged();
+
+    void on_outputField_textChanged();
 
     void on_fetcherPathButton_clicked();
 
@@ -144,7 +152,7 @@ private:
      *          enable it
      * \param path, path to validate
      */
-    void validatePath(QString path);
+    void validatePath(QString path, const int mode);
 
     // Utility Methods
     /*!

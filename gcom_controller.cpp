@@ -758,9 +758,28 @@ void GcomController::on_fetcherPathField_returnPressed()
     ui->fetcherPathField->clearFocus();
 }
 
+void GcomController::on_imageScriptField_returnPressed()
+{
+    ui->imageScriptField->clearFocus();
+}
+
+void GcomController::on_outputField_returnPressed()
+{
+    ui->outputField->clearFocus();
+}
+
 void GcomController::on_fetcherPathField_textChanged()
 {
-    validatePath(ui->fetcherPathField->text());
+    validatePath(ui->fetcherPathField->text(), SAVE_IMAGE);
+}
+void GcomController::on_imageScriptField_textChanged()
+{
+    validatePath(ui->imageScriptField->text(), IMAGE_SCRIPT);
+}
+
+void GcomController::on_outputField_textChanged()
+{
+    validatePath(ui->outputField->text(), OUTPUT);
 }
 
 void GcomController::fetcherBrowseDir(const int mode) {
@@ -792,24 +811,55 @@ void GcomController::fetcherBrowseDir(const int mode) {
     }
 }
 
-void GcomController::validatePath(QString path) {
+void GcomController::validatePath(QString path, const int mode) {
     // If the path is invalid or is empty, show error message and
     // disable the start image transfer button
     // If the path is valid and the error message is showing,
     // hide the error message
     if(!PATH_REGEX.exactMatch(path) || path.length() == 0)
     {
-        ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-        ui->fetcherPathInvalidLabel->show();
-        ui->fetcherImageTransferButton->setEnabled(false);
+        switch(mode)
+        {
+            case SAVE_IMAGE:
+                ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+                ui->fetcherPathInvalidLabel->show();
+                ui->fetcherImageTransferButton->setEnabled(false);
+            break;
+            case IMAGE_SCRIPT:
+                ui->fetcherPathInvalidLabel_2->setText(FETCHER_INVALID_PATH_LABEL);
+                ui->fetcherPathInvalidLabel_2->show();
+                ui->fetcherImageTransferButton->setEnabled(false);
+            break;
+            case OUTPUT:
+                ui->fetcherPathInvalidLabel_3->setText(FETCHER_INVALID_PATH_LABEL);
+                ui->fetcherPathInvalidLabel_3->show();
+                ui->fetcherImageTransferButton->setEnabled(false);
+            break;
+        }
     }
-    else if (!ui->fetcherPathInvalidLabel->isHidden())
+    else
     {
-        ui->fetcherPathInvalidLabel->hide();
+        switch(mode)
+        {
+            case SAVE_IMAGE:
+                if(!ui->fetcherPathInvalidLabel->isHidden())
+                ui->fetcherPathInvalidLabel->hide();
+            break;
+            case IMAGE_SCRIPT:
+                if(!ui->fetcherPathInvalidLabel_2->isHidden())
+                ui->fetcherPathInvalidLabel_2->hide();
+            break;
+            case OUTPUT:
+                if(!ui->fetcherPathInvalidLabel_3->isHidden())
+                ui->fetcherPathInvalidLabel_3->hide();
+            break;
+        }
     }
 
     if (ui->fetcherImageTransferButton->isEnabled() ||
-        !ui->fetcherPathInvalidLabel->isHidden())
+        !ui->fetcherPathInvalidLabel->isHidden() ||
+        !ui->fetcherPathInvalidLabel_2->isHidden() ||
+        !ui->fetcherPathInvalidLabel_3->isHidden())
         return;
 
     // If the start image transfer button is disabled and
