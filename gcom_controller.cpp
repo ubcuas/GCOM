@@ -160,7 +160,7 @@ GcomController::GcomController(QWidget *parent) :
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
-    enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 
     ui->startTrackButton->setEnabled(false);
     ui->antennaTrackerCalibrateIMUButton->setEnabled(false);
@@ -736,6 +736,32 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
 
     ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
     ui->fetcherPathInvalidLabel->hide();
+
+
+    ui->imageScriptField->setText(currentDir);
+
+    ui->imageScriptField->setValidator(new QRegExpValidator(PATH_REGEX));
+
+    // Prevent layout from changing when labels are hidden
+    retainSize = ui->fetcherPathInvalidLabel_2->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPathInvalidLabel_2->setSizePolicy(retainSize);
+
+    ui->fetcherPathInvalidLabel_2->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathInvalidLabel_2->hide();
+
+
+    ui->outputField->setText(currentDir);
+
+    ui->outputField->setValidator(new QRegExpValidator(PATH_REGEX));
+
+    // Prevent layout from changing when labels are hidden
+    retainSize = ui->fetcherPathInvalidLabel_3->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPathInvalidLabel_3->setSizePolicy(retainSize);
+
+    ui->fetcherPathInvalidLabel_3->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathInvalidLabel_3->hide();
 }
 
 void GcomController::on_fetcherPathButton_clicked()
