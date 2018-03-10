@@ -77,30 +77,22 @@ void DCNC::cancelConnection()
     if (serverStatus == DCNCStatus::CONNECTED)
         serverStatus = DCNCStatus::SEARCHING;
 
-    if(clientConnection != nullptr)
-    {
-        disconnect(clientConnection, SIGNAL(readyRead()),
-                   this, SLOT(handleClientData()));
-        disconnect(clientConnection, SIGNAL(disconnected()),
-                   this, SLOT(handleClientDisconnected()));
+    if (clientConnection == nullptr)
+        return;
 
-        // Closes the I/O device for the socket and calls disconnectFromHost() to
-        // close the socket's connection.
-        clientConnection->close();
-        clientConnection->deleteLater();
-        clientConnection = nullptr;
-        emit droppedConnection();
+    disconnect(clientConnection, SIGNAL(readyRead()),
+               this, SLOT(handleClientData()));
+    disconnect(clientConnection, SIGNAL(disconnected()),
+               this, SLOT(handleClientDisconnected()));
 
-        // Restart listening for connections
-        if (!server->isListening()) {
-            bool listenStatus = server->listen(QHostAddress(this->address), this->port);
+    // Closes the I/O device for the socket and calls disconnectFromHost() to
+    // close the socket's connection.
+    clientConnection->close();
+    clientConnection->deleteLater();
+    clientConnection = nullptr;
+    emit droppedConnection();
 
-            if (!listenStatus)
-                serverStatus = DCNCStatus::OFFLINE;
-        }
-    }
-
-
+    server->resumeAccepting();
 }
 
 DCNC::DCNCStatus DCNC::status()
@@ -127,8 +119,8 @@ void DCNC::handleClientConection()
     // Update the DCNC's state and notify listners
     serverStatus = DCNCStatus::CONNECTED;
 
-    // Stop listening for incoming connections
-    server->close();
+    // Pause listening for incoming connections
+    server->pauseAccepting();
 
     // Send system info request and check that the message was successfully sent
     RequestMessage request(UASMessage::MessageID::DATA_SYSTEM_INFO);
@@ -278,19 +270,27 @@ void DCNC::handleResponse(CommandMessage::Commands command,
 {
     switch(command)
     {
-        // if reset then ask for the info messgae again
         case CommandMessage::Commands::SYSTEM_RESET:
         {
-            // simply drop the connection for a reset doesn't depend on the reset
-            emit droppedConnection();
+            emit reestablishedConnection(CommandMessage::Commands::SYSTEM_RESET, responses);
 
+            // Request capabilities again
+            RequestMessage requestCapabilities(UASMessage::MessageID::DATA_CAPABILITIES);
+            messageFramer.frameMessage(requestCapabilities);
+            connectionDataStream << messageFramer;
         }
         break;
-        // return nullptr if resume succeed
+
         case CommandMessage::Commands::SYSTEM_RESUME:
         {
-            if (responses != ResponseMessage::ResponseCodes::NO_ERROR)
-                 emit droppedConnection();
+            emit reestablishedConnection(CommandMessage::Commands::SYSTEM_RESUME, responses);
+
+            if (responses == ResponseMessage::ResponseCodes::NO_ERROR)
+                return;
+
+            // If there is an error, cancel the connection
+            serverStatus = DCNCStatus::OFFLINE;
+            cancelConnection();
         }
         break;
 
@@ -316,8 +316,3 @@ UASMessage* DCNC::handleInfo(std::string systemId, bool dropped, bool autoResume
         return new RequestMessage(UASMessage::MessageID::DATA_CAPABILITIES);
     }
 }
-
-
-
-
-

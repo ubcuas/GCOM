@@ -113,6 +113,8 @@ signals:
     // DCNC Control Signals
     void receivedConnection();
     void droppedConnection();
+    void reestablishedConnection(CommandMessage::Commands command,
+                                 ResponseMessage::ResponseCodes response);
     // Data Signals
     void receivedImageUntaggedData(std::shared_ptr<ImageUntaggedMessage> imageUntaggedMessage);
     void receivedImageTaggedData(std::shared_ptr<ImageTaggedMessage> imageTaggedMessage);

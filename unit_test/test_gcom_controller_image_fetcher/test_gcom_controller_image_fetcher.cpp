@@ -35,8 +35,8 @@ const QString FETCHER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font
 const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path </font>");
 const QString FETCHER_NONREAL_PATH_LABEL("<font color='#D52D2D'> *Path does not exist</font>");
 
-const QString IMAGE_TRANSER_START_TEXT("Start Image Transfer");
-const QString IMAGE_TRANSER_STOP_TEXT("Stop Image Transfer");
+const QString IMAGE_TRANSFER_START_TEXT("Start Image Transfer");
+const QString IMAGE_TRANSFER_STOP_TEXT("Stop Image Transfer");
 
 const int FETCHER_STATUS_UNAVAILABLE = 0;
 const int FETCHER_STATUS_READY = 1;
@@ -131,6 +131,8 @@ const bool HIDDEN = true;
 const bool ENABLED = true;
 const bool DISABLED = false;
 
+const bool IMAGE_TRANSFERRING = true;
+
 QTEST_MAIN(TestGcomControllerImageFetcher)
 
 void TestGcomControllerImageFetcher::initTestCase()
@@ -199,23 +201,20 @@ void TestGcomControllerImageFetcher::handleClientMessage(std::shared_ptr<UASMess
     }
 }
 
-void TestGcomControllerImageFetcher::checkDCNCInitialStatus()
+void TestGcomControllerImageFetcher::checkDCNCStatus(QString statusField,
+                                                     QString connectionStatusField,
+                                                     bool tabEnabled)
 {
-    // Verify status fields are disconnected, fetcher tab is disabled, no capabilities
-    QCOMPARE(gcom->ui->dcncStatusField->text(), DISCONNECT_LABEL);
-    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), DISCONNECT_LABEL);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
-    QVERIFY(!gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER));
+    QCOMPARE(gcom->ui->dcncStatusField->text(), statusField);
+    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), connectionStatusField);
+    QCOMPARE(gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER), tabEnabled);
 }
 
 void TestGcomControllerImageFetcher::startServer()
 {
     // Verify that the only change from initial status is that dcnc is now searching
     gcom->on_dcncConnectionButton_clicked();
-    QCOMPARE(gcom->ui->dcncStatusField->text(), SEARCHING_LABEL);
-    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), DISCONNECT_LABEL);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
-    QVERIFY(!gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER));
+    checkDCNCStatus(SEARCHING_LABEL, DISCONNECT_LABEL, DISABLED);
 }
 
 void TestGcomControllerImageFetcher::stopServer()
@@ -223,7 +222,7 @@ void TestGcomControllerImageFetcher::stopServer()
     int waitCounter = 0;
 
     gcom->on_dcncConnectionButton_clicked();
-    checkDCNCInitialStatus();
+    checkDCNCStatus(DISCONNECT_LABEL, DISCONNECT_LABEL, DISABLED);
 
     // wait for socket to change status
     while (socket->state() != QTcpSocket::UnconnectedState && waitCounter++ < WAIT_TIMEOUT)
@@ -247,15 +246,7 @@ void TestGcomControllerImageFetcher::connectSocket()
     sendCapabilities(CapabilitiesMessage::Capabilities::CAMERA_TAGGED, 1);
 
     // Verify status fields are connected, fetcher tab is enabled, capabilities are displayed
-    QCOMPARE(gcom->ui->dcncStatusField->text(), CONNECTED_LABEL);
-    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), CONNECTED_LABEL);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->item(0)->text(), CAMERA_TAGGED_TEXT);
-    QVERIFY(gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER));
-
-    // Verify all fetcher fields are in default state
-    QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_READY);
-    QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_READY_LABEL);
-    QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_START_TEXT);
+    checkDCNCStatus(CONNECTED_LABEL, CONNECTED_LABEL, ENABLED);
 }
 
 void TestGcomControllerImageFetcher::disconnectSocket()
@@ -269,10 +260,7 @@ void TestGcomControllerImageFetcher::disconnectSocket()
     while (gcom->ui->dcncStatusField->text() != SEARCHING_LABEL && waitCounter++ < WAIT_TIMEOUT)
         QTest::qWait(1);
 
-    QCOMPARE(gcom->ui->dcncStatusField->text(), SEARCHING_LABEL);
-    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), DISCONNECT_LABEL);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
-    QVERIFY(!gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER));
+    checkDCNCStatus(SEARCHING_LABEL, DISCONNECT_LABEL, DISABLED);
 }
 
 void TestGcomControllerImageFetcher::connectSocketNoCapabilities()
@@ -286,11 +274,6 @@ void TestGcomControllerImageFetcher::connectSocketNoCapabilities()
     // Wait for connection to be received on dcnc end
     QVERIFY(receivedConnectionSpy.wait());
     QCOMPARE(receivedConnectionSpy.count(), 1);
-
-    QCOMPARE(gcom->ui->dcncStatusField->text(), CONNECTED_LABEL);
-    QCOMPARE(gcom->ui->dcncConnectionStatusField->text(), CONNECTED_LABEL);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
-    QVERIFY(!gcom->ui->tabMain->isTabEnabled(TAB_IMAGE_FETCHER));
 }
 
 void TestGcomControllerImageFetcher::sendCapabilities(CapabilitiesMessage::Capabilities
@@ -312,7 +295,8 @@ void TestGcomControllerImageFetcher::sendCapabilities(CapabilitiesMessage::Capab
 
 void TestGcomControllerImageFetcher::testConnection()
 {
-    checkDCNCInitialStatus();
+    checkDCNCStatus(DISCONNECT_LABEL, DISCONNECT_LABEL, DISABLED);
+    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
 
     // Test start and stop searching without socket connecting
     startServer();
@@ -321,34 +305,41 @@ void TestGcomControllerImageFetcher::testConnection()
     // Test start and stop searching with socket connecting, without capabilities sent
     startServer();
     connectSocketNoCapabilities();
+    QCOMPARE(gcom->ui->dcncCapabilitiesField->count(), 0);
+    checkDCNCStatus(CONNECTED_LABEL, CONNECTED_LABEL, DISABLED);
     stopServer();
 
     // Test start and stop searching with socket connecting, capabilities sent
     startServer();
     connectSocket();
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
     stopServer();
 
     // Test connection being dropped on socket side, then reconnected
     startServer();
     connectSocket();
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
     disconnectSocket();
     connectSocket();
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
 
     // Ensure that more than one capability can be displayed
     sendCapabilities(CapabilitiesMessage::Capabilities::CAMERA_TAGGED << 8 |
-                     CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED, 3);
-    // First capability wass sent in the connectSocket function
+                     CapabilitiesMessage::Capabilities::CAMERA_TAGGED, 2);
     QCOMPARE(gcom->ui->dcncCapabilitiesField->item(0)->text(), CAMERA_TAGGED_TEXT);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->item(1)->text(), CAMERA_UNTAGGED_TEXT);
-    QCOMPARE(gcom->ui->dcncCapabilitiesField->item(2)->text(), CAMERA_TAGGED_TEXT);
+    QCOMPARE(gcom->ui->dcncCapabilitiesField->item(1)->text(), CAMERA_TAGGED_TEXT);
     disconnectSocket();
+
     stopServer();
 
     // Test timer timeout
     startServer();
     // Timeout timer
     gcom->dcncSearchTimeout();
-    checkDCNCInitialStatus();
+    checkDCNCStatus(DISCONNECT_LABEL, DISCONNECT_LABEL, DISABLED);
 }
 
 void TestGcomControllerImageFetcher::testRegexValidPath_data()
@@ -391,19 +382,39 @@ void TestGcomControllerImageFetcher::testRegexInvalidPath()
              FETCHER_INVALID_PATH_LABEL);
 }
 
-void TestGcomControllerImageFetcher::checkFetcherStatus(bool transferButtonEnabled,
+void TestGcomControllerImageFetcher::checkFetcherStatus(int fetcherStatus,
+                                                        QString fetcherStatusField,
+                                                        QString imageTransferButtonText,
+                                                        bool transferButtonEnabled,
                                                         bool invalidLabelHidden,
+                                                        bool pathFieldEnabled,
+                                                        bool pathButtonEnabled,
                                                         QString invalidLabel)
 {
-    QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_READY);
-    QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_READY_LABEL);
-    QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_START_TEXT);
-    QVERIFY(gcom->ui->fetcherImageTransferButton->isEnabled() == transferButtonEnabled);
-    QVERIFY(gcom->ui->fetcherPathInvalidLabel->isHidden() == invalidLabelHidden);
-    QVERIFY(gcom->ui->fetcherPathField->isEnabled());
-    QVERIFY(gcom->ui->fetcherPathButton->isEnabled());
+    QCOMPARE(gcom->fetcherStatus, fetcherStatus);
+    QCOMPARE(gcom->ui->fetcherStatusField->text(), fetcherStatusField);
+    QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), imageTransferButtonText);
+    QCOMPARE(gcom->ui->fetcherImageTransferButton->isEnabled(), transferButtonEnabled);
+    QCOMPARE(gcom->ui->fetcherPathInvalidLabel->isHidden(), invalidLabelHidden);
+    QCOMPARE(gcom->ui->fetcherPathField->isEnabled(), pathFieldEnabled);
+    QCOMPARE(gcom->ui->fetcherPathButton->isEnabled(), pathButtonEnabled);
+
     if (!invalidLabelHidden)
         QCOMPARE(gcom->ui->fetcherPathInvalidLabel->text(), invalidLabel);
+}
+
+void TestGcomControllerImageFetcher::sendResponse(CommandMessage::Commands command)
+{
+    ResponseMessage response(command,
+                             ResponseMessage::ResponseCodes::NO_ERROR);
+    messageFramer.frameMessage(response);
+    connectionDataStream << messageFramer;
+
+    // Wait for status to change
+    int waitCounter = 0;
+    while (!gcom->ui->tabMain->widget(TAB_IMAGE_FETCHER)->isEnabled()
+           && waitCounter++ < WAIT_TIMEOUT)
+        QTest::qWait(1);
 }
 
 void TestGcomControllerImageFetcher::startImageTransferSuccess()
@@ -415,29 +426,19 @@ void TestGcomControllerImageFetcher::startImageTransferSuccess()
     QVERIFY(receivedCommandSpy.isValid());
 
     gcom->on_fetcherImageTransferButton_clicked();
-    QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_TRANSFERRING);
-    QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_TRANSFER_LABEL);
-    QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_STOP_TEXT);
-    QVERIFY(!gcom->ui->fetcherPathField->isEnabled());
-    QVERIFY(!gcom->ui->fetcherPathButton->isEnabled());
+    checkFetcherStatus(FETCHER_STATUS_TRANSFERRING, FETCHER_TRANSFER_LABEL,
+                       IMAGE_TRANSFER_STOP_TEXT, ENABLED, HIDDEN, DISABLED, DISABLED,
+                       FETCHER_INVALID_PATH_LABEL);
 
     QVERIFY(receivedCommandSpy.wait());
     QCOMPARE(receivedCommandSpy.count(), 1);
 }
 
-void TestGcomControllerImageFetcher::startImageTransferFail(bool invalidLabelHidden)
+void TestGcomControllerImageFetcher::startImageTransferFail()
 {
-    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
-            this, SLOT(compareStartImageTransfer(CommandMessage::Commands)));
-
-    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands)));
-    QVERIFY(receivedCommandSpy.isValid());
-
     gcom->on_fetcherImageTransferButton_clicked();
-    checkFetcherStatus(DISABLED, invalidLabelHidden, FETCHER_NONREAL_PATH_LABEL);
-
-    QVERIFY(receivedCommandSpy.wait(500));
-    QCOMPARE(receivedCommandSpy.count(), 0);
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       DISABLED, VISIBLE, ENABLED, ENABLED, FETCHER_NONREAL_PATH_LABEL);
 }
 
 void TestGcomControllerImageFetcher::stopImageTransfer()
@@ -449,11 +450,8 @@ void TestGcomControllerImageFetcher::stopImageTransfer()
     QVERIFY(receivedCommandSpy.isValid());
 
     gcom->on_fetcherImageTransferButton_clicked();
-    QCOMPARE(gcom->fetcherStatus, FETCHER_STATUS_READY);
-    QCOMPARE(gcom->ui->fetcherStatusField->text(), FETCHER_READY_LABEL);
-    QCOMPARE(gcom->ui->fetcherImageTransferButton->text(), IMAGE_TRANSER_START_TEXT);
-    QVERIFY(gcom->ui->fetcherPathField->isEnabled());
-    QVERIFY(gcom->ui->fetcherPathButton->isEnabled());
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
 
     QVERIFY(receivedCommandSpy.wait());
     QCOMPARE(receivedCommandSpy.count(), 1);
@@ -485,30 +483,46 @@ void TestGcomControllerImageFetcher::testImageTransfer()
     // Setup connection and check for initial statuses
     startServer();
     connectSocket();
-    checkFetcherStatus(ENABLED, HIDDEN, FETCHER_INVALID_PATH_LABEL);
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
 
     // Set invalid path and check that user is unable to start image transfer
     gcom->ui->fetcherPathField->setText(INVALID_PATH_TEST[0]);
-    checkFetcherStatus(DISABLED, VISIBLE, FETCHER_INVALID_PATH_LABEL);
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       DISABLED, VISIBLE, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
+
 
     // Set valid path and check that user is able to start image transfer
     gcom->ui->fetcherPathField->setText(VALID_PATH_TEST[0]);
-    checkFetcherStatus(ENABLED, HIDDEN, FETCHER_INVALID_PATH_LABEL);
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
 
     startImageTransferSuccess();
 
     // Drop connection, restart, and check statuses
     disconnectSocket();
-    connectSocket();
 
-    // Restart image transfer
-    startImageTransferSuccess();
+    // In a system resume, images should continue transferring once connection is reestablished
+    connectSocketNoCapabilities();
+    sendResponse(CommandMessage::Commands::SYSTEM_RESUME);
+    checkFetcherStatus(FETCHER_STATUS_TRANSFERRING, FETCHER_TRANSFER_LABEL, IMAGE_TRANSFER_STOP_TEXT,
+                       ENABLED, HIDDEN, DISABLED, DISABLED, FETCHER_INVALID_PATH_LABEL);
 
     stopImageTransfer();
 
-//    fetcherSetPath(NONREAL_PATH);
-//    startImageTransferFail(VISIBLE);
+    startImageTransferSuccess();
+    disconnectSocket();
 
-//    fetcherSetPath(REAL_PATH);
-//    startImageTransferSuccess();
+    // In a system reset, fetcher should be reset to initial state
+    connectSocket();
+    sendResponse(CommandMessage::Commands::SYSTEM_RESET);
+    checkFetcherStatus(FETCHER_STATUS_READY, FETCHER_READY_LABEL, IMAGE_TRANSFER_START_TEXT,
+                       ENABLED, HIDDEN, ENABLED, ENABLED, FETCHER_INVALID_PATH_LABEL);
+
+    // If paths are valid but do not exist, image transfer start should fail
+    gcom->ui->fetcherPathField->setText(NONREAL_PATH);
+    startImageTransferFail();
+
+    gcom->ui->fetcherPathField->setText(REAL_PATH);
+    startImageTransferSuccess();
 }

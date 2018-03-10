@@ -14,7 +14,6 @@ TEMPLATE = app
 
 INCLUDEPATH += ../../ \
                ../../Mavlink \
-               C:/GCOM_builds/
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
@@ -75,3 +74,4 @@ SOURCES += \
         ../../modules/uas_interop_system/interop_json_interpreter.cpp \
         ../../modules/uas_utility/uas_utility.cpp \
 
+FORMS += ../../gcomcontroller.ui

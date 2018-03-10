@@ -43,13 +43,17 @@ public slots:
     void compareStopImageTransfer(CommandMessage::Commands command);
 
 private:
-    void checkDCNCInitialStatus();
+    void checkDCNCStatus(QString statusField,
+                         QString connectionStatusField,
+                         bool tabEnabled);
     void startServer();
     void stopServer();
     void connectSocket();
     void disconnectSocket();
     void connectSocketNoCapabilities();
-    void checkFetcherStatus(bool transferButtonEnabled, bool invalidLabelHidden,
+    void checkFetcherStatus(int fetcherStatus, QString fetcherStatusField,
+                            QString imageTransferButtonText, bool transferButtonEnabled,
+                            bool invalidLabelHidden, bool pathFieldEnabled, bool pathButtonEnabled,
                             QString invalidLabel);
     /*!
      * \brief Sends capabilities to dcnc
@@ -57,8 +61,9 @@ private:
      * \param num, number of capabilities sent
      */
     void sendCapabilities(CapabilitiesMessage::Capabilities capabilities, int num);
+    void sendResponse(CommandMessage::Commands command);
     void startImageTransferSuccess();
-    void startImageTransferFail(bool invalidLabelHidden);
+    void startImageTransferFail();
     void stopImageTransfer();
 
     GcomController* gcom;
