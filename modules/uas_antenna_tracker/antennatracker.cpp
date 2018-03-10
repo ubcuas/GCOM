@@ -61,11 +61,6 @@ const QString zaberSetVerticalMoveSpeed = "/1 1 set maxspeed 120000\n";
 //===================================================================
 AntennaTracker::AntennaTracker()
 {
-    // Default Values
-    arduinoSerial = nullptr;
-    zaberSerial = nullptr;
-    arduinoFramer = new UASMessageSerialFramer();
-
     // Reset the state varaibles
     antennaTrackerConnected = false;
     overrideGPSToggle = false;
@@ -89,21 +84,16 @@ AntennaTracker::AntennaTracker()
 AntennaTracker::~AntennaTracker()
 {
     //close serial connection to arduino if it's open
-    if(arduinoSerial != nullptr && arduinoSerial->isOpen())
+    if (arduinoSerial.isOpen())
     {
-        arduinoSerial->close();
-        delete arduinoSerial;
-        delete arduinoDataStream;
+        arduinoSerial.close();
     }
 
     //close serial connection to zaber if it's open
-    if(zaberSerial != nullptr && zaberSerial->isOpen())
+    if (zaberSerial.isOpen())
     {
-        zaberSerial->close();
-        delete zaberSerial;
+        zaberSerial.close();
     }
-
-    delete arduinoFramer;
 }
 
 bool AntennaTracker::setupArduino(QString port, QSerialPort::BaudRate baud) {
@@ -111,25 +101,22 @@ bool AntennaTracker::setupArduino(QString port, QSerialPort::BaudRate baud) {
     if (antennaTrackerConnected)
         stopTracking();
 
-    // Create the object if its not already initialized
-    if (arduinoSerial == nullptr)
-        arduinoSerial = new QSerialPort(port);
-
     // Close the port if its open
-    if (arduinoSerial->isOpen())
+    if (arduinoSerial.isOpen())
         disconnectArduino();
 
-    if(!arduinoSerial->open(QIODevice::ReadWrite))
+    if(!arduinoSerial.open(QIODevice::ReadWrite))
         return false;
 
     // Initialize arduino serial port
-    arduinoSerial->setBaudRate(baud);
-    arduinoSerial->setDataBits(QSerialPort::Data8);
-    arduinoSerial->setParity(QSerialPort::NoParity);
-    arduinoSerial->setStopBits(QSerialPort::OneStop);
-    arduinoSerial->setFlowControl(QSerialPort::NoFlowControl);
+    arduinoSerial.setPortName(port);
+    arduinoSerial.setBaudRate(baud);
+    arduinoSerial.setDataBits(QSerialPort::Data8);
+    arduinoSerial.setParity(QSerialPort::NoParity);
+    arduinoSerial.setStopBits(QSerialPort::OneStop);
+    arduinoSerial.setFlowControl(QSerialPort::NoFlowControl);
 
-    connect(arduinoSerial,
+    connect(&arduinoSerial,
             SIGNAL(errorOccurred(QSerialPort::SerialPortError)), this,
             SLOT(arduinoDisconnected(QSerialPort::SerialPortError)));
 
@@ -140,25 +127,21 @@ bool AntennaTracker::setupZaber(QString port, QSerialPort::BaudRate baud) {
     if (antennaTrackerConnected)
         stopTracking();
 
-    // Create the object if its not already initialized
-    if (zaberSerial == nullptr)
-        zaberSerial = new QSerialPort(port);
-
     // Close the port if its open
-    if (zaberSerial->isOpen())
+    if (zaberSerial.isOpen())
         disconnectZaber();
 
     // Initialize the zaber serial port
-    zaberSerial = new QSerialPort(port);
-    zaberSerial->setBaudRate(baud);
-    zaberSerial->setDataBits(QSerialPort::Data8);
-    zaberSerial->setParity(QSerialPort::NoParity);
-    zaberSerial->setStopBits(QSerialPort::OneStop);
-    zaberSerial->setFlowControl(QSerialPort::NoFlowControl);
-    if (!zaberSerial->open(QIODevice::ReadWrite))
+    zaberSerial.setPortName(port);
+    zaberSerial.setBaudRate(baud);
+    zaberSerial.setDataBits(QSerialPort::Data8);
+    zaberSerial.setParity(QSerialPort::NoParity);
+    zaberSerial.setStopBits(QSerialPort::OneStop);
+    zaberSerial.setFlowControl(QSerialPort::NoFlowControl);
+    if (!zaberSerial.open(QIODevice::ReadWrite))
         return false;
 
-    connect(zaberSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
+    connect(&zaberSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
             this, SLOT(zaberControllerDisconnected(QSerialPort::SerialPortError)));
 
     return true;
@@ -173,30 +156,24 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
         return AntennaTrackerConnectionState::RELAY_NOT_OPEN;
 
     // Double check that the conditions required for the connection is correct
-    if (arduinoSerial == nullptr)
-        return AntennaTrackerConnectionState::ARDUINO_UNINITIALIZED;
-
-    if (zaberSerial == nullptr)
-        return AntennaTrackerConnectionState::ZABER_UNITIALIZED;
-
-    if (!arduinoSerial->isOpen())
+    if (!arduinoSerial.isOpen())
         return AntennaTrackerConnectionState::ARDUINO_NOT_OPEN;
 
-    if (!zaberSerial->isOpen())
+    if (!zaberSerial.isOpen())
         return AntennaTrackerConnectionState::ZABER_NOT_OPEN;
 
     // Create the datastreams and framer
-    arduinoDataStream = new QDataStream(arduinoSerial);
+    arduinoDataStream.setDevice(&arduinoSerial);
 
     // if the GPS is not overrided retrieve the gps location from arduino
-    if (!overrideGPSToggle) {
-        if(!retrieveStationPos())
-            return AntennaTrackerConnectionState::FAILED;
+    if (!overrideGPSToggle && !retrieveStationPos())
+    {
+        return AntennaTrackerConnectionState::FAILED;
     }
 
     // Setup desired speed for Zaber vertical movement
-    zaberSerial->write(zaberSetVerticalMoveSpeed.toStdString().c_str());
-    zaberSerial->flush();
+    zaberSerial.write(zaberSetVerticalMoveSpeed.toStdString().c_str());
+    zaberSerial.flush();
 
     connect(relay,
             SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
@@ -234,43 +211,35 @@ void AntennaTracker::stopTracking()
 
 void AntennaTracker::disconnectArduino()
 {
-    if (arduinoSerial == nullptr)
-        return;
-
-    if (!arduinoSerial->isOpen())
+    if (!arduinoSerial.isOpen())
         return;
 
     if (antennaTrackerConnected)
         stopTracking();
 
-    disconnect(arduinoSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
+    disconnect(&arduinoSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
                this, SLOT(arduinoDisconnected(QSerialPort::SerialPortError)));
-    arduinoSerial->close();
+    arduinoSerial.close();
     emit antennaTrackerDeviceDisconnected(AntennaTrackerSerialDevice::ARDUINO);
 }
 
 void AntennaTracker::disconnectZaber()
 {
-    if (zaberSerial == nullptr)
-        return;
-
-    if (!zaberSerial->isOpen())
+    if (!zaberSerial.isOpen())
         return;
 
     if (antennaTrackerConnected)
         stopTracking();
 
-    disconnect(zaberSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
+    disconnect(&zaberSerial, SIGNAL(errorOccurred(QSerialPort::SerialPortError)),
                this, SLOT(zaberControllerDisconnected(QSerialPort::SerialPortError)));
-    zaberSerial->close();
+    zaberSerial.close();
     emit antennaTrackerDeviceDisconnected(AntennaTrackerSerialDevice::ZABER);
 }
 
 AntennaTracker::AntennaTrackerConnectionState AntennaTracker::getArduinoStatus() {
     // check arduino serial
-    if (arduinoSerial == nullptr)
-        return AntennaTrackerConnectionState::ARDUINO_UNINITIALIZED;
-    else if (!arduinoSerial->isOpen())
+    if (!arduinoSerial.isOpen())
         return AntennaTrackerConnectionState::ARDUINO_NOT_OPEN;
     else
         return AntennaTrackerConnectionState::SUCCESS;
@@ -278,9 +247,7 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::getArduinoStatus()
 
 AntennaTracker::AntennaTrackerConnectionState AntennaTracker::getZaberStatus() {
     // check zaber serial
-    if (zaberSerial == nullptr)
-        return AntennaTrackerConnectionState::ZABER_UNITIALIZED;
-    else if (!zaberSerial->isOpen())
+    if (!zaberSerial.isOpen())
         return AntennaTrackerConnectionState::ZABER_NOT_OPEN;
     else
         return AntennaTrackerConnectionState::SUCCESS;
@@ -309,33 +276,33 @@ void AntennaTracker::receiveHandler(std::shared_ptr<mavlink_global_position_int_
     qDebug() << "Mavlink signal consumed!" << endl;
 
     RequestMessage imuRequest(UASMessage::MessageID::DATA_IMU);
-    arduinoFramer->frameMessage(imuRequest);
-    (*arduinoDataStream) << (*arduinoFramer);
+    arduinoFramer.frameMessage(imuRequest);
+    arduinoDataStream << arduinoFramer;
 
     // Wait till we recieve data from the IMU
     while (true)
     {
-        arduinoDataStream->startTransaction();
-        (*arduinoDataStream) >> (*arduinoFramer);
-        if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
+        arduinoDataStream.startTransaction();
+        arduinoDataStream >> arduinoFramer;
+        if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
         {
             break;
         }
-        else if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
+        else if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
         {
-            arduinoDataStream->rollbackTransaction();
+            arduinoDataStream.rollbackTransaction();
         }
         else
         {
-            arduinoDataStream->commitTransaction();
+            arduinoDataStream.commitTransaction();
             return;
         }
-        arduinoSerial->waitForReadyRead(3000);
+        arduinoSerial.waitForReadyRead(3000);
     }
-    arduinoDataStream->commitTransaction();
+    arduinoDataStream.commitTransaction();
 
 
-    std::shared_ptr<UASMessage> imuMessage = arduinoFramer->generateMessage();
+    std::shared_ptr<UASMessage> imuMessage = arduinoFramer.generateMessage();
     if ((imuMessage == nullptr) || (imuMessage->type() != UASMessage::MessageID::DATA_IMU))
         return;
 
@@ -355,7 +322,7 @@ void AntennaTracker::receiveHandler(std::shared_ptr<mavlink_global_position_int_
 bool AntennaTracker::moveZaber(int16_t horizAngle, int16_t vertAngle)
 {
     // checks if serial connection is made
-    if (!zaberSerial->isOpen())
+    if (!zaberSerial.isOpen())
         return false;
 
     // converts user defined angles to microsteps
@@ -365,16 +332,16 @@ bool AntennaTracker::moveZaber(int16_t horizAngle, int16_t vertAngle)
     if(vertAngle != 0) {
         // move vertical command
         QString vertZaberCommand = QString(zaberMoveCommandTemplate).arg(1).arg(microStepsVert);
-        zaberSerial->write(vertZaberCommand.toStdString().c_str());
+        zaberSerial.write(vertZaberCommand.toStdString().c_str());
     }
     if(horizAngle != 0) {
         // move horizontal command
         QString horizZaberCommand = QString(zaberMoveCommandTemplate).arg(2).arg(microStepsHoriz);
-        zaberSerial->write(horizZaberCommand.toStdString().c_str());
+        zaberSerial.write(horizZaberCommand.toStdString().c_str());
     }
 
     if(vertAngle != 0 && horizAngle != 0)
-        zaberSerial->flush();
+        zaberSerial.flush();
 
     return true;
 }
@@ -383,34 +350,34 @@ bool AntennaTracker::retrieveStationPos()
 {
     // Retrieve the base's GPS Corrdinates
     RequestMessage gpsRequest = RequestMessage(UASMessage::MessageID::DATA_GPS);
-    arduinoFramer->frameMessage(gpsRequest);
-    (*arduinoDataStream) << (*arduinoFramer);
+    arduinoFramer.frameMessage(gpsRequest);
+    arduinoDataStream << arduinoFramer;
 
     // Verify the connection
-    if (!arduinoSerial->waitForReadyRead(3000))
+    if (!arduinoSerial.waitForReadyRead(3000))
         return false;
 
-    arduinoFramer->clearMessage();
+    arduinoFramer.clearMessage();
 
     // Attempt to read the GPS Message from the antenna tracker
     // Note: This is a bad busy loop! We are only allowed to do this because the drone will not be
     // in flight at this time!
     while (true)
     {
-        arduinoDataStream->startTransaction();
-        (*arduinoDataStream) >> (*arduinoFramer);
-        if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
+        arduinoDataStream.startTransaction();
+        arduinoDataStream >> arduinoFramer;
+        if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
             break;
-        else if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
-            arduinoDataStream->rollbackTransaction();
+        else if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
+            arduinoDataStream.rollbackTransaction();
         else
             return false;
-        arduinoSerial->waitForReadyRead(10);
+        arduinoSerial.waitForReadyRead(10);
     }
-    arduinoDataStream->commitTransaction();
+    arduinoDataStream.commitTransaction();
 
     // Process the GPS Coordinates of the base station!
-    std::shared_ptr<UASMessage> gpsMessage = arduinoFramer->generateMessage();
+    std::shared_ptr<UASMessage> gpsMessage = arduinoFramer.generateMessage();
     if ((gpsMessage == nullptr) || (gpsMessage->type() != UASMessage::MessageID::DATA_GPS))
         return false;
 
@@ -426,7 +393,7 @@ bool AntennaTracker::retrieveStationPos()
 bool AntennaTracker::setStationPos(float lon, float lat)
 {
     // check inputs in range
-    if((lat < -90 || lat > 90) || (lon < -180 || lat > 180))
+    if((lat < -90 || lat > 90) || (lon < -180 || lon > 180))
         return false;
 
     // check if the tracker is running
@@ -471,36 +438,36 @@ void AntennaTracker::setOverrideGPSToggle(bool toggled)
 bool AntennaTracker::levelVertical()
 {
     // Create the datastreams and framer
-    arduinoDataStream = new QDataStream(arduinoSerial);
+    arduinoDataStream.setDevice(&arduinoSerial);
 
     // Send request data request to arduino/IMU
     RequestMessage imuRequest(UASMessage::MessageID::DATA_IMU);
-    arduinoFramer->frameMessage(imuRequest);
-    (*arduinoDataStream) << (*arduinoFramer);
+    arduinoFramer.frameMessage(imuRequest);
+    arduinoDataStream << arduinoFramer;
 
     // Wait till we recieve data from the IMU
     while (true)
     {
-        arduinoDataStream->startTransaction();
-        (*arduinoDataStream) >> (*arduinoFramer);
-        if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
+        arduinoDataStream.startTransaction();
+        arduinoDataStream >> arduinoFramer;
+        if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::SUCCESS)
         {
             break;
         }
-        else if (arduinoFramer->status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
+        else if (arduinoFramer.status() == UASMessageSerialFramer::SerialFramerStatus::INCOMPLETE_MESSAGE)
         {
-            arduinoDataStream->rollbackTransaction();
+            arduinoDataStream.rollbackTransaction();
         }
         else
         {
-            arduinoDataStream->commitTransaction();
+            arduinoDataStream.commitTransaction();
             return false;
         }
-        arduinoSerial->waitForReadyRead(3000);
+        arduinoSerial.waitForReadyRead(3000);
     }
-    arduinoDataStream->commitTransaction();
+    arduinoDataStream.commitTransaction();
 
-    std::shared_ptr<UASMessage> imuMessage = arduinoFramer->generateMessage();
+    std::shared_ptr<UASMessage> imuMessage = arduinoFramer.generateMessage();
     if ((imuMessage == nullptr) || (imuMessage->type() != UASMessage::MessageID::DATA_IMU))
         return false;
 
@@ -524,7 +491,7 @@ bool AntennaTracker::levelVertical()
 bool AntennaTracker::calibrateIMU()
 {
     // checks if serial connection is made
-    if (!zaberSerial->isOpen()) {
+    if (!zaberSerial.isOpen()) {
         qDebug() << "zaber is not connected" << endl;
         return false;
     }
@@ -557,13 +524,13 @@ bool AntennaTracker::calibrateIMU()
         // checks for IDLE, and executes move command once found
         while(true) {
             // send check status command
-            zaberSerial->write(zaberCheckStatusCommand.toStdString().c_str());
-            zaberSerial->flush();
+            zaberSerial.write(zaberCheckStatusCommand.toStdString().c_str());
+            zaberSerial.flush();
 
             // check bytes written before reading
-            if(zaberSerial->waitForBytesWritten(500) && zaberSerial->waitForReadyRead(500)) {
+            if(zaberSerial.waitForBytesWritten(500) && zaberSerial.waitForReadyRead(500)) {
                 // read data
-                QByteArray datas = zaberSerial->readAll();
+                QByteArray datas = zaberSerial.readAll();
                 outputLine = datas; // convert to QString
 
                 // check for IDLE

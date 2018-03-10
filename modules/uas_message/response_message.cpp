@@ -25,8 +25,8 @@ ResponseMessage::ResponseMessage(CommandMessage::Commands command, ResponseCodes
 
 ResponseMessage::ResponseMessage(const std::vector<uint8_t> &serializedMessage)
 {
-    command = static_cast<CommandMessage::Commands>(serializedMessage[COMMAND_FILED_INDEX]);
-    response = static_cast<ResponseCodes>(serializedMessage[RESPONSE_FIELD_INDEX]);
+    this->command = static_cast<CommandMessage::Commands>(serializedMessage[COMMAND_FILED_INDEX]);
+    this->response = static_cast<ResponseCodes>(serializedMessage[RESPONSE_FIELD_INDEX]);
 }
 
 ResponseMessage::~ResponseMessage()

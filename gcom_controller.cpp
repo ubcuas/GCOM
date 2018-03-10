@@ -150,14 +150,16 @@ GcomController::GcomController(QWidget *parent) :
     connect(ui->dcncServerAutoResume, SIGNAL(clicked(bool)), dcnc, SLOT(changeAutoResume(bool)));
     resetDCNCGUI();
 
-    // Antenna Tracker Setup
-    tracker = new AntennaTracker();
-    ui->antennaTrackerTab->setDisabled(true);
+    // Image Fetcher Setup
     // Set fetcher to nullptr so it is only initialized once
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+
+    // Antenna Tracker Setup
+    tracker = new AntennaTracker();
+    ui->antennaTrackerTab->setDisabled(true);
 
     ui->startTrackButton->setEnabled(false);
     ui->antennaTrackerCalibrateIMUButton->setEnabled(false);
@@ -600,8 +602,6 @@ void GcomController::on_startTrackButton_clicked()
         // checks the tracking status
         if(status == AntennaTracker::AntennaTrackerConnectionState::SUCCESS)
             qDebug() << "both devices started";
-        else if(status == AntennaTracker::AntennaTrackerConnectionState::ARDUINO_UNINITIALIZED)
-            qDebug() << "arduino not initialized";
         else if(status == AntennaTracker::AntennaTrackerConnectionState::ARDUINO_NOT_OPEN)
             qDebug() << "arduino not open";
         else
