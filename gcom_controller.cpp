@@ -128,7 +128,7 @@ GcomController::GcomController(QWidget *parent) :
             SLOT(interopLoginHandler(Interop::RequestStatus)));
 
     connect(interop,
-            SIGNAL(getMissionResponse(Interop::RequestStatus, QList<InteropMission*>)),
+            SIGNAL(getMutiMissionResponse(Interop::RequestStatus, QList<InteropMission*>)),
             this,
             SLOT(interopGetMissionHandler(Interop::RequestStatus, QList<InteropMission*>)));
 }

@@ -72,28 +72,29 @@ InteropJsonInterpreter::ObstacleSet* InteropJsonInterpreter::parseObstacles(QJso
     return new InteropJsonInterpreter::ObstacleSet{movingObstList, stationaryObstList};
 }
 
-InteropOdlc* InteropJsonInterpreter::parseInteropOdlc(QJsonDocument json)
+InteropOdlc* InteropJsonInterpreter::parseSingleOdlc(QJsonDocument json)
 {
     QJsonObject jsonObj = json.object();
-    InteropOdlc* odlc = new InteropOdlc();
 
-    odlc->setId(jsonObj["id"].toInt());
-    odlc->setUser(jsonObj["user"].toInt());
-    odlc->setType(jsonObj["type"].toString());
-    odlc->setLatitude(jsonObj["latitude"].toDouble());
-    odlc->setLongitude(jsonObj["longitude"].toDouble());
-    odlc->setOrientation(jsonObj["orientation"].toString());
-    odlc->setShape(jsonObj["shape"].toString());
-    odlc->setBackgroundColor(jsonObj["background_color"].toString());
-    odlc->setAlphanumeric(jsonObj["alphanumeric"].toString());
-    odlc->setAlphanumericColor(jsonObj["alphanumeric_color"].toString());
-    odlc->setDescription(jsonObj["description"].toString());
-    odlc->setAutonomous(jsonObj["autonomous"].toBool());
-
-    return odlc;
+    return parseOdlc(jsonObj);
 }
 
-QJsonDocument InteropJsonInterpreter::encodeInteropOdlc(InteropOdlc odlc)
+QList<InteropOdlc*> InteropJsonInterpreter::parseMultipleOldcs(QJsonDocument json)
+{
+    QList<InteropOdlc*> pasredOdlcList;
+
+    QJsonArray jsonArr = json.array();
+    foreach(const QJsonValue& arrayVal, jsonArr)
+    {
+        QJsonObject arrayObj = arrayVal.toObject();
+        InteropOdlc* parsedOdlc = this->parseOdlc(arrayObj);
+        pasredOdlcList.append(parsedOdlc);
+    }
+
+    return pasredOdlcList;
+}
+
+QJsonDocument InteropJsonInterpreter::encodeOdlc(InteropOdlc odlc)
 {
     QJsonObject encodeJson;
 
@@ -215,6 +216,24 @@ InteropMission* InteropJsonInterpreter::parseMission(QJsonObject obj)
     parsedMission->setSearchGridPoints(searchGridPtsList);
 
     return parsedMission;
+}   
+
+InteropOdlc* InteropJsonInterpreter::parseOdlc(QJsonObject obj)
+{
+    InteropOdlc* odlc = new InteropOdlc();
+
+    odlc->setId(obj["id"].toInt());
+    odlc->setUser(obj["user"].toInt());
+    odlc->setType(obj["type"].toString());
+    odlc->setLatitude(obj["latitude"].toDouble());
+    odlc->setLongitude(obj["longitude"].toDouble());
+    odlc->setOrientation(obj["orientation"].toString());
+    odlc->setShape(obj["shape"].toString());
+    odlc->setBackgroundColor(obj["background_color"].toString());
+    odlc->setAlphanumeric(obj["alphanumeric"].toString());
+    odlc->setAlphanumericColor(obj["alphanumeric_color"].toString());
+    odlc->setDescription(obj["description"].toString());
+    odlc->setAutonomous(obj["autonomous"].toBool());
+
+    return odlc;
 }
-
-

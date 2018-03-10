@@ -25,14 +25,49 @@ public:
     };
 
     void login(const QString url, const QString userName, const QString password);
+
+    //GET Requests
     void getMissions();
-    void getMissions(int missionId);
+    void getMission(int missionId);
     void getObstacles();
-    void postTelemetry();
+    void getOdlcs();
+    void getOdlc(int odlcId);
+    void getOdlcImage(int odlcId);
+
+    //POST Requests
+    void postTelemetry(InteropTelemetry telemetry);
+    void postOdlc(InteropOdlc odlc);
+    void postOdlcImage(int odlcId, QByteArray imageData);
+
+    //PUT Requests
+    void putOdlc(int odlcId, InteropOdlc odlc);
+
+    //DELETE Requests
+    void deleteOdlc(int odlcId);
+    void deleteOdlcImage(int odlcId);
 
 signals:
     void loginResponse(Interop::RequestStatus status);
-    void getMissionResponse(Interop::RequestStatus status, QList<InteropMission*> missions);
+
+    //GET Responses
+    void getMultiMissionResponse(Interop::RequestStatus status, QList<InteropMission*> missions);
+    void getSingleMissionResponse(Interop::RequestStatus status, InteropMission* mission);
+    void getObstaclesResponse(Interop::RequestStatus status, InteropJsonInterpreter::ObstacleSet* obstacleSet);
+    void getMultipleOdlcResponse(Interop::RequestStatus status, QList<InteropOdlc*> odlcs);
+    void getSingleOdlcResponse(Interop::RequestStatus status, InteropOdlc* odlc);
+    void getOdlcImageResponse(Interop::RequestStatus status, QByteArray imageData);
+
+    //POST Responses
+    void postTelemetryResponse(Interop::RequestStatus status);
+    void postOdlcResponse(Interop::RequestStatus status, InteropOdlc* odlc);
+    void postOdlcImageResponse(Interop::RequestStatus status);
+
+    //PUT Responses
+    void putOldcResponse(Interop::RequestStatus status, InteropOdlc* odlc);
+
+    //DELETE Responses
+    void deleteOdlcResponse(Interop::RequestStatus status);
+    void deleteOdlcImageResponse(Interop::RequestStatus status);
 
 protected:
 
@@ -61,8 +96,26 @@ private:
     InteropJsonInterpreter* jsonInterpreter;
 
     void finishLogin(QNetworkReply *reply);
-    void finishGetObstacles(QNetworkReply *reply);
+
+    //GET Response Handlers
     void finishGetMissions(QNetworkReply *reply);
+    void finishGetMission(QNetworkReply *reply);
+    void finishGetObstacles(QNetworkReply *reply);
+    void finishGetOdlcs(QNetworkReply *reply);
+    void finishGetOdlc(QNetworkReply *reply);
+    void finishGetOdlcImage(QNetworkReply *reply);
+
+    //POST Response Handlers
+    void finishPostTelemetry(QNetworkReply *reply);
+    void finishPostOdlc(QNetworkReply *reply);
+    void finishPostOdlcImage(QNetworkReply *reply);
+
+    //PUT Response Handlers
+    void finishPutOdlc(QNetworkReply *reply);
+
+    //DELETE Response Handlers
+    void finishDeleteOdlc(QNetworkReply *reply);
+    void finishDeleteOdlcImage(QNetworkReply *reply);
 
     RequestStatus interpretHttpStatus(QVariant status);
 

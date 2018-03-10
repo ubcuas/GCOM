@@ -28,12 +28,14 @@ public:
     QList<InteropMission*> parseMultipleMissions(QJsonDocument json);
     InteropTelemetry* parseTelemetry(QJsonDocument json);
     ObstacleSet* parseObstacles(QJsonDocument json);
-    InteropOdlc* parseInteropOdlc(QJsonDocument json);
-    QJsonDocument encodeInteropOdlc(InteropOdlc odlc);
+    InteropOdlc* parseSingleOdlc(QJsonDocument json);
+    QList<InteropOdlc*> parseMultipleOldcs(QJsonDocument json);
+    QJsonDocument encodeOdlc(InteropOdlc odlc);
 
 
 private:
     InteropMission* parseMission(QJsonObject obj);
+    InteropOdlc* parseOdlc(QJsonObject obj);
 
 };
 
