@@ -41,7 +41,7 @@ void CollisionAvoidance::generateWaypointFile(QList<InteropMission::Waypoint> wa
     QString filename = fileNameTag + ".waypoints";
     QFile file(filename);
 
-    if(file.open(QFile::ReadWrite)) {
+    if(file.open(QFile::ReadWrite|QFile::Truncate)) {
         QTextStream stream(&file);
         stream << QGC_VERISON << endl;
         stream << "0	1	0	0	0	0	0	0	0	0	0	1" << endl;
