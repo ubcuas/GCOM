@@ -29,7 +29,8 @@ ImageFetcher::ImageFetcher(QString dir, const DCNC *sender)
         throw std::invalid_argument("Invalid directory");
     QDateTime dateTime = QDateTime::currentDateTime();
     QString newSectionMessage = QString(newSectionMessageTemplate).arg(dateTime.toString());
-    tagFile->write(qPrintable(newSectionMessage),newSectionMessage.length());
+    tagFile->write(qPrintable(newSectionMessage), newSectionMessage.length());
+    tagFile->flush();
     updateImageNum(dir);
     prevSeqNum = 0;
 
@@ -40,6 +41,7 @@ ImageFetcher::ImageFetcher(QString dir, const DCNC *sender)
 
 // Destructor
 ImageFetcher::~ImageFetcher() {
+    tagFile->close();
     delete tagFile;
 }
 
@@ -56,6 +58,12 @@ inline bool ImageFetcher::changeDir(QString dir)
     fileDirectory = dir;
     tagFile = new QFile(QString(tagPathTemplate).arg(dir));
     tagFile->open(QIODevice::ReadWrite | QIODevice::Append);
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString newSectionMessage = QString(newSectionMessageTemplate).arg(dateTime.toString());
+    tagFile->write(qPrintable(newSectionMessage), newSectionMessage.length());
+    tagFile->flush();
+    updateImageNum(dir);
+    prevSeqNum = 0;
     return true;
 }
 // Checks to see if the directory is valid
@@ -123,4 +131,5 @@ void ImageFetcher::handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> 
                       QString::number(imageTaggedMessage->altitude_rel()) + ',' +
                       QString::number(imageTaggedMessage->heading()) + "\n";
     tagFile->write(qPrintable(tagData),tagData.length());
+    tagFile->flush();
 }
