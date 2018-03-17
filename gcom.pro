@@ -71,11 +71,9 @@ HEADERS  += \
     modules/uas_message/imu_message.hpp \
     modules/uas_message/capabilities_message.hpp \
     modules/uas_message/image_untagged_message.hpp \
-    modules/uas_utility/uas_utility.h \
     modules/uas_image_fetcher/image_fetcher.hpp \
     modules/uas_message/image_tagged_message.hpp \
     modules/uas_image_fetcher/mavlink_image_fetcher.hpp \
-    modules/uas_utility/uas_utility.h \
     modules/uas_interop_system/InteropObjects/interop_mission.hpp \
     modules/uas_interop_system/InteropObjects/interop_telemetry.hpp \
     modules/uas_interop_system/InteropObjects/moving_obstacle.hpp \
@@ -83,7 +81,8 @@ HEADERS  += \
     modules/uas_interop_system/interop.hpp \
     modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
     modules/uas_interop_system/interop_json_interpreter.hpp \
-    modules/image_processing/image_processing.hpp
+    modules/image_processing/image_processing.hpp \
+    modules/uas_utility/uas_utility.hpp
 
 FORMS += \
     gcomcontroller.ui

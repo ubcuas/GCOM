@@ -1,4 +1,4 @@
-#include "uas_utility.h"
+#include "uas_utility.hpp"
 
 //===================================================================
 // Includes
@@ -8,6 +8,8 @@
 #include <QList>
 #include <QtMath>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 
 // System Includes
 #include <vector>
@@ -82,4 +84,11 @@ float Utility::calcVertical(std::shared_ptr<mavlink_global_position_int_t> drone
     }
 
     return vertAngleDiff;
+}
+
+// Checks to see if the directory is valid
+bool Utility::checkDir(QString dir)
+{
+    QFileInfo fileInfo{QFile{dir}};
+    return (fileInfo.exists() && fileInfo.isReadable() && fileInfo.isWritable());
 }

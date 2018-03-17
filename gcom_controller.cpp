@@ -20,6 +20,7 @@
 #include "modules/uas_dcnc/dcnc.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
 #include "modules/uas_message/uas_message_serial_framer.hpp"
+#include "modules/image_processing/image_processing.hpp"
 
 //===================================================================
 // Constants
@@ -179,6 +180,7 @@ GcomController::GcomController(QWidget *parent) :
 
     // Interop Setup
     interop = new Interop();
+    imp = Imp()
 }
 
 GcomController::~GcomController()
@@ -720,6 +722,7 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
     switch(camera) {
         case CapabilitiesMessage::Capabilities::CAMERA_TAGGED:
             fetcher = new ImageFetcher(currentDir, dcnc);
+            imp(currentDir,currentDir);
             break;
         default:
             break;
@@ -743,12 +746,12 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
     ui->imageScriptField->setValidator(new QRegExpValidator(PATH_REGEX));
 
     // Prevent layout from changing when labels are hidden
-    retainSize = ui->fetcherPathInvalidLabel_2->sizePolicy();
+    retainSize = ui->imageScriptPathInvalidLabel->sizePolicy();
     retainSize.setRetainSizeWhenHidden(true);
-    ui->fetcherPathInvalidLabel_2->setSizePolicy(retainSize);
+    ui->imageScriptPathInvalidLabel->setSizePolicy(retainSize);
 
-    ui->fetcherPathInvalidLabel_2->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->fetcherPathInvalidLabel_2->hide();
+    ui->imageScriptPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->imageScriptPathInvalidLabel->hide();
 
 
     ui->outputField->setText(currentDir);
@@ -756,12 +759,12 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
     ui->outputField->setValidator(new QRegExpValidator(PATH_REGEX));
 
     // Prevent layout from changing when labels are hidden
-    retainSize = ui->fetcherPathInvalidLabel_3->sizePolicy();
+    retainSize = ui->outputPathInvalidLabel->sizePolicy();
     retainSize.setRetainSizeWhenHidden(true);
-    ui->fetcherPathInvalidLabel_3->setSizePolicy(retainSize);
+    ui->outputPathInvalidLabel->setSizePolicy(retainSize);
 
-    ui->fetcherPathInvalidLabel_3->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->fetcherPathInvalidLabel_3->hide();
+    ui->outputPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->outputPathInvalidLabel->hide();
 }
 
 void GcomController::on_fetcherPathButton_clicked()
@@ -852,13 +855,13 @@ void GcomController::validatePath(QString path, const int mode) {
                 ui->fetcherImageTransferButton->setEnabled(false);
             break;
             case IMAGE_SCRIPT:
-                ui->fetcherPathInvalidLabel_2->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->fetcherPathInvalidLabel_2->show();
+                ui->imageScriptPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+                ui->imageScriptPathInvalidLabel->show();
                 ui->fetcherImageTransferButton->setEnabled(false);
             break;
             case OUTPUT:
-                ui->fetcherPathInvalidLabel_3->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->fetcherPathInvalidLabel_3->show();
+                ui->outputPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+                ui->outputPathInvalidLabel->show();
                 ui->fetcherImageTransferButton->setEnabled(false);
             break;
         }
@@ -872,20 +875,20 @@ void GcomController::validatePath(QString path, const int mode) {
                 ui->fetcherPathInvalidLabel->hide();
             break;
             case IMAGE_SCRIPT:
-                if(!ui->fetcherPathInvalidLabel_2->isHidden())
-                ui->fetcherPathInvalidLabel_2->hide();
+                if(!ui->imageScriptPathInvalidLabel->isHidden())
+                ui->imageScriptPathInvalidLabel->hide();
             break;
             case OUTPUT:
-                if(!ui->fetcherPathInvalidLabel_3->isHidden())
-                ui->fetcherPathInvalidLabel_3->hide();
+                if(!ui->outputPathInvalidLabel->isHidden())
+                ui->outputPathInvalidLabel->hide();
             break;
         }
     }
 
     if (ui->fetcherImageTransferButton->isEnabled() ||
         !ui->fetcherPathInvalidLabel->isHidden() ||
-        !ui->fetcherPathInvalidLabel_2->isHidden() ||
-        !ui->fetcherPathInvalidLabel_3->isHidden())
+        !ui->imageScriptPathInvalidLabel->isHidden() ||
+        !ui->outputPathInvalidLabel->isHidden())
         return;
 
     // If the start image transfer button is disabled and
@@ -903,11 +906,24 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             {
                 ui->fetcherPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
                 ui->fetcherPathInvalidLabel->show();
-
-                if (ui->fetcherImageTransferButton->isEnabled()) {
-                    ui->fetcherImageTransferButton->clearFocus();
-                    ui->fetcherImageTransferButton->setEnabled(false);  
-                }
+            }
+            if (!imp.changeImageScriptDir(ui->imageScriptField->text()))
+            {
+                ui->imageScriptPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
+                ui->fetcherPathInvalidLabel->show();
+            }
+            if (!imp.changeOutputDir(ui->outputField->text()))
+            {
+                ui->outputPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
+                ui->outputPathInvalidLabel->show();
+            }
+            if (ui->fetcherImageTransferButton->isEnabled() &&
+                (!ui->fetcherPathInvalidLabel->isHidden() ||
+                !ui->imageScriptPathInvalidLabel->isHidden() ||
+                !ui->outputPathInvalidLabel->isHidden()))
+            {
+                ui->fetcherImageTransferButton->clearFocus();
+                ui->fetcherImageTransferButton->setEnabled(false);
                 return;
             }
 
@@ -917,6 +933,10 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
             ui->fetcherPathField->setEnabled(false);
             ui->fetcherPathButton->setEnabled(false);
+            ui->imageScriptField->setEnabled(false);
+            ui->imageScriptPathButton->setEnabled(false);
+            ui->outputField->setEnabled(false);
+            ui->outputPathButton->setEnabled(false);
         }
         break;
 
@@ -928,6 +948,10 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             fetcherStatus = FETCHER_STATUS_READY;
             ui->fetcherPathField->setEnabled(true);
             ui->fetcherPathButton->setEnabled(true);
+            ui->imageScriptField->setEnabled(true);
+            ui->imageScriptPathButton->setEnabled(true);
+            ui->outputField->setEnabled(true);
+            ui->outputPathButton->setEnabled(true);
         }
     }
 }

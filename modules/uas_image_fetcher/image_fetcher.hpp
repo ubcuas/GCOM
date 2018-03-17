@@ -39,11 +39,6 @@ public:
      */
     ~ImageFetcher();
 
-    /*!
-     * \brief checks to see if the directory exists, is writable, and is readable
-     * \param dir QString path of directory
-     */
-    bool checkDir(QString dir);
     void updateImageNum(QString dir);
 
     /*!

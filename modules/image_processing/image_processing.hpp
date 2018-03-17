@@ -10,12 +10,15 @@
 class ImageProcessing
 {
 public:
-    ImageProcessing();
+    ImageProcessing(QString imageScriptLocation, QString outputLocation);
     void excuteScript(QString scriptPath);
 
+    bool changeImageScriptDir(QString dir);
+    bool changeOutputDir(QString dir);
+
 private:
-    QString ImageScriptPath;
-    QString OutputPath;
+    QString imageScriptPath;
+    QString outputPath;
     float rejectionRange;
 
 

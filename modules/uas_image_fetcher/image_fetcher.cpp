@@ -10,6 +10,7 @@
 #include <QRegExp>
 // GCOM Includes
 #include "image_fetcher.hpp"
+#include "modules/uas_utility/uas_utility.hpp"
 //===================================================================
 // Constants
 //===================================================================
@@ -48,7 +49,7 @@ ImageFetcher::~ImageFetcher() {
 // Checks tag directory and updates it if its valid
 inline bool ImageFetcher::changeDir(QString dir)
 {
-    if(!checkDir(dir))
+    if(!Utility::checkDir(dir))
         return false;
     if (tagFile != nullptr)
     {
@@ -65,12 +66,6 @@ inline bool ImageFetcher::changeDir(QString dir)
     updateImageNum(dir);
     prevSeqNum = 0;
     return true;
-}
-// Checks to see if the directory is valid
-inline bool ImageFetcher::checkDir(QString dir)
-{
-    QFileInfo fileInfo{QFile{dir}};
-    return (fileInfo.exists() && fileInfo.isReadable() && fileInfo.isWritable());
 }
 
 // Extracts the imageNum of the latest image and sets the current ImageNum to the next value
