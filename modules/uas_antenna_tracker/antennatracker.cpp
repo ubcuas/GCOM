@@ -80,8 +80,6 @@ AntennaTracker::AntennaTracker()
     // initialize base elevation
     elevation = 0;
 
-    // Mavlink Relay
-    mavlinkRelay = nullptr;
 
     sentRequest = false;
 }
@@ -164,13 +162,9 @@ bool AntennaTracker::setupZaber(QString port, QSerialPort::BaudRate baud) {
     return true;
 }
 
-AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVLinkRelay * const relay)
-{
-    this->mavlinkRelay = relay;
 
-    // Connect the Mavlink Relay
-    if(relay->status() != MAVLinkRelay::MAVLinkRelayStatus::CONNECTED)
-        return AntennaTrackerConnectionState::RELAY_NOT_OPEN;
+AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking()
+{
 
     // Double check that the conditions required for the connection is correct
     if (arduinoSerial == nullptr)
@@ -198,10 +192,6 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
     zaberSerial->write(zaberSetVerticalMoveSpeed.toStdString().c_str());
     zaberSerial->flush();
 
-    connect(relay,
-            SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
-            this, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
-
     // update internal state
     antennaTrackerConnected = true;
 
@@ -214,16 +204,11 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
 
     return AntennaTrackerConnectionState::SUCCESS;
 }
-
+// MARK_MAV
 void AntennaTracker::stopTracking()
 {
     if (!antennaTrackerConnected)
         return;
-
-    // Disconnect the mavlink relay
-    disconnect(this->mavlinkRelay,
-               SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
-               this, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
 
     // update internal state
     antennaTrackerConnected = false;

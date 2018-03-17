@@ -496,8 +496,15 @@ void GcomController::on_startTrackButton_clicked()
             }
         }
 
-        // initiate tracking and update button
-        AntennaTracker::AntennaTrackerConnectionState status = tracker->startTracking(mavlinkRelay);
+        AntennaTracker::AntennaTrackerConnectionState status = AntennaTracker::AntennaTrackerConnectionState::UNDEFINED_STATE;
+        if(mavlinkRelay->status() != MAVLinkRelay::MAVLinkRelayStatus::CONNECTED) 
+             status = AntennaTracker::AntennaTrackerConnectionState::RELAY_NOT_OPEN;
+        else{
+             status = tracker->startTracking();
+            connect(mavlinkRelay, SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
+                    tracker, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
+        }
+        
         ui->startTrackButton->setText(STOP_TRACKING_BUTTON_TEXT);
 
         // checks the tracking status
@@ -512,6 +519,8 @@ void GcomController::on_startTrackButton_clicked()
     } else {
         // station is currently tracking, stop it and enable fields
         tracker->stopTracking();
+        disconnect(mavlinkRelay, SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
+                   tracker, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
         ui->startTrackButton->setText(START_TRACKING_BUTTON_TEXT);
     }
 }

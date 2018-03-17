@@ -84,7 +84,7 @@ public:
     AntennaTrackerConnectionState getZaberStatus();
     void disconnectArduino();
     void disconnectZaber();
-    AntennaTrackerConnectionState startTracking(MAVLinkRelay * const relay);
+    AntennaTrackerConnectionState startTracking();
     void stopTracking();
 
     /*!
@@ -181,8 +181,6 @@ private:
     bool antennaTrackerConnected;
     bool overrideGPSToggle;
 
-    // Mavlink relay
-    MAVLinkRelay *mavlinkRelay;
 
     std::atomic<bool> sentRequest;
 
