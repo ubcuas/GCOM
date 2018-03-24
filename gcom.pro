@@ -76,11 +76,10 @@ HEADERS  += \
     modules/uas_message/capabilities_message.hpp \
     modules/uas_message/image_untagged_message.hpp \
     modules/uas_message/path_tagged_message.hpp \
-    modules/uas_utility/uas_utility.h \
+    modules/uas_utility/uas_utility.hpp \
     modules/uas_image_fetcher/image_fetcher.hpp \
     modules/uas_message/image_tagged_message.hpp \
     modules/uas_image_fetcher/mavlink_image_fetcher.hpp \
-    modules/uas_utility/uas_utility.h \
     modules/uas_interop_system/InteropObjects/interop_mission.hpp \
     modules/uas_interop_system/InteropObjects/interop_telemetry.hpp \
     modules/uas_interop_system/InteropObjects/moving_obstacle.hpp \
