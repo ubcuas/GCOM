@@ -4,6 +4,7 @@
 // GCOM Includes
 #include "../Mavlink/ardupilotmega/mavlink.h"
 #include "modules/mavlink_relay/mavlink_relay_tcp.hpp"
+#include "modules/uas_message/image_tagged_message.hpp"
 
 namespace Utility
 {
@@ -23,6 +24,9 @@ namespace Utility
     float calcVertical(std::shared_ptr<mavlink_global_position_int_t> gpsData, float pitchIMU, float latBase,
                        float lonBase, float elevationBase);
 
+
+    std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
+    std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
 }
 
 #endif // UAS_UTILITY_H

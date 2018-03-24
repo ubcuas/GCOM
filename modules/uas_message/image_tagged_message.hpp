@@ -83,9 +83,6 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
          */
         std::vector<uint8_t> serialize();
 
-        std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath);
-
-
         /*!
          * \brief Converts latitude to double
          * \return latitude as a double
@@ -148,6 +145,9 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
 
 class PathTaggedMessage : public ImageTaggedMessage {
     public:
+        PathTaggedMessage(uint8_t sequenceNumber, int32_t latitude, int32_t longitude,
+                                         int32_t altitudeAbs, int32_t altitudeRel, uint16_t heading,
+                                         uint8_t* imageData, size_t dataSize);
         /*!
         * \brief type returns the type of the message as a MessageID
         * \return The type of the enclosed message as a MessageID enum value
@@ -160,7 +160,6 @@ class PathTaggedMessage : public ImageTaggedMessage {
         */
         std::vector<uint8_t> serialize();
 
-        std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage();
 
 };
 
