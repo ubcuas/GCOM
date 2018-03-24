@@ -19,27 +19,26 @@ MAVLinkRelay::MAVLinkRelay()
     port = 14550;
     relayStatus = MAVLinkRelayStatus::DISCCONNECTED;
     // Build the sockets and connect the signals/slots
-    missionplannerSocket = new QTcpSocket(this);
-    connect(missionplannerSocket, SIGNAL(connected()),
+    connect(&missionplannerSocket, SIGNAL(connected()),
             this, SLOT(connected()));
-    connect(missionplannerSocket, SIGNAL(disconnected()),
+    connect(&missionplannerSocket, SIGNAL(disconnected()),
             this, SLOT(disconnected()));
-    connect(missionplannerSocket, SIGNAL(readyRead()),
+    connect(&missionplannerSocket, SIGNAL(readyRead()),
             this, SLOT(readBytes()));
-    connect(missionplannerSocket, &QTcpSocket::stateChanged,
+    connect(&missionplannerSocket, &QTcpSocket::stateChanged,
             this, &MAVLinkRelay::statusChanged);
 }
 
 void MAVLinkRelay::stop()
 {
-    missionplannerSocket->disconnectFromHost();
+    missionplannerSocket.disconnectFromHost();
 }
 
 void MAVLinkRelay::setup(QString ipAddress, qint16 port)
 {
     // If the socket is unconnected or is not in the process of closing then we
     // close it
-    if (missionplannerSocket->state() != QAbstractSocket::UnconnectedState)
+    if (missionplannerSocket.state() != QAbstractSocket::UnconnectedState)
         stop();
     // Save connection Parameters
     this->ipaddress = ipAddress;
@@ -54,10 +53,10 @@ MAVLinkRelay::MAVLinkRelayStatus MAVLinkRelay::status()
 bool MAVLinkRelay::start()
 {
     // If the socket if is not unconnected then return false
-    if (missionplannerSocket->state() != QAbstractSocket::UnconnectedState)
+    if (missionplannerSocket.state() != QAbstractSocket::UnconnectedState)
         return false;
     // Attempt to connect to the specified host
-    missionplannerSocket->connectToHost(ipaddress, port);
+    missionplannerSocket.connectToHost(ipaddress, port);
 
     return true;
 }
@@ -95,7 +94,7 @@ void MAVLinkRelay::readBytes()
     QByteArray bufferByteArray;
 
     // Read all available data from TCP Socket
-    bufferByteArray = missionplannerSocket->readAll();
+    bufferByteArray = missionplannerSocket.readAll();
     // Loop through every read byte and pass it through the decode function
     for(auto messageCurrentByte = bufferByteArray.begin();
         messageCurrentByte != bufferByteArray.end(); ++messageCurrentByte)

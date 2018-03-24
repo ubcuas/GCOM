@@ -1,4 +1,5 @@
 #include "uas_utility.hpp"
+#include "modules/uas_message/image_tagged_message.hpp"
 
 //===================================================================
 // Includes
@@ -84,6 +85,49 @@ float Utility::calcVertical(std::shared_ptr<mavlink_global_position_int_t> drone
     }
 
     return vertAngleDiff;
+}
+
+std::shared_ptr<ImageTaggedMessage> Utility::toImageTaggedMessage(PathTaggedMessage& message)
+{
+    QString filePath = reinterpret_cast<const char *>(message.imageData.data());
+    QFile file(filePath);
+    file.open(QIODevice::ReadOnly);
+    QByteArray imageArray = file.readAll();
+    file.close();
+    std::vector<uint8_t> newImageData = std::vector<uint8_t>(imageArray.begin(), imageArray.end());
+    size_t newImageDataSize = newImageData.size();
+    std::shared_ptr<ImageTaggedMessage> newMessage(new ImageTaggedMessage(message.sequenceNumber,
+                                                                       message.latitudeRaw,
+                                                                       message.longitudeRaw,
+                                                                       message.altitudeAbsRaw,
+                                                                       message.altitudeRelRaw,
+                                                                       message.headingRaw,
+                                                                       const_cast<uint8_t *>(newImageData.data()),
+                                                                       newImageDataSize));
+    return newMessage;
+}
+
+std::shared_ptr<PathTaggedMessage> Utility::toPathTaggedMessage(QString filePath, ImageTaggedMessage& message)
+{
+    std::vector<uint8_t> imageDataCopy = message.imageData;
+    uint8_t *imageArray = &imageDataCopy[0];
+    size_t sizeOfImageData = imageDataCopy.size();
+    QFile file(filePath);
+    file.open(QIODevice::WriteOnly);
+    file.write(reinterpret_cast<const char *>(imageArray), sizeOfImageData);
+    file.close();
+    QByteArray pathArray(filePath.toStdString().c_str());
+    std::vector<uint8_t> pathData = std::vector<uint8_t>(pathArray.begin(), pathArray.end());
+    size_t pathDataSize = pathData.size();
+    std::shared_ptr<PathTaggedMessage> newMessage(new PathTaggedMessage(message.sequenceNumber,
+                                                                     message.latitudeRaw,
+                                                                     message.longitudeRaw,
+                                                                     message.altitudeAbsRaw,
+                                                                     message.altitudeRelRaw,
+                                                                     message.headingRaw,
+                                                                     const_cast<uint8_t *>(pathData.data()),
+                                                                     pathDataSize));
+    return newMessage;
 }
 
 // Checks to see if the directory is valid

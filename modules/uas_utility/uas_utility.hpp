@@ -29,7 +29,11 @@ public:
      * \param dir QString path of directory
      */
     static bool checkDir(QString dir);
+    
+    std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
+    std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
 
 };
 
 #endif // UAS_UTILITY_H
+

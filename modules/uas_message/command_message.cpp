@@ -17,7 +17,7 @@ CommandMessage::CommandMessage(Commands command)
 
 CommandMessage::CommandMessage(const std::vector<uint8_t> &serializedMessage)
 {
-    command = static_cast<Commands>(serializedMessage.front());
+    this->command = static_cast<Commands>(serializedMessage.front());
 }
 
 CommandMessage::~CommandMessage()

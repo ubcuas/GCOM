@@ -26,9 +26,9 @@ SystemInfoMessage::SystemInfoMessage(std::string systemId, uint16_t versionNumbe
 SystemInfoMessage::SystemInfoMessage(const std::vector<uint8_t> &serializedMessage)
 {
 
-    versionNumber = (serializedMessage[0] << 8) |  serializedMessage[1];
-    dropped = serializedMessage[2];
-    systemId = std::string(serializedMessage.begin() + SYSTEM_ID_OFFSET,serializedMessage.end());
+    this->versionNumber = (serializedMessage[0] << 8) |  serializedMessage[1];
+    this->dropped = serializedMessage[2];
+    this->systemId = std::string(serializedMessage.begin() + SYSTEM_ID_OFFSET,serializedMessage.end());
 
 }
 
