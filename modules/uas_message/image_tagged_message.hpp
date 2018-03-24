@@ -7,10 +7,10 @@
 // System Includes
 #include <vector>
 #include <QFile>
+#include <memory>
 // GCOM Includes
 #include "modules/uas_message/uas_message.hpp"
 #include "modules/uas_message/image_untagged_message.hpp"
-#include "path_tagged_message.hpp"
 
 //===================================================================
 // Public Class Declaration
@@ -144,6 +144,24 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
          * \details If unknown, will be set to UINT16_MAX
          */
         uint16_t headingRaw;
+};
+
+class PathTaggedMessage : public ImageTaggedMessage {
+    public:
+        /*!
+        * \brief type returns the type of the message as a MessageID
+        * \return The type of the enclosed message as a MessageID enum value
+        */
+        MessageID type();
+
+        /*!
+        * \brief serialize serializes the message into a unsigned char vector
+        * \return A standard unsigned vector containing the message's serialized contents
+        */
+        std::vector<uint8_t> serialize();
+
+        std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage();
+
 };
 
 #endif // IMAGE_TAGGED_MESSAGE_HPP

@@ -6,9 +6,11 @@
 #include <algorithm>
 #include <iterator>
 #include <QFile>
+#include <memory>
+#include <QDir>
 // GCOM Includes
 #include "modules/uas_message/image_tagged_message.hpp"
-#include "path_tagged_message.hpp"
+#include "modules/uas_message/path_tagged_message.hpp"
 
 //===================================================================
 // Defines
@@ -234,3 +236,32 @@ std::shared_ptr<PathTaggedMessage> ImageTaggedMessage::toPathTaggedMessage(QStri
     return message;
 }
 
+UASMessage::MessageID PathTaggedMessage::type()
+{
+    return MessageID::DATA_PATH_TAGGED;
+}
+
+std::vector<uint8_t> PathTaggedMessage::serialize()
+{
+    throw std::invalid_argument("Cannot serialize TaggedPathMessage");
+}
+
+std::shared_ptr<ImageTaggedMessage> PathTaggedMessage::toImageTaggedMessage()
+{
+    QString filePath = reinterpret_cast<const char *>(this->imageData.data());
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QByteArray imageArray = file.readAll();
+        std::vector<uint8_t> imageData = std::vector<uint8_t>(imageArray.begin(), imageArray.end());
+    }
+    std::shared_ptr<ImageTaggedMessage> message(new ImageTaggedMessage(this->sequenceNumber,
+                                                                       this->latitudeRaw,
+                                                                       this->longitudeRaw,
+                                                                       this->altitudeAbsRaw,
+                                                                       this->altitudeRelRaw,
+                                                                       this->headingRaw,
+                                                                       const_cast<uint8_t *>(imageData.data()),
+                                                                       imageData.size()));
+    return message;
+}
