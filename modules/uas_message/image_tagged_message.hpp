@@ -6,9 +6,11 @@
 //===================================================================
 // System Includes
 #include <vector>
+#include <QFile>
 // GCOM Includes
 #include "modules/uas_message/uas_message.hpp"
 #include "modules/uas_message/image_untagged_message.hpp"
+#include "path_tagged_message.hpp"
 
 //===================================================================
 // Public Class Declaration
@@ -80,6 +82,9 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
          * \return A standard unsigned vector containing the message's serialized contents
          */
         std::vector<uint8_t> serialize();
+
+        std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath);
+
 
         /*!
          * \brief Converts latitude to double

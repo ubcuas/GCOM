@@ -30,7 +30,6 @@ std::shared_ptr<ImageTaggedMessage> PathTaggedMessage::toImageTaggedMessage()
         QByteArray imageArray = file.readAll();
         std::vector<uint8_t> imageData = std::vector<uint8_t>(imageArray.begin(), imageArray.end());
     }
-    size_t dataSize = imageData.size();
     std::shared_ptr<ImageTaggedMessage> message(new ImageTaggedMessage(this->sequenceNumber,
                                                                        this->latitudeRaw,
                                                                        this->longitudeRaw,
@@ -38,6 +37,6 @@ std::shared_ptr<ImageTaggedMessage> PathTaggedMessage::toImageTaggedMessage()
                                                                        this->altitudeRelRaw,
                                                                        this->headingRaw,
                                                                        const_cast<uint8_t *>(imageData.data()),
-                                                                       dataSize));
+                                                                       imageData.size()));
     return message;
 }
