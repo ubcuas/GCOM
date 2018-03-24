@@ -80,7 +80,7 @@ private slots:
 
 private:
     // Private Member Variables
-    QTcpSocket *missionplannerSocket;
+    QTcpSocket missionplannerSocket;
     MAVLinkRelayStatus relayStatus;
     QString ipaddress;
     qint16 port;

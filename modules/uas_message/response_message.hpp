@@ -25,7 +25,7 @@ class ResponseMessage : public UASMessage
         enum class ResponseCodes : uint8_t
         {
             NO_ERROR         =   0x00,
-            INVALID_COMMAD   =   0x01,
+            INVALID_COMMAND  =   0x01,
             INVALID_REQUEST  =   0x02
         };
 

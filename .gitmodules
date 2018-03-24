@@ -1,3 +1,6 @@
 [submodule "Mavlink"]
 	path = Mavlink
 	url = https://github.com/mavlink/c_library_v2
+[submodule "auvsi_suas_interop"]
+	path = auvsi_suas_interop
+	url = https://github.com/auvsi-suas/interop.git
