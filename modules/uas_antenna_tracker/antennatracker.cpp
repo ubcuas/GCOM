@@ -10,7 +10,7 @@
 #include "modules/uas_message/imu_message.hpp"
 #include "modules/uas_message/uas_message_serial_framer.hpp"
 #include "../Mavlink/ardupilotmega/mavlink.h"
-#include "modules/uas_utility/uas_utility.h"
+#include "modules/uas_utility/uas_utility.hpp"
 // QT Includes
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>

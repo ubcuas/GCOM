@@ -1,5 +1,5 @@
-#ifndef UAS_UTILITY_H
-#define UAS_UTILITY_H
+#ifndef UAS_UTILITY_HPP
+#define UAS_UTILITY_HPP
 
 // GCOM Includes
 #include "../Mavlink/ardupilotmega/mavlink.h"
@@ -29,4 +29,4 @@ namespace Utility
     std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
 }
 
-#endif // UAS_UTILITY_H
+#endif // UAS_UTILITY_HPP
