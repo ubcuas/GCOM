@@ -5,8 +5,10 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <QFile>
 // GCOM Includes
 #include "modules/uas_message/image_tagged_message.hpp"
+#include "path_tagged_message.hpp"
 
 //===================================================================
 // Defines
@@ -209,3 +211,25 @@ float ImageTaggedMessage::altitude_rel() {
 float ImageTaggedMessage::heading() {
     return UNPACK_HDG(headingRaw);
 }
+
+std::shared_ptr<PathTaggedMessage> ImageTaggedMessage::toPathTaggedMessage(QString filePath)
+{
+    //QString filePath = reinterpret_cast<const char *>(this->imageData.data());
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QByteArray imageArray = file.readAll();
+        std::vector<uint8_t> imageData = std::vector<uint8_t>(imageArray.begin(), imageArray.end());
+    }
+    size_t dataSize = imageData.size();
+    std::shared_ptr<ImageTaggedMessage> message(new ImageTaggedMessage(this->sequenceNumber,
+                                                                       this->latitudeRaw,
+                                                                       this->longitudeRaw,
+                                                                       this->altitudeAbsRaw,
+                                                                       this->altitudeRelRaw,
+                                                                       this->headingRaw,
+                                                                       const_cast<uint8_t *>(imageData.data()),
+                                                                       dataSize));
+    return message;
+}
+

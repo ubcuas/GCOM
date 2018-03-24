@@ -70,8 +70,8 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
         ImageTaggedMessage(const std::vector<uint8_t> &serializedMessage);
 
         /*!
-         * \brief type returns the type of the message as a MeesageId
-         * \return The type of the enclosed message as a MeeageId enum value
+         * \brief type returns the type of the message as a MessageID
+         * \return The type of the enclosed message as a MessageID enum value
          */
         MessageID type();
 
