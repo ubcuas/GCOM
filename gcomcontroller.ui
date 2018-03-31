@@ -215,101 +215,45 @@
             <property name="title">
              <string> AUVSI Interop</string>
             </property>
-            <widget class="QLineEdit" name="interopUrlField">
-             <property name="geometry">
-              <rect>
-               <x>120</x>
-               <y>50</y>
-               <width>161</width>
-               <height>24</height>
-              </rect>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="interopConnectButton">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>180</y>
-               <width>80</width>
-               <height>25</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Connect</string>
-             </property>
-            </widget>
-            <widget class="QLabel" name="interopUrlLabel">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>50</y>
-               <width>101</width>
-               <height>16</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Interop Address</string>
-             </property>
-            </widget>
-            <widget class="QLineEdit" name="interopUserField">
-             <property name="geometry">
-              <rect>
-               <x>120</x>
-               <y>100</y>
-               <width>161</width>
-               <height>24</height>
-              </rect>
-             </property>
-            </widget>
-            <widget class="QLabel" name="interopUserLabel">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>100</y>
-               <width>71</width>
-               <height>16</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Username</string>
-             </property>
-            </widget>
-            <widget class="QLabel" name="interopPwLabel">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>150</y>
-               <width>71</width>
-               <height>16</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Password</string>
-             </property>
-            </widget>
-            <widget class="QLineEdit" name="interopPwField">
-             <property name="geometry">
-              <rect>
-               <x>120</x>
-               <y>150</y>
-               <width>161</width>
-               <height>24</height>
-              </rect>
-             </property>
-            </widget>
-            <widget class="QPushButton" name="testPushButton">
-             <property name="geometry">
-              <rect>
-               <x>120</x>
-               <y>180</y>
-               <width>80</width>
-               <height>25</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>Test Button</string>
-             </property>
-            </widget>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="0" column="0">
+              <widget class="QLabel" name="interopUrlLabel">
+               <property name="text">
+                <string>Interop Address</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="interopUrlField"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="interopUserLabel">
+               <property name="text">
+                <string>Username</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="interopUserField"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="interopPwLabel">
+               <property name="text">
+                <string>Password</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="interopPwField"/>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="interopConnectButton">
+               <property name="text">
+                <string>Connect</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
