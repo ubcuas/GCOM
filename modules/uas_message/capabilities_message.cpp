@@ -1,3 +1,4 @@
+#include <string>
 #include "capabilities_message.hpp"
 #include "modules/uas_message/uas_message.hpp"
 
@@ -36,11 +37,38 @@ std::vector<uint8_t> CapabilitiesMessage::serialize()
 //===================================================================
 // Enum Operator Definitions
 //===================================================================
+
+std::string CapabilitiesMessage::capabilitiesToString(Capabilities &capabilities)
+{
+    switch(capabilities)
+    {
+        case Capabilities::CAMERA_TAGGED:
+            return "Tagged camera images";
+            break;
+        case Capabilities::CAMERA_UNTAGGED:
+            return "Untagged camera images";
+            break;
+        case Capabilities::CAMERA_TIMER:
+            return "Timed camera triggering";
+            break;
+        case Capabilities::CAMERA_DISTANCE:
+            return "Distance camera triggering";
+            break;
+        default:
+            return "Invalid Capability";
+    }
+}
 CapabilitiesMessage::Capabilities operator|(const CapabilitiesMessage::Capabilities &a,
                                             const CapabilitiesMessage::Capabilities &b)
 {
     return static_cast<CapabilitiesMessage::Capabilities>(static_cast<uint32_t>(a) |
                                                           static_cast<uint32_t>(b));
+}
+
+CapabilitiesMessage::Capabilities operator|=(CapabilitiesMessage::Capabilities &a,
+                                             const CapabilitiesMessage::Capabilities &b)
+{
+    return a = a | b;
 }
 
 CapabilitiesMessage::Capabilities operator&(const CapabilitiesMessage::Capabilities &a,
