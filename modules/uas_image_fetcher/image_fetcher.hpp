@@ -61,8 +61,7 @@ signals:
     /*!
      * \brief TaggedImage is emitted for every image and contains the image directory and tags
      */
-    void taggedImage(QString filePath, double latitude, double longitude,
-                     float altitude_abs, float altitude_rel, float heading);
+    void taggedImage(std::shared_ptr<PathTaggedMessage> pathMessage);
     /*!
      * \brief skippedFromSeqNumTo is emitted every time there is a jump in the sequence number
      *        and contains the pervious and new sequence numbers

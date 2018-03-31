@@ -101,22 +101,13 @@ void ImageFetcher::handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> 
     QString filePath;
     ImageTaggedMessage *imageTaggedMessage = message.get();
     uint8_t uniqueSeqNum = imageTaggedMessage->sequenceNumber;
-
-    std::vector<uint8_t> imageData = imageTaggedMessage->imageData;
-    uint8_t *imageArray = &imageData[0];
-    size_t sizeOfData = imageData.size();
     // Compares current and previous sequence numbers to ensure uniqueness, emits signal otherwise
     if ((uniqueSeqNum == 0 && prevSeqNum != 255) || (uniqueSeqNum != prevSeqNum + 1)){
         emit skippedFromSeqNumTo(prevSeqNum, uniqueSeqNum);
     }
     filePath = QString(imagePathTemplate).arg(fileDirectory).arg(QString::number(imageNum++));
-    saveToDisc(filePath, imageArray, sizeOfData);
-    emit taggedImage(filePath,
-                     imageTaggedMessage->latitude(),
-                     imageTaggedMessage->longitude(),
-                     imageTaggedMessage->altitude_abs(),
-                     imageTaggedMessage->altitude_rel(),
-                     imageTaggedMessage->heading());
+    std::shared_ptr<PathTaggedMessage>pathMessage=Utility::toPathTaggedMessage(filepath, message);
+    emit taggedImage(pathMessage);
     prevSeqNum = uniqueSeqNum;
     QString tagData = QString::number(imageNum) + ", " +
                       QString::number(uniqueSeqNum) + ": " +
