@@ -105,7 +105,8 @@ const QString STOP_TRACKING_BUTTON_TEXT("Stop Tracking");
 //===================================================================
 GcomController::GcomController(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::GcomController)
+    ui(new Ui::GcomController),
+    imp(QDir::currentPath(),QDir::currentPath())
 {
     // General UI Setup
     ui->setupUi(this);
@@ -182,7 +183,6 @@ GcomController::GcomController(QWidget *parent) :
 
     // Interop Setup
     interop = new Interop();
-    imp = Imp()
 }
 
 GcomController::~GcomController()
@@ -722,7 +722,6 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
     switch(camera) {
         case CapabilitiesMessage::Capabilities::CAMERA_TAGGED:
             fetcher = new ImageFetcher(currentDir, dcnc);
-            imp(currentDir,currentDir);
             break;
         default:
             break;

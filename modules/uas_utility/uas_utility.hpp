@@ -4,6 +4,7 @@
 // GCOM Includes
 #include "../Mavlink/ardupilotmega/mavlink.h"
 #include "modules/mavlink_relay/mavlink_relay_tcp.hpp"
+#include "modules/uas_message/image_tagged_message.hpp"
 
 class Utility
 {
@@ -30,8 +31,8 @@ public:
      */
     static bool checkDir(QString dir);
     
-    std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
-    std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
+    static std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
+    static std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
 
 };
 
