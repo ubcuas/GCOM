@@ -94,22 +94,56 @@ QList<InteropOdlc*> InteropJsonInterpreter::parseMultipleOldcs(QJsonDocument jso
     return pasredOdlcList;
 }
 
-QJsonDocument InteropJsonInterpreter::encodeOdlc(InteropOdlc odlc)
+QJsonDocument InteropJsonInterpreter::encodeOdlc(InteropOdlc* odlc)
 {
     QJsonObject encodeJson;
 
-    encodeJson.insert("id", QJsonValue::fromVariant(odlc.getId()));
-    encodeJson.insert("user", QJsonValue::fromVariant(odlc.getUser()));
-    encodeJson.insert("type", QJsonValue::fromVariant(odlc.getType()));
-    encodeJson.insert("latitude", QJsonValue::fromVariant(odlc.getLatitude()));
-    encodeJson.insert("longitude", QJsonValue::fromVariant(odlc.getLongitude()));
-    encodeJson.insert("orientation", QJsonValue::fromVariant(odlc.getOrientation()));
-    encodeJson.insert("shape", QJsonValue::fromVariant(odlc.getShape()));
-    encodeJson.insert("background_color", QJsonValue::fromVariant(odlc.getBackgroundColor()));
-    encodeJson.insert("alphanumeric", QJsonValue::fromVariant(odlc.getAlphanumeric()));
-    encodeJson.insert("alphanumeric_color", QJsonValue::fromVariant(odlc.getAlphanumericColor()));
-    encodeJson.insert("description", QJsonValue::fromVariant(odlc.getDescription()));
-    encodeJson.insert("autonomous", QJsonValue::fromVariant(odlc.getAutonomous()));
+    if(odlc->getId() != INT_MIN)
+    {
+        encodeJson.insert("id", QJsonValue::fromVariant(odlc->getId()));
+    }
+    if(odlc->getUser() != INT_MIN)
+    {
+        encodeJson.insert("user", QJsonValue::fromVariant(odlc->getUser()));
+    }
+    if(!odlc->getType().isNull())
+    {
+        encodeJson.insert("type", QJsonValue::fromVariant(odlc->getType()));
+    }
+    if(odlc->getLatitude() != INT_MIN)
+    {
+        encodeJson.insert("latitude", QJsonValue::fromVariant(odlc->getLatitude()));
+    }
+    if(odlc->getLongitude() != INT_MIN)
+    {
+        encodeJson.insert("longitude", QJsonValue::fromVariant(odlc->getLongitude()));
+    }
+    if(!odlc->getOrientation().isNull())
+    {
+        encodeJson.insert("orientation", QJsonValue::fromVariant(odlc->getOrientation()));
+    }
+    if(!odlc->getShape().isNull())
+    {
+        encodeJson.insert("shape", QJsonValue::fromVariant(odlc->getShape()));
+    }
+    if(!odlc->getBackgroundColor().isNull())
+    {
+        encodeJson.insert("background_color", QJsonValue::fromVariant(odlc->getBackgroundColor()));
+    }
+    if(!odlc->getAlphanumeric().isNull())
+    {
+        encodeJson.insert("alphanumeric", QJsonValue::fromVariant(odlc->getAlphanumeric()));
+    }
+    if(!odlc->getAlphanumericColor().isNull())
+    {
+        encodeJson.insert("alphanumeric_color", QJsonValue::fromVariant(odlc->getAlphanumericColor()));
+    }
+    if(!odlc->getDescription().isNull())
+    {
+        encodeJson.insert("description", QJsonValue::fromVariant(odlc->getDescription()));
+    }
+
+    encodeJson.insert("autonomous", QJsonValue::fromVariant(odlc->getAutonomous()));
 
     return QJsonDocument(encodeJson);
 }

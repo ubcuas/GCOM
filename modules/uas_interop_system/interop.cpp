@@ -137,7 +137,7 @@ void Interop::getOdlcImage(int odlcId)
 /***********************************************************************************************
  *                                      POST Requests                                          *
  ***********************************************************************************************/
-void Interop::postTelemetry(InteropTelemetry telemetry)
+void Interop::postTelemetry(InteropTelemetry *telemetry)
 {
     this->currRequest = InteropRequest::POST_TELEMETRY;
 
@@ -146,13 +146,13 @@ void Interop::postTelemetry(InteropTelemetry telemetry)
     QUrl requestUrl(requestUrlString);
     QByteArray postParams;
     postParams.append("latitude=");
-    postParams.append(telemetry.getLatitude());
+    postParams.append(QString::number(telemetry->getLatitude()));
     postParams.append("&longitude=");
-    postParams.append(telemetry.getLongitude());
+    postParams.append(QString::number(telemetry->getLongitude()));
     postParams.append("&altitude_msl=");
-    postParams.append(telemetry.getAltitudeMsl());
+    postParams.append(QString::number(telemetry->getAltitudeMsl()));
     postParams.append("&uas_heading=");
-    postParams.append(telemetry.getUasHeading());
+    postParams.append(QString::number(telemetry->getUasHeading()));
 
     QNetworkRequest request(requestUrl);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -161,7 +161,7 @@ void Interop::postTelemetry(InteropTelemetry telemetry)
     this->networkAccessManager->post(request, postParams);
 }
 
-void Interop::postOdlc(InteropOdlc odlc)
+void Interop::postOdlc(InteropOdlc *odlc)
 {
     this->currRequest = InteropRequest::POST_ODLCS;
 
@@ -172,7 +172,7 @@ void Interop::postOdlc(InteropOdlc odlc)
     QNetworkRequest request(requestUrl);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QByteArray jsonBody = jsonInterpreter->encodeOdlc(odlc).toBinaryData();
+    QByteArray jsonBody = jsonInterpreter->encodeOdlc(odlc).toJson();
 
     connect(this->networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishRequest(QNetworkReply*)));
     this->networkAccessManager->post(request, jsonBody);
@@ -196,7 +196,7 @@ void Interop::postOdlcImage(int odlcId, QByteArray imageData)
 /***********************************************************************************************
  *                                      PUT Requests                                           *
  ***********************************************************************************************/
-void Interop::putOdlc(int odlcId, InteropOdlc odlc)
+void Interop::putOdlc(int odlcId, InteropOdlc *odlc)
 {
     this->currRequest = InteropRequest::PUT_ODLCS_WITH_ID;
 
@@ -207,7 +207,7 @@ void Interop::putOdlc(int odlcId, InteropOdlc odlc)
     QNetworkRequest request(requestUrl);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QByteArray jsonBody = jsonInterpreter->encodeOdlc(odlc).toBinaryData();
+    QByteArray jsonBody = jsonInterpreter->encodeOdlc(odlc).toJson();
 
     connect(this->networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishRequest(QNetworkReply*)));
     this->networkAccessManager->put(request, jsonBody);
@@ -277,11 +277,11 @@ void Interop::finishRequest(QNetworkReply *reply)
             break;
 
         case InteropRequest::GET_ODLCS:
-            finishGetOdlcs(reply);
+            finishGetMultiOdlcs(reply);
             break;
 
         case InteropRequest::GET_ODLCS_WITH_ID:
-            finishGetOdlc(reply);
+            finishGetSingleOdlc(reply);
             break;
 
         case InteropRequest::PUT_ODLCS_WITH_ID:
@@ -366,7 +366,7 @@ void Interop::finishGetObstacles(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void Interop::finishGetOdlcs(QNetworkReply *reply)
+void Interop::finishGetMultiOdlcs(QNetworkReply *reply)
 {
     QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     RequestStatus reqStatus = interpretHttpStatus(statusCode);
@@ -382,7 +382,7 @@ void Interop::finishGetOdlcs(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void Interop::finishGetOdlc(QNetworkReply *reply)
+void Interop::finishGetSingleOdlc(QNetworkReply *reply)
 {
     QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     RequestStatus reqStatus = interpretHttpStatus(statusCode);

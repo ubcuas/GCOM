@@ -10,8 +10,9 @@
 #include "InteropObjects/stationary_obstacle.hpp"
 #include "InteropObjects/interop_odlc.hpp"
 
-class InteropJsonInterpreter
+class InteropJsonInterpreter : public QObject
 {
+    Q_OBJECT
 
 public:
 
@@ -30,7 +31,7 @@ public:
     ObstacleSet* parseObstacles(QJsonDocument json);
     InteropOdlc* parseSingleOdlc(QJsonDocument json);
     QList<InteropOdlc*> parseMultipleOldcs(QJsonDocument json);
-    QJsonDocument encodeOdlc(InteropOdlc odlc);
+    QJsonDocument encodeOdlc(InteropOdlc *odlc);
 
 
 private:
