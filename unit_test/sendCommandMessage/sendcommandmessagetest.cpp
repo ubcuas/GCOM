@@ -43,8 +43,8 @@ void SendCommandMessageTest::sendCommand()
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     QSignalSpy spy(socket, SIGNAL(readyRead()));
     spy.wait(5000);
-    CommandMessage* outgoingMessage = new CommandMessage(CommandMessage::Commands::IMAGE_RELAY_START,CommandMessage::Triggers::TIME,0xFF);
-    bool sendStatus = dcnc->sendUASMessage(std::shared_ptr<UASMessage>(outgoingMessage));
+    CommandMessage outgoingMessage(CommandMessage::Commands::IMAGE_RELAY_START);
+    bool sendStatus = dcnc->sendUASMessage(outgoingMessage);
 
     QVERIFY(sendStatus);
     QTimer timer;

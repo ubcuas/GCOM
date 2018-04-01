@@ -28,8 +28,7 @@ public slots:
      * \param relative altitude of type float
      * \param heading of type float
      */
-    void compareHandleImageTaggedMessage(QString filePath, double latitude, double longitude,
-                                         float altitude_abs, float altitude_rel, float heading);
+    void compareHandleImageTaggedMessage(std::shared_ptr<PathTaggedMessage> message);
     /*!
      * \brief compares values in skippedFromSeqNumTo signal to expected values
      * \param previous sequence number

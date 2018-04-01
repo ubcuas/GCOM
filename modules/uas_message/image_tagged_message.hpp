@@ -141,6 +141,8 @@ class ImageTaggedMessage : public ImageUntaggedMessage {
          * \details If unknown, will be set to UINT16_MAX
          */
         uint16_t headingRaw;
+
+        using ImageUntaggedMessage::imageData;
 };
 
 class PathTaggedMessage : public ImageTaggedMessage {

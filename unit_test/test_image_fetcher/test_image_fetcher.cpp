@@ -156,10 +156,10 @@ void TestImageFetcher::testHandleImageTaggedMessage()
     image.close();
 
     // Connect taggedImage signal to compare function
-    connect(imageFetcher, SIGNAL(taggedImage(QString, double, double, float, float, float)),
-            this, SLOT(compareHandleImageTaggedMessage(QString, double, double, float, float, float)));
+    connect(imageFetcher, SIGNAL(taggedImage(std::shared_ptr<PathTaggedMessage>)),
+            this, SLOT(compareHandleImageTaggedMessage(std::shared_ptr<PathTaggedMessage>)));
     QSignalSpy taggedImageMessageSpy(imageFetcher,
-                                     SIGNAL(taggedImage(QString, double, double, float, float, float)));
+                                     SIGNAL(taggedImage(std::shared_ptr<PathTaggedMessage>)));
     QVERIFY(taggedImageMessageSpy.isValid());
 
     // Connect skippedFromSeqNumTo signal to compare function
@@ -199,19 +199,19 @@ void TestImageFetcher::compareSkippedFromSeqNumTo(uint8_t fromSeqNum, uint8_t to
 }
 
 // Verifies that the data in the signal taggedImage is as expected
-void TestImageFetcher::compareHandleImageTaggedMessage(QString filePath, double latitude, double longitude,
-                                                       float altitude_abs, float altitude_rel, float heading)
+void TestImageFetcher::compareHandleImageTaggedMessage(std::shared_ptr<PathTaggedMessage> message)
 {
-    QCOMPARE(filePath, expectedFilePath);
-    QCOMPARE(latitude, expectedLatitude);
-    QCOMPARE(longitude, expectedLongitude);
-    QCOMPARE(altitude_abs, expectedAltitudeAbs);
-    QCOMPARE(altitude_rel, expectedAltitudeRel);
-    QCOMPARE(heading, expectedHeading);
+    ImageTaggedMessage *imageTaggedMessage = message.get();
+    QCOMPARE(reinterpret_cast<const char *>(message.imageData.data()), expectedFilePath);
+    QCOMPARE(imageTaggedMessage->latitude(), expectedLatitude);
+    QCOMPARE(imageTaggedMessage->longitude(), expectedLongitude);
+    QCOMPARE(imageTaggedMessage->altitude_abs(), expectedAltitudeAbs);
+    QCOMPARE(imageTaggedMessage->altitude_rel(), expectedAltitudeRel);
+    QCOMPARE(imageTaggedMessage->heading(), expectedHeading);
 
     // Disconnect taggedImage signal from compareHandleImageTaggedMessage slot
-    disconnect(imageFetcher, SIGNAL(taggedImage(QString, double, double, float, float, float)),
-               this, SLOT(compareHandleImageTaggedMessage(QString, double, double, float, float, float)));
+    disconnect(imageFetcher, SIGNAL(taggedImage(std::shared_ptr<PathTaggedMessage>)),
+               this, SLOT(compareHandleImageTaggedMessage(std::shared_ptr<PathTaggedMessage>)));
 }
 
 QTEST_MAIN(TestImageFetcher)

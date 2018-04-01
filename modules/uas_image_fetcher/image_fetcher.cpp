@@ -106,7 +106,7 @@ void ImageFetcher::handleImageTaggedMessage(std::shared_ptr<ImageTaggedMessage> 
         emit skippedFromSeqNumTo(prevSeqNum, uniqueSeqNum);
     }
     filePath = QString(imagePathTemplate).arg(fileDirectory).arg(QString::number(imageNum++));
-    std::shared_ptr<PathTaggedMessage>pathMessage=Utility::toPathTaggedMessage(filePath, *message);
+    std::shared_ptr<PathTaggedMessage>pathMessage = Utility::toPathTaggedMessage(filePath, *message);
     emit taggedImage(pathMessage);
     prevSeqNum = uniqueSeqNum;
     QString tagData = QString::number(imageNum) + ", " +
