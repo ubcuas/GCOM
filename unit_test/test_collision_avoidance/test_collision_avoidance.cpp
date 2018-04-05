@@ -13,12 +13,12 @@ QTEST_MAIN(TestCollisionAvoidance)
 
 void TestCollisionAvoidance::initTestCase()
 {
-    collisionAvoidanceInstance = new CollisionAvoidance();
+    collisionAvoidance = new CollisionAvoidance();
 }
 
 void TestCollisionAvoidance::cleanupTestCase()
 {
-    delete collisionAvoidanceInstance;
+    delete collisionAvoidance;
 }
 
 void TestCollisionAvoidance::testCase1()
@@ -26,7 +26,27 @@ void TestCollisionAvoidance::testCase1()
     // setup mock waypoint simulation
     QList<InteropMission::Waypoint> mockWaypoints = this->getMockWaypointsOrdered();
 
-    collisionAvoidanceInstance->generateWaypointFile(mockWaypoints, "missionplanwaypoints1");
+    collisionAvoidance->generateWaypointFile(mockWaypoints, "missionplanwaypoints1");
+    QVERIFY2(true, "Failure");
+}
+
+
+void TestCollisionAvoidance::testCase2()
+{
+    // testing calculations [38 m]
+    double lat1 = 49.262029;
+    double lon1 = -123.247443;
+    double lat2 = 49.262318;
+    double lon2 = -123.247690;
+
+    double x1 = collisionAvoidance->longitudeToX(lon1);
+    double y1 = collisionAvoidance->latitudeToY(lat1);
+    double x2 = collisionAvoidance->longitudeToX(lon2);
+    double y2 = collisionAvoidance->latitudeToY(lat2);
+
+    double distance1 = collisionAvoidance->distanceBetweenTwoPoints(x1,y1,x2,y2);
+    double distance2 = collisionAvoidance->distanceOfTwoCoordsKm(lat1,lon1,lat2,lon2)*1000;
+
     QVERIFY2(true, "Failure");
 }
 

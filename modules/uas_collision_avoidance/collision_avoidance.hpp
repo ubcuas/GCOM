@@ -12,18 +12,20 @@ public:
 
     void generateWaypointFile(QList<InteropMission::Waypoint> waypoints, QString fileNameTag);
 
-private:
     QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);
-
-    float longitudeToX(float);
-    float latitudeToY(float);
-
-    QList<InteropMission::Waypoint> missionWaypoints;
-    QList<StationaryObstacle> stationaryObstacles;
-
+    static double longitudeToX(double);
+    static double latitudeToY(double);
+    static double distanceBetweenTwoPoints(double Ax, double Ay, double Bx, double By);
     bool collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
                                                InteropMission::Waypoint waypointB,
                                                QList<StationaryObstacle> obstacles);
+    void sortMissionWaypoints(InteropMission::Waypoint waypoints[], int size);
+    double distanceOfTwoCoordsKm(double lat1d, double lon1d, double lat2d, double lon2d);
+    void swapWaypoints(InteropMission::Waypoint &a, InteropMission::Waypoint &b);
+
+private:
+    QList<InteropMission::Waypoint> missionWaypoints;
+    QList<StationaryObstacle> stationaryObstacles;
 };
 
 #endif // COLLISION_AVOIDANCE_H

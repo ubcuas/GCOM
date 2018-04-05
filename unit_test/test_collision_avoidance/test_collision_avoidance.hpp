@@ -17,10 +17,11 @@ class TestCollisionAvoidance : public QObject
     Q_OBJECT
 
 private:
-    CollisionAvoidance *collisionAvoidanceInstance;
+    CollisionAvoidance *collisionAvoidance;
 
 private slots:
     void testCase1();
+    void testCase2();
     QList<InteropMission::Waypoint> getMockWaypointsOrdered();
 
 private Q_SLOTS:
