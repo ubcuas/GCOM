@@ -11,7 +11,9 @@
 #include <QTcpSocket>
 #include <string>
 #include <memory>
+#include <QDataStream>
 #include "../Mavlink/ardupilotmega/mavlink.h"
+#include "modules/uas_interop_system/InteropObjects/interop_mission.hpp"
 
 //===================================================================
 // Class Declarations
@@ -32,7 +34,7 @@ public:
     enum class MAVLinkRelayStatus : int
     {
         CONNECTED           = 0,
-        DISCCONNECTED       = 1,
+        DISCONNECTED        = 1,
         CONNECTING          = 2,
     };
     // Public Methods
@@ -66,6 +68,28 @@ public:
      */
     MAVLinkRelayStatus status();
 
+
+    /*!
+     * \brief triggerCamera
+     * \param session, 0: stop, 1: start or keep it up //Session control e.g. show/hide lens
+     * \param zoom_pos, 1 to N //Zoom's absolute position (0 means ignore)
+     * \param zoom_step, -100 to 100 //Zooming step value to offset zoom from the current position
+     * \param focus_lock, 0: unlock focus or keep unlocked,
+     *                    1: lock focus or keep locked, 3: re-lock focus
+     * \param shot, 0: ignore, 1: shot or start filming
+     * \param command_id, Command Identity (incremental loop: 0 to 255)
+     *                    A command sent multiple times will be executed or pooled just once
+     * \param extra_param, Extra parameters enumeration (0 means ignore)
+     * \param extra_value, Correspondent value to given extra_param
+     * \return true if message sent sucessfully, false if unsuccessfully
+     */
+    bool triggerCamera(uint8_t session, uint8_t zoom_pos, int8_t zoom_step,
+                       uint8_t focus_lock, uint8_t shot, uint8_t command_id,
+                       uint8_t extra_param, float extra_value);
+
+    void writeWayPoints(QList<InteropMission::Waypoint> waypoints);
+    void clearWayPoints();
+
 signals:
     void mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t> gpsSignal);
     void mavlinkRelayCameraInfo(std::shared_ptr<mavlink_camera_feedback_t> cameraSignal);
@@ -79,11 +103,27 @@ private slots:
     void readBytes();
 
 private:
+    /*!
+     * \brief writeData, writes data to the socket
+     * \param outgoingMessage, message to write
+     * \return true if successful, false if unsuccessful
+     */
+    bool writeData(mavlink_message_t outgoingMessage);
+
+    void handleMissionRequest(uint16_t seq);
+
     // Private Member Variables
     QTcpSocket missionplannerSocket;
     MAVLinkRelayStatus relayStatus;
     QString ipaddress;
     qint16 port;
     mavlink_status_t lastStatus;
+
+    uint8_t systemSysID;
+    uint8_t systemCompID;
+    uint8_t missionPlannerSysID;
+    uint8_t missionPlannerCompID;
+
+    QList<InteropMission::Waypoint> waypointList;
 };
 #endif // MAVLINKRELAYTCP_HPP

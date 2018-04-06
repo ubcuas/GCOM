@@ -5,6 +5,7 @@
 #include <QString>
 #include <memory>
 #include <QDebug>
+#include <QDateTime>
 // GCOM Includes
 #include "mavlink_relay_tcp.hpp"
 #include "../Mavlink/ardupilotmega/mavlink.h"
@@ -17,7 +18,7 @@ MAVLinkRelay::MAVLinkRelay()
     // Set defualt values
     ipaddress = "127.0.0.1";
     port = 14550;
-    relayStatus = MAVLinkRelayStatus::DISCCONNECTED;
+    relayStatus = MAVLinkRelayStatus::DISCONNECTED;
     // Build the sockets and connect the signals/slots
     connect(&missionplannerSocket, SIGNAL(connected()),
             this, SLOT(connected()));
@@ -58,6 +59,9 @@ bool MAVLinkRelay::start()
     // Attempt to connect to the specified host
     missionplannerSocket.connectToHost(ipaddress, port);
 
+    systemSysID = 2;
+    systemCompID = 1;
+
     return true;
 }
 
@@ -69,7 +73,7 @@ void MAVLinkRelay::connected()
 
 void MAVLinkRelay::disconnected()
 {
-    relayStatus = MAVLinkRelayStatus::DISCCONNECTED;
+    relayStatus = MAVLinkRelayStatus::DISCONNECTED;
     emit mavlinkRelayDisconnected();
 }
 
@@ -113,7 +117,6 @@ void MAVLinkRelay::readBytes()
         {
             switch (message.msgid)
             {
-
                 case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                 {
                     std::shared_ptr<mavlink_global_position_int_t> gpsPacketPointer(
@@ -132,9 +135,107 @@ void MAVLinkRelay::readBytes()
                     break;
                 }
 
+                case MAVLINK_MSG_ID_HEARTBEAT:
+                {
+                    missionPlannerSysID = message.sysid;
+                    missionPlannerCompID = message.compid;
+                    break;
+                }
+
+                case MAVLINK_MSG_ID_MISSION_REQUEST:
+                {
+                    mavlink_mission_request_t mission_request;
+                    mavlink_msg_mission_request_decode(&message, &mission_request);
+                    handleMissionRequest(mission_request.seq);
+                    break;
+                }
+
+                case MAVLINK_MSG_ID_MISSION_ACK:
+                {
+                    mavlink_mission_ack_t mission_ack;
+                    mavlink_msg_mission_ack_decode(&message, &mission_ack);
+                    qDebug() << "ack received:" << mission_ack.type;
+                    break;
+                }
                 default:
                     break;
             }
         }
     }
+}
+
+bool MAVLinkRelay::writeData(mavlink_message_t outgoingMessage)
+{
+    if (missionplannerSocket.state() != QAbstractSocket::ConnectedState)
+        return false;
+
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+
+    int messageLength = mavlink_msg_to_send_buffer(buffer, &outgoingMessage);
+    int bytesWritten = missionplannerSocket.write(reinterpret_cast<const char*>(buffer),
+                                                  messageLength);
+
+    if (bytesWritten != messageLength)
+        return false;
+
+    return true;
+}
+
+bool MAVLinkRelay::triggerCamera(uint8_t session, uint8_t zoom_pos, int8_t zoom_step,
+                                 uint8_t focus_lock, uint8_t shot, uint8_t command_id,
+                                 uint8_t extra_param, float extra_value)
+{
+    mavlink_message_t outgoingMessage;
+
+    mavlink_msg_digicam_control_pack(systemSysID, systemCompID, &outgoingMessage,
+                                     missionPlannerSysID, missionPlannerCompID,
+                                     session, zoom_pos, zoom_step, focus_lock, shot,
+                                     command_id, extra_param, extra_value);
+
+    if (!writeData(outgoingMessage))
+        return false;
+
+    return true;
+}
+
+void MAVLinkRelay::writeWayPoints(QList<InteropMission::Waypoint> waypoints)
+{   
+    mavlink_message_t outgoingMessage;
+
+    waypointList = waypoints;
+
+    mavlink_msg_mission_count_pack(systemSysID, systemCompID, &outgoingMessage,
+                                   missionPlannerSysID, missionPlannerCompID,
+                                   waypointList.size());
+
+    if(!writeData(outgoingMessage))
+        qDebug() << "count failed";
+    else
+        qDebug() << "sent" << waypointList.size();
+}
+
+void MAVLinkRelay::handleMissionRequest(uint16_t seq)
+{
+    mavlink_message_t outgoingMessage;
+
+    mavlink_msg_mission_item_pack(systemSysID, systemCompID, &outgoingMessage,
+                                  missionPlannerSysID, missionPlannerCompID,
+                                  seq, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT,
+                                  0, 1, 0, 0, 0, 0,
+                                  waypointList.at(seq).latitude,
+                                  waypointList.at(seq).longitude,
+                                  waypointList.at(seq).altitudeMsl);
+
+    if(!writeData(outgoingMessage))
+        qDebug() << "failed to send waypoint";
+}
+
+void MAVLinkRelay::clearWayPoints()
+{
+    mavlink_message_t outgoingMessage;
+
+    mavlink_msg_mission_clear_all_pack(systemSysID, systemCompID, &outgoingMessage,
+                                       missionPlannerSysID, missionPlannerCompID);
+
+    writeData(outgoingMessage);
 }

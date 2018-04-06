@@ -217,7 +217,7 @@ void GcomController::on_mavlinkConnectionButton_clicked()
 {
     // If the MAVLink relay was disconnected the state machine progresses to
     // the connection stage
-    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCCONNECTED)
+    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCONNECTED)
     {
         // Disable all input fields
         ui->mavlinkIPField->setDisabled(true);
@@ -316,6 +316,13 @@ void GcomController::resetDCNCGUI()
 
 void GcomController::on_dcncConnectionButton_clicked()
 {
+    QList<InteropMission::Waypoint> waypointList;
+    waypointList.append({100.0, 49.2628057, -123.2437491, 0});
+    waypointList.append({100.0, 49.2613774, -123.2440495, 1});
+    waypointList.append({100.0, 49.2608032, -123.2485127, 2});
+
+    mavlinkRelay->writeWayPoints(waypointList);
+
     bool status;
     switch(dcnc->status())
     {
@@ -376,6 +383,7 @@ void GcomController::on_dcncConnectionButton_clicked()
 
 void GcomController::on_dcncDropGremlin_clicked()
 {
+    mavlinkRelay->clearWayPoints();
     dcnc->cancelConnection();
 }
 
