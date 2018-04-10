@@ -27,6 +27,8 @@
  */
 class MAVLinkRelay : public QObject
 {
+    friend class TestMAVLinkRelay;
+
     Q_OBJECT
 
 public:
@@ -87,8 +89,16 @@ public:
                        uint8_t focus_lock, uint8_t shot, uint8_t command_id,
                        uint8_t extra_param, float extra_value);
 
-    void writeWayPoints(QList<InteropMission::Waypoint> waypoints);
-    void clearWayPoints();
+    /*!
+     * \brief writeMission, write mission (takeoff, waypoints, land) to drone
+     * \param takeoffAlt, takeoff altitude
+     * \param waypoints, list of waypoints
+     */
+    void writeMission(float takeoffAlt, QList<InteropMission::Waypoint> waypoints);
+    /*!
+     * \brief clearMission, clears all waypoints
+     */
+    bool clearMission();
 
 signals:
     void mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t> gpsSignal);
@@ -96,13 +106,24 @@ signals:
     void mavlinkRelayConnected();
     void mavlinkRelayDisconnected();
 
+    void missionAck(uint8_t type);
+
 private slots:
     void connected();
     void disconnected();
     void statusChanged(QAbstractSocket::SocketState socketState);
     void readBytes();
 
+public slots:
+    void changeAutoReconnect(bool autoReconnect);
+
 private:
+    enum class MAVLinkRelaySendingStatus : int
+    {
+        READY               = 0,
+        SENDING             = 1
+    };
+
     /*!
      * \brief writeData, writes data to the socket
      * \param outgoingMessage, message to write
@@ -111,6 +132,7 @@ private:
     bool writeData(mavlink_message_t outgoingMessage);
 
     void handleMissionRequest(uint16_t seq);
+    void handleMissionAck(uint8_t type);
 
     // Private Member Variables
     QTcpSocket missionplannerSocket;
@@ -119,11 +141,16 @@ private:
     qint16 port;
     mavlink_status_t lastStatus;
 
+    bool autoReconnect;
+
     uint8_t systemSysID;
     uint8_t systemCompID;
-    uint8_t missionPlannerSysID;
-    uint8_t missionPlannerCompID;
+    uint8_t targetSysID;
+    uint8_t targetCompID;
+
+    MAVLinkRelaySendingStatus sendingStatus;
 
     QList<InteropMission::Waypoint> waypointList;
+    float takeoffAltitude;
 };
 #endif // MAVLINKRELAYTCP_HPP

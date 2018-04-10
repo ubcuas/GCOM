@@ -13,7 +13,8 @@ test {
     TEMPLATE = subdirs
     SUBDIRS += \
         unit_test/test_image_fetcher \
-        unit_test/test_gcom_controller_image_fetcher
+        unit_test/test_gcom_controller_image_fetcher \
+        unit_test/test_mavlink_relay
 }
 else {
     TEMPLATE = app
