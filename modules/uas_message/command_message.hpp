@@ -26,8 +26,8 @@ class CommandMessage : public UASMessage
             SYSTEM_RESET            = 0x01,
             SYSTEM_PAUSE            = 0x02,
             SYSTEM_RESUME           = 0x03,
-            IMAGE_RELAY_START    = 0x04,
-            IMAGE_RELAY_STOP     = 0x05,
+            IMAGE_RELAY_START       = 0x04,
+            IMAGE_RELAY_STOP        = 0x05,
             // Special Command used for responses to requests
             DATA_REQUEST            = 0xFA
         };
@@ -36,8 +36,13 @@ class CommandMessage : public UASMessage
         /*!
          * \brief CommandMessage's constructor creates a command message to send to the drone
          * \param [in] command, The command to send to the Gremlin
+<<<<<<< HEAD
+         * \param [in] args that are command specific, it is up to the reciver to interpret them.
+=======
+         * \param [in] args that are command specific, it is up to the receiver to interpret them.
+>>>>>>> controller
          */
-        CommandMessage(Commands command);
+        CommandMessage(Commands command, std::vector<uint8_t> args);
 
         /*!
          * \brief CommandMessage constructor designed to initialize a message using a serialized payload
@@ -67,6 +72,11 @@ class CommandMessage : public UASMessage
          * \brief The type of command that was requested
          */
         Commands command;
+
+        /*!
+         * \brief Command Specific Args
+         */
+        std::vector<uint8_t> args;
 };
 
 #endif // COMMANDMESSAGE_H
