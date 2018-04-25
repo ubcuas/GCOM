@@ -11,7 +11,7 @@
 #include <QTcpSocket>
 #include <string>
 #include <memory>
-#include <QDataStream>
+#include <QElapsedTimer>
 #include "../Mavlink/ardupilotmega/mavlink.h"
 #include "modules/uas_interop_system/InteropObjects/interop_mission.hpp"
 
@@ -70,7 +70,6 @@ public:
      */
     MAVLinkRelayStatus status();
 
-
     /*!
      * \brief triggerCamera
      * \param session, 0: stop, 1: start or keep it up //Session control e.g. show/hide lens
@@ -92,7 +91,7 @@ public:
     /*!
      * \brief writeMission, write mission (takeoff, waypoints, land) to drone
      * \param takeoffAlt, takeoff altitude
-     * \param waypoints, list of waypoints
+     * \param waypoints, list of waypoints to be sent
      */
     void writeMission(float takeoffAlt, QList<InteropMission::Waypoint> waypoints);
     /*!
@@ -106,7 +105,18 @@ signals:
     void mavlinkRelayConnected();
     void mavlinkRelayDisconnected();
 
-    void missionAck(uint8_t type);
+    void receivedMissionAck(uint8_t type);
+    void receivedMissionRequest(uint16_t seq);
+    /*!
+     * \brief mavlinkRelayCommandSuccess
+     * \details true if command was sent, received, and acknowledged without error
+     *          false if command had any error
+     */
+    /*!
+     * \brief mavlinkRelayCommandSuccess, signals other modules whether or not command
+     *                                    succeeded or failed
+     */
+    void mavlinkRelayCommandSuccess(bool);
 
 private slots:
     void connected();
@@ -114,8 +124,8 @@ private slots:
     void statusChanged(QAbstractSocket::SocketState socketState);
     void readBytes();
 
-public slots:
-    void changeAutoReconnect(bool autoReconnect);
+    void handleMissionRequest(uint16_t seq);
+    void handleMissionAck(uint8_t type);
 
 private:
     enum class MAVLinkRelaySendingStatus : int
@@ -131,9 +141,6 @@ private:
      */
     bool writeData(mavlink_message_t outgoingMessage);
 
-    void handleMissionRequest(uint16_t seq);
-    void handleMissionAck(uint8_t type);
-
     // Private Member Variables
     QTcpSocket missionplannerSocket;
     MAVLinkRelayStatus relayStatus;
@@ -141,14 +148,15 @@ private:
     qint16 port;
     mavlink_status_t lastStatus;
 
-    bool autoReconnect;
-
+    // sys and comp id of ground
     uint8_t systemSysID;
     uint8_t systemCompID;
+    // sys and comp id of drone
     uint8_t targetSysID;
     uint8_t targetCompID;
 
     MAVLinkRelaySendingStatus sendingStatus;
+    QElapsedTimer waypointRequestTimer;
 
     QList<InteropMission::Waypoint> waypointList;
     float takeoffAltitude;

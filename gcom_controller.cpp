@@ -125,8 +125,6 @@ GcomController::GcomController(QWidget *parent) :
             this, SLOT(mavlinkRelayConnected()));
     connect(mavlinkRelay, SIGNAL(mavlinkRelayDisconnected()),
             this, SLOT(mavlinkRelayDisconnected()));
-    connect(ui->mavlinkAutoReconnect, SIGNAL(clicked(bool)),
-            mavlinkRelay, SLOT(changeAutoReconnect(bool)));
     mavlinkButtonDisconnect = false;
     mavlinkConnectingMovie = new QMovie (":/connection/mavlink_connecting.gif");
     mavlinkConnectedMovie = new QMovie (":/connection/mavlink_connected.gif");
@@ -318,13 +316,6 @@ void GcomController::resetDCNCGUI()
 
 void GcomController::on_dcncConnectionButton_clicked()
 {
-    QList<InteropMission::Waypoint> waypointList;
-    waypointList.append({40.0, 49.2623646, -123.2473218, 0});
-    waypointList.append({40.0, 49.2620145, -123.2484162, 1});
-    waypointList.append({40.0, 49.2624661, -123.2486147, 2});
-
-    mavlinkRelay->writeMission(40, waypointList);
-
     bool status;
     switch(dcnc->status())
     {
@@ -385,7 +376,6 @@ void GcomController::on_dcncConnectionButton_clicked()
 
 void GcomController::on_dcncDropGremlin_clicked()
 {
-    mavlinkRelay->clearMission();
     dcnc->cancelConnection();
 }
 

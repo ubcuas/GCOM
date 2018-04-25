@@ -3,14 +3,13 @@
 //===================================================================
 // System Includes
 #include <QString>
-#include <memory>
-#include <QDebug>
-#include <QDateTime>
 // GCOM Includes
 #include "mavlink_relay_tcp.hpp"
 #include "../Mavlink/ardupilotmega/mavlink.h"
 
-#define PACK_LAT_LON(x) (int32_t) (x*1e7)
+#define PACK_LAT_LON(x) (x*1e7) // float -> int32_t
+
+const int WAYPOINT_REQUEST_TIMEOUT = 7000; // ms
 
 //===================================================================
 // Class Definitions
@@ -22,6 +21,10 @@ MAVLinkRelay::MAVLinkRelay()
     port = 14550;
     relayStatus = MAVLinkRelayStatus::DISCONNECTED;
     sendingStatus = MAVLinkRelaySendingStatus::READY;
+    systemSysID = 2;
+    systemCompID = 1;
+    targetSysID = 1;
+    targetCompID = 1;
     // Build the sockets and connect the signals/slots
     connect(&missionplannerSocket, SIGNAL(connected()),
             this, SLOT(connected()));
@@ -31,6 +34,10 @@ MAVLinkRelay::MAVLinkRelay()
             this, SLOT(readBytes()));
     connect(&missionplannerSocket, &QTcpSocket::stateChanged,
             this, &MAVLinkRelay::statusChanged);
+    connect(this, SIGNAL(receivedMissionRequest(uint16_t)),
+            this, SLOT(handleMissionRequest(uint16_t)));
+    connect(this, SIGNAL(receivedMissionAck(uint8_t)),
+            this, SLOT(handleMissionAck(uint8_t)));
 }
 
 void MAVLinkRelay::stop()
@@ -62,20 +69,34 @@ bool MAVLinkRelay::start()
     // Attempt to connect to the specified host
     missionplannerSocket.connectToHost(ipaddress, port);
 
-    systemSysID = 2;
-    systemCompID = 1;
-
     return true;
 }
 
 void MAVLinkRelay::connected()
 {
-     relayStatus = MAVLinkRelayStatus::CONNECTED;
-     emit mavlinkRelayConnected();
+    /* If disconnection is longer than WAYPOINT_REQUEST_TIMEOUT, ardupilot
+     * times out and stop rerequesting waypoints on reconnection, so command fails
+     */
+    if (sendingStatus == MAVLinkRelaySendingStatus::SENDING &&
+        waypointRequestTimer.elapsed() >= WAYPOINT_REQUEST_TIMEOUT)
+    {
+        sendingStatus = MAVLinkRelaySendingStatus::READY;
+        emit mavlinkRelayCommandSuccess(false);
+    }
+
+    // Stop timer
+    waypointRequestTimer.invalidate();
+
+    relayStatus = MAVLinkRelayStatus::CONNECTED;
+    emit mavlinkRelayConnected();
 }
 
 void MAVLinkRelay::disconnected()
 {
+    // Start timer
+    if (sendingStatus == MAVLinkRelaySendingStatus::SENDING)
+        waypointRequestTimer.start();
+
     relayStatus = MAVLinkRelayStatus::DISCONNECTED;
     emit mavlinkRelayDisconnected();
 }
@@ -91,12 +112,6 @@ void MAVLinkRelay::statusChanged(QAbstractSocket::SocketState socketState)
     else if ((relayStatus == MAVLinkRelayStatus::CONNECTING)
              && (socketState == QAbstractSocket::SocketState::UnconnectedState))
         disconnected();
-}
-
-void MAVLinkRelay::changeAutoReconnect(bool autoReconnect)
-{
-    // Todo
-    this->autoReconnect = autoReconnect;
 }
 
 void MAVLinkRelay::readBytes()
@@ -153,15 +168,13 @@ void MAVLinkRelay::readBytes()
 
                 case MAVLINK_MSG_ID_MISSION_REQUEST:
                 {
-                    qDebug() << "request" << mavlink_msg_mission_request_get_seq(&message);
-                    handleMissionRequest(mavlink_msg_mission_request_get_seq(&message));
+                    emit receivedMissionRequest(mavlink_msg_mission_request_get_seq(&message));
                     break;
                 }
 
                 case MAVLINK_MSG_ID_MISSION_ACK:
                 {
-                    qDebug() << "ack" << mavlink_msg_mission_ack_get_type(&message);
-                    handleMissionAck(mavlink_msg_mission_ack_get_type(&message));
+                    emit receivedMissionAck(mavlink_msg_mission_ack_get_type(&message));
                     break;
                 }
                 default:
@@ -205,14 +218,35 @@ bool MAVLinkRelay::triggerCamera(uint8_t session, uint8_t zoom_pos, int8_t zoom_
     return true;
 }
 
+bool MAVLinkRelay::clearMission()
+{
+    if (sendingStatus == MAVLinkRelaySendingStatus::SENDING)
+        return false;
+
+    mavlink_message_t outgoingMessage;
+
+    mavlink_msg_mission_clear_all_pack(systemSysID, systemCompID, &outgoingMessage,
+                                       targetSysID, targetCompID);
+
+    if (!writeData(outgoingMessage))
+        return false;
+
+    return true;
+}
+
 void MAVLinkRelay::writeMission(float takeoffAlt, QList<InteropMission::Waypoint> waypoints)
 {   
+    if (sendingStatus == MAVLinkRelaySendingStatus::SENDING ||
+        missionplannerSocket.state() != QAbstractSocket::ConnectedState)
+        return;
+
     mavlink_message_t outgoingMessage;
 
     waypointList = waypoints;
     takeoffAltitude = takeoffAlt;
 
     // Tell the drone the number of waypoints to be sent
+    // 3 extra waypoints to be sent - home, takeoff, landing
     mavlink_msg_mission_count_pack(systemSysID, systemCompID, &outgoingMessage,
                                    targetSysID, targetCompID, waypointList.size()+3);
 
@@ -226,10 +260,8 @@ void MAVLinkRelay::handleMissionRequest(uint16_t seq)
         return;
 
     mavlink_message_t outgoingMessage;
-    qDebug() << "send" << seq;
 
-    // Last waypoint is a land command
-    // Land at current location
+    // Last waypoint is a land command, land at current location
     if (seq == waypointList.size()+2)
     {
         mavlink_msg_mission_item_int_pack(systemSysID, systemCompID, &outgoingMessage,
@@ -250,29 +282,30 @@ void MAVLinkRelay::handleMissionRequest(uint16_t seq)
         case 0:
         {
             mavlink_msg_mission_item_int_pack(systemSysID, systemCompID, &outgoingMessage,
-                                          targetSysID, targetCompID, seq,
-                                          MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT,
-                                          0, 1, 0, 0, 0, 0, 0, 0, 0);
+                                              targetSysID, targetCompID, seq,
+                                              MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT,
+                                              0, 1, 0, 0, 0, 0, 0, 0, 0);
             break;
         }
         // Second waypoint is the takeoff command
         case 1:
         {
             mavlink_msg_mission_item_int_pack(systemSysID, systemCompID, &outgoingMessage,
-                                          targetSysID, targetCompID, seq,
-                                          MAV_FRAME_GLOBAL, MAV_CMD_NAV_TAKEOFF,
-                                          0, 1, 0, 0, 0, 0, 0, 0, takeoffAltitude);
+                                              targetSysID, targetCompID, seq,
+                                              MAV_FRAME_GLOBAL, MAV_CMD_NAV_TAKEOFF,
+                                              0, 1, 0, 0, 0, 0, 0, 0, takeoffAltitude);
             break;
         }
+        // Any other is a regular waypoint
         default:
         {
             mavlink_msg_mission_item_int_pack(systemSysID, systemCompID, &outgoingMessage,
-                                          targetSysID, targetCompID, seq,
-                                          MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT,
-                                          0, 1, 0, 0, 0, 0,
-                                          PACK_LAT_LON(waypointList.at(seq-2).latitude),
-                                          PACK_LAT_LON(waypointList.at(seq-2).longitude),
-                                          waypointList.at(seq-2).altitudeMsl);
+                                              targetSysID, targetCompID, seq,
+                                              MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT,
+                                              0, 1, 0, 0, 0, 0,
+                                              PACK_LAT_LON(waypointList.at(seq-2).latitude),
+                                              PACK_LAT_LON(waypointList.at(seq-2).longitude),
+                                              waypointList.at(seq-2).altitudeMsl);
         }
     }
 
@@ -286,33 +319,21 @@ void MAVLinkRelay::handleMissionAck(uint8_t type)
 
     switch(type)
     {
-        case MAV_MISSION_ACCEPTED:
-            sendingStatus = MAVLinkRelaySendingStatus::READY;
-            emit missionAck(MAV_MISSION_ACCEPTED);
-        break;
-
+        // This error does not affect overall command, so ignore
         case MAV_MISSION_INVALID_SEQUENCE:
         break;
 
-        default:
+        case MAV_MISSION_ACCEPTED:
+        {
             sendingStatus = MAVLinkRelaySendingStatus::READY;
-            clearMission();
-            emit missionAck(type);
+            emit mavlinkRelayCommandSuccess(true);
+            break;
+        }
+        // All other acknowledgement types are errors
+        default:
+        {
+            sendingStatus = MAVLinkRelaySendingStatus::READY;
+            emit mavlinkRelayCommandSuccess(false);
+        }
     }
-}
-
-bool MAVLinkRelay::clearMission()
-{
-    if (sendingStatus == MAVLinkRelaySendingStatus::SENDING)
-        return false;
-
-    mavlink_message_t outgoingMessage;
-
-    mavlink_msg_mission_clear_all_pack(systemSysID, systemCompID, &outgoingMessage,
-                                       targetSysID, targetCompID);
-
-    if (!writeData(outgoingMessage))
-        return false;
-
-    return true;
 }

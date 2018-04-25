@@ -23,13 +23,16 @@ private Q_SLOTS:
     void cleanupTestCase();
 
 private slots:
-    void testClearMission();
     void testTriggerCamera();
+    void testWriteMission();
+    void testClearMission();
+    void testDisconnection();
 
 signals:
     void receivedTriggerCamera(mavlink_message_t message);
     void receivedClearMission(mavlink_message_t message);
-
+    void receivedMissionItem(mavlink_message_t message);
+    void receivedMissionCount(mavlink_message_t message);
 
 public slots:
     void readBytes();
@@ -37,13 +40,20 @@ public slots:
     void compareTriggerCamera(mavlink_message_t message);
     void compareClearMission(mavlink_message_t message);
 
+    void handleMissionCount(mavlink_message_t message);
+    void compareMissionItem(mavlink_message_t message);
 
 private:
     bool writeData(mavlink_message_t outgoingMessage);
 
+
+
     QTcpServer server;
     QTcpSocket *socket;
     MAVLinkRelay mavlinkRelay;
+
+    uint16_t waypointCount;
+    int waypointNumber;
 };
 
 #endif // TEST_MAVLINK_RELAY_HPP
