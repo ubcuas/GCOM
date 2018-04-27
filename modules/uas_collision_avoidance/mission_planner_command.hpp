@@ -3,6 +3,7 @@
 
 enum MissionPlannerCommand : uint8_t
 {
+    NULL_WAYPOINT = 0,
     WAYPOINT = 16,
     SPLINE_WAYPOINT = 82,
     LOITER_TURNS = 18,

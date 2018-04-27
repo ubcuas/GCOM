@@ -340,7 +340,7 @@ void AntennaTracker::receiveHandler(std::shared_ptr<mavlink_global_position_int_
         return;
 
     const float yawBase= std::static_pointer_cast<IMUMessage>(imuMessage)->x;
-    const float pitchBase = std::static_pointer_cast<IMUMessage>(imuMessage)->y;
+    const float pitchBase = std::static_pointer_cast<IMUMessage>(imuMessage)->z * -1;
 
     // Calculate horizontal angle
     float moveHorizAngle = Utility::calcHorizontal(droneGPSData, yawBase, latBase, lonBase, heading);

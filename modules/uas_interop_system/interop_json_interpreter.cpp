@@ -178,7 +178,7 @@ InteropMission* InteropJsonInterpreter::parseMission(QJsonObject obj)
         int order = missionWaypointObj["order"].toInt();
 
         InteropMission::Waypoint missionWaypoint =
-                InteropMission::Waypoint{altMsl, lat, lon, order};
+                InteropMission::Waypoint{altMsl, lat, lon, order, MissionPlannerCommand::NULL_WAYPOINT};
         missionWaypointsList.append(missionWaypoint);
     }
     parsedMission->setMissionWaypoints(missionWaypointsList);
@@ -209,7 +209,7 @@ InteropMission* InteropJsonInterpreter::parseMission(QJsonObject obj)
         int order = searchGridPtObj["order"].toInt();
 
         InteropMission::Waypoint searchGridPt =
-                InteropMission::Waypoint{altMsl, lat, lon, order};
+                InteropMission::Waypoint{altMsl, lat, lon, order, MissionPlannerCommand::NULL_WAYPOINT};
         searchGridPtsList.append(searchGridPt);
     }
     parsedMission->setMissionWaypoints(searchGridPtsList);
