@@ -7,25 +7,35 @@
 class CollisionAvoidance
 {
 public:
+
+    struct Position
+    {
+        double latitude;
+        double longitude;
+    };
+
     CollisionAvoidance();
     ~CollisionAvoidance();
 
     void generateWaypointFile(QList<InteropMission::Waypoint> waypoints, QString fileNameTag);
 
-    QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);
-    static double longitudeToX(double);
-    static double latitudeToY(double);
-    static double distanceBetweenTwoPoints(double Ax, double Ay, double Bx, double By);
-    bool collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
+private:
+    QList<StationaryObstacle> stationaryObstacles;
+    QList<InteropMission::Waypoint> missionWaypoints;
+    QList<InteropMission::Waypoint> collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
                                                InteropMission::Waypoint waypointB,
                                                QList<StationaryObstacle> obstacles);
-    void sortMissionWaypoints(InteropMission::Waypoint waypoints[], int size);
-    double distanceOfTwoCoordsKm(double lat1d, double lon1d, double lat2d, double lon2d);
-    void swapWaypoints(InteropMission::Waypoint &a, InteropMission::Waypoint &b);
+    QList<InteropMission::Waypoint>generateAvoidingWaypoints(Position posA, Position posB,
+                                                             StationaryObstacle obstacle);
 
-private:
-    QList<InteropMission::Waypoint> missionWaypoints;
-    QList<StationaryObstacle> stationaryObstacles;
+    bool vectorABInsideObstacleRadius(Position posA, Position posB, StationaryObstacle obstacle);
+    QString generateMissionPlannerCommand(InteropMission::Waypoint waypoint);
+    void sortMissionWaypoints(InteropMission::Waypoint waypoints[], int size);
+    void swapWaypoints(InteropMission::Waypoint &a, InteropMission::Waypoint &b);
+    double bearingPosXtoY(Position posA, Position posB);
+    double distanceOfTwoCoordsKm(Position posA, Position posB);
+    double deg2rad(double deg);
+    double rad2deg(double rad);
 };
 
 #endif // COLLISION_AVOIDANCE_H

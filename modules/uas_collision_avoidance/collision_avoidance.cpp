@@ -80,6 +80,13 @@ void CollisionAvoidance::sortMissionWaypoints(InteropMission::Waypoint waypoints
     }
 }
 
+void CollisionAvoidance::swapWaypoints(InteropMission::Waypoint &a,InteropMission::Waypoint &b) {
+    InteropMission::Waypoint temp;
+    temp = a;
+    a = b;
+    b = temp;
+}
+
 // 1. Create a sort method for the mission waypoints [done]
 // 2. Create a method that iterates through a the list of waypoints, flags where collisions have
 //      occured
@@ -90,47 +97,67 @@ void CollisionAvoidance::sortMissionWaypoints(InteropMission::Waypoint waypoints
 // COLLISION DETECTION RELATED
 //===================================================================
 
-bool CollisionAvoidance::collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
+QList<InteropMission::Waypoint> CollisionAvoidance::collisionDetectedBetweenTwoWaypoints(InteropMission::Waypoint waypointA,
                                            InteropMission::Waypoint waypointB,
                                            QList<StationaryObstacle> obstacles) {
-    return false;
+    Position posA;
+    posA.latitude = waypointA.latitude;
+    posA.longitude = waypointA.longitude;
+
+    Position posB;
+    posB.latitude = waypointB.latitude;
+    posB.longitude = waypointB.longitude;
+
+    for (StationaryObstacle obstacle : obstacles) {
+        if(vectorABInsideObstacleRadius(posA, posB, obstacle)) {
+            return generateAvoidingWaypoints(posA, posB, obstacle);
+        }
+    }
+
+    return QList<InteropMission::Waypoint>();
 }
 
-// calculations
-double CollisionAvoidance::longitudeToX(double lon) {
-    return lon * 6371000.0 * M_PI / 180;
+QList<InteropMission::Waypoint> CollisionAvoidance::generateAvoidingWaypoints(Position posA,
+                                                                              Position posB,
+                                                                              StationaryObstacle obstacle) {
+    return QList<InteropMission::Waypoint>();
 }
 
-double CollisionAvoidance::latitudeToY(double lat) {
-    return log(tan(M_PI_4 + (lat * M_PI / 360))) * 6371000.0;
+bool CollisionAvoidance::vectorABInsideObstacleRadius(Position posA, Position posB,
+                                                    StationaryObstacle obstacle) {
+    Position posO;
+    posO.latitude = obstacle.getLatitude();
+    posO.longitude = obstacle.getLongitude();
+    double bearingAO = bearingPosXtoY(posA, posO);
+    double bearingAB = bearingPosXtoY(posA, posB);
+    double distanceAO = distanceOfTwoCoordsKm(posA, posO);
+    double minDistanceFromVectorToObstacle = abs(asin(sin(distanceAO/earthRadiusKm) *
+                                                  sin(bearingAO - bearingAB)) * earthRadiusKm);
+    return minDistanceFromVectorToObstacle*1000 <= obstacle.getCylinderRadius();
 }
 
-double CollisionAvoidance::distanceBetweenTwoPoints(double Ax, double Ay, double Bx, double By) {
-    return sqrt(pow((Ax - Bx),2) + pow((Ay - By),2));
+double CollisionAvoidance::bearingPosXtoY(Position posA, Position posB) {
+    double deltaLon = abs(posB.longitude-posA.longitude);
+    return atan2(sin(deltaLon)*cos(posB.latitude), cos(posA.latitude)*sin(posB.latitude) -
+                 sin(posA.latitude)*cos(posB.latitude)*cos(deltaLon));
 }
 
-double deg2rad(double deg) {
-  return (deg * M_PI / 180);
-}
-
-double rad2deg(double rad) {
-  return (rad * 180 / M_PI);
-}
-
-double CollisionAvoidance::distanceOfTwoCoordsKm(double lat1d, double lon1d, double lat2d, double lon2d) {
+// Haversine Forumla
+double CollisionAvoidance::distanceOfTwoCoordsKm(Position posA, Position posB) {
   double lat1r, lon1r, lat2r, lon2r, u, v;
-  lat1r = deg2rad(lat1d);
-  lon1r = deg2rad(lon1d);
-  lat2r = deg2rad(lat2d);
-  lon2r = deg2rad(lon2d);
+  lat1r = deg2rad(posA.latitude);
+  lon1r = deg2rad(posA.longitude);
+  lat2r = deg2rad(posB.latitude);
+  lon2r = deg2rad(posB.longitude);
   u = sin((lat2r - lat1r)/2);
   v = sin((lon2r - lon1r)/2);
   return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
 }
 
-void CollisionAvoidance::swapWaypoints(InteropMission::Waypoint &a,InteropMission::Waypoint &b) {
-    InteropMission::Waypoint temp;
-    temp = a;
-    a = b;
-    b = temp;
+double CollisionAvoidance::deg2rad(double deg) {
+  return (deg * M_PI / 180);
+}
+
+double CollisionAvoidance::rad2deg(double rad) {
+  return (rad * 180 / M_PI);
 }
