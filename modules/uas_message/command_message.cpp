@@ -10,6 +10,11 @@
 //===================================================================
 // Class Definitions
 //===================================================================
+CommandMessage::CommandMessage(Commands command)
+{
+    this->command = command;
+}
+
 CommandMessage::CommandMessage(Commands command, std::vector<uint8_t> args)
 {
     this->command = command;

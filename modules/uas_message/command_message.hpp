@@ -36,11 +36,13 @@ class CommandMessage : public UASMessage
         /*!
          * \brief CommandMessage's constructor creates a command message to send to the drone
          * \param [in] command, The command to send to the Gremlin
-<<<<<<< HEAD
-         * \param [in] args that are command specific, it is up to the reciver to interpret them.
-=======
+         */
+        CommandMessage(Commands command);
+
+        /*!
+         * \brief CommandMessage's constructor creates a command message to send to the drone
+         * \param [in] command, The command to send to the Gremlin
          * \param [in] args that are command specific, it is up to the receiver to interpret them.
->>>>>>> controller
          */
         CommandMessage(Commands command, std::vector<uint8_t> args);
 
