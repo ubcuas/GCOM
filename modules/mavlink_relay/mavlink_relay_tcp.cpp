@@ -7,7 +7,7 @@
 #include "mavlink_relay_tcp.hpp"
 #include "../Mavlink/ardupilotmega/mavlink.h"
 
-#define PACK_LAT_LON(x) (x*1e7) // float -> int32_t
+#define PACK_LAT_LON(x) qRound(x*1e7) // float -> int32_t
 
 const int WAYPOINT_REQUEST_TIMEOUT = 7000; // ms
 
