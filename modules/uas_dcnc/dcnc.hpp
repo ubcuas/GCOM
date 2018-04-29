@@ -106,7 +106,7 @@ public:
 
     // Data Methods
     bool sendUASMessage(UASMessage& outgoingMessage);
-    void startImageRelay();
+    void startImageRelay(float photoFreq);
     void stopImageRelay();
 
 signals:

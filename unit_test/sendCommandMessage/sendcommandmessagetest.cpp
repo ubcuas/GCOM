@@ -43,8 +43,8 @@ void SendCommandMessageTest::sendCommand()
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     QSignalSpy spy(socket, SIGNAL(readyRead()));
     spy.wait(5000);
-    CommandMessage* outgoingMessage = new CommandMessage(CommandMessage::Commands::IMAGE_RELAY_START,CommandMessage::Triggers::TIME,0xFF);
-    bool sendStatus = dcnc->sendUASMessage(std::shared_ptr<UASMessage>(outgoingMessage));
+    CommandMessage outgoingMessage(CommandMessage::Commands::IMAGE_RELAY_START);
+    bool sendStatus = dcnc->sendUASMessage(outgoingMessage);
 
     QVERIFY(sendStatus);
     QTimer timer;
@@ -101,8 +101,6 @@ void SendCommandMessageTest::handleClientMessage(std::shared_ptr<UASMessage> mes
               std::shared_ptr<CommandMessage> commandMesg = std::static_pointer_cast<CommandMessage>(message);
               qDebug() <<("This is a command message");
               QCOMPARE(commandMesg->command,CommandMessage::Commands::IMAGE_RELAY_START);
-              QCOMPARE(commandMesg->trigger,CommandMessage::Triggers::TIME);
-              QCOMPARE(commandMesg->parameter,(uint8_t)0xFF);
               qDebug()<<("Command message received succeed");
               QVERIFY(true);
               break;

@@ -812,12 +812,13 @@ void GcomController::on_fetcherImageTransferButton_clicked()
                 return;
             }
 
-            dcnc->startImageRelay();
+            dcnc->startImageRelay(ui->fetcherPhotoFreqField->value());
             ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_STOP_TEXT);
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
             ui->fetcherPathField->setEnabled(false);
             ui->fetcherPathButton->setEnabled(false);
+            ui->fetcherPhotoFreqField->setEnabled(false);
         }
         break;
 
@@ -829,6 +830,7 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             fetcherStatus = FETCHER_STATUS_READY;
             ui->fetcherPathField->setEnabled(true);
             ui->fetcherPathButton->setEnabled(true);
+            ui->fetcherPhotoFreqField->setEnabled(true);
         }
     }
 }
