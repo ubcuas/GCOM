@@ -10,6 +10,8 @@
 #include "test_gcom_controller_image_fetcher.hpp"
 #include "ui_gcomcontroller.h"
 
+#define UNPACK_PHOTO_FREQ(x) (x/1e1)
+
 const QString IP_ADDRESS = "127.0.0.1";
 const int PORT = 4206;
 
@@ -74,8 +76,8 @@ const int PATH_TAGS = 1;
         "/n/o/p/q/r/s/t/u/v/w/x/y/z"    // long path
     };
 
-    const int TEST_START_INDEX = 0;
-    const int TEST_STOP_INDEX = 10;
+    const int PATH_TEST_START_INDEX = 0;
+    const int PATH_TEST_STOP_INDEX = 10;
 
 #elif defined(Q_OS_MACOS)
     const QString INVALID_PATH_TEST[] = {
@@ -97,8 +99,8 @@ const int PATH_TAGS = 1;
         "n/o/p/q/r/s/t/u/v/w/x/y/z/"   // long path
     };
 
-    const int TEST_START_INDEX = 0;
-    const int TEST_STOP_INDEX = 5;
+    const int PATH_TEST_START_INDEX = 0;
+    const int PATH_TEST_STOP_INDEX = 5;
 
 #elif defined(Q_OS_LINUX)
     const QString INVALID_PATH_TEST[] = {
@@ -118,8 +120,8 @@ const int PATH_TAGS = 1;
         "1234567890-=[]\\;',."          // all characters besides / are valid
     };
 
-    const int TEST_START_INDEX = 0;
-    const int TEST_STOP_INDEX = 4;
+    const int PATH_TEST_START_INDEX = 0;
+    const int PATH_TEST_STOP_INDEX = 4;
 #else
 #endif
 
@@ -133,6 +135,10 @@ const bool DISABLED = false;
 
 const bool IMAGE_TRANSFERRING = true;
 
+const float PHOTO_FREQ_TEST[] = {25.5};
+const int PHOTO_FREQ_TEST_START_INDEX = 0;
+const int PHOTO_FREQ_TEST_STOP_INDEX = 0;
+
 QTEST_MAIN(TestGcomControllerImageFetcher)
 
 void TestGcomControllerImageFetcher::initTestCase()
@@ -140,6 +146,7 @@ void TestGcomControllerImageFetcher::initTestCase()
     // Register metatypes for use in QSignalSpy
     qRegisterMetaType<CapabilitiesMessage::Capabilities>();
     qRegisterMetaType<CommandMessage::Commands>();
+    qRegisterMetaType<std::vector<uint8_t>>();
 
     gcom = new GcomController();
 
@@ -192,7 +199,7 @@ void TestGcomControllerImageFetcher::handleClientMessage(std::shared_ptr<UASMess
         {
             std::shared_ptr<CommandMessage> command =
                     std::static_pointer_cast<CommandMessage>(message);
-            emit receivedCommand(command->command);
+            emit receivedCommand(command->command, command->args);
             break;
         }
 
@@ -346,7 +353,7 @@ void TestGcomControllerImageFetcher::testRegexValidPath_data()
 {
     QTest::addColumn<QString>("validPath");
 
-    for (int i = TEST_START_INDEX; i <= TEST_STOP_INDEX; i++)
+    for (int i = PATH_TEST_START_INDEX; i <= PATH_TEST_STOP_INDEX; i++)
     {
         QTest::newRow(qPrintable(QString::number(i))) << VALID_PATH_TEST[i];
     }
@@ -365,7 +372,7 @@ void TestGcomControllerImageFetcher::testRegexInvalidPath_data()
 {
     QTest::addColumn<QString>("invalidPath");
 
-    for (int i = TEST_START_INDEX; i <= TEST_STOP_INDEX; i++)
+    for (int i = PATH_TEST_START_INDEX; i <= PATH_TEST_STOP_INDEX; i++)
     {
         QTest::newRow(qPrintable(QString::number(i))) << INVALID_PATH_TEST[i];
     }
@@ -419,10 +426,12 @@ void TestGcomControllerImageFetcher::sendResponse(CommandMessage::Commands comma
 
 void TestGcomControllerImageFetcher::startImageTransferSuccess()
 {
-    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
-            this, SLOT(compareStartImageTransfer(CommandMessage::Commands)));
+    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands, std::vector<uint8_t>)),
+            this, SLOT(compareStartImageTransfer(CommandMessage::Commands,
+                                                 std::vector<uint8_t>)));
 
-    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands)));
+    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands,
+                                                               std::vector<uint8_t>)));
     QVERIFY(receivedCommandSpy.isValid());
 
     gcom->on_fetcherImageTransferButton_clicked();
@@ -443,10 +452,12 @@ void TestGcomControllerImageFetcher::startImageTransferFail()
 
 void TestGcomControllerImageFetcher::stopImageTransfer()
 {
-    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
-            this, SLOT(compareStopImageTransfer(CommandMessage::Commands)));
+    connect(this, SIGNAL(receivedCommand(CommandMessage::Commands, std::vector<uint8_t>)),
+            this, SLOT(compareStopImageTransfer(CommandMessage::Commands,
+                                                std::vector<uint8_t>)));
 
-    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands)));
+    QSignalSpy receivedCommandSpy(this, SIGNAL(receivedCommand(CommandMessage::Commands,
+                                                               std::vector<uint8_t>)));
     QVERIFY(receivedCommandSpy.isValid());
 
     gcom->on_fetcherImageTransferButton_clicked();
@@ -457,20 +468,24 @@ void TestGcomControllerImageFetcher::stopImageTransfer()
     QCOMPARE(receivedCommandSpy.count(), 1);
 }
 
-void TestGcomControllerImageFetcher::compareStartImageTransfer(CommandMessage::Commands command)
+void TestGcomControllerImageFetcher::compareStartImageTransfer(CommandMessage::Commands command,
+                                                               std::vector<uint8_t> args)
 {
     QCOMPARE(command, CommandMessage::Commands::IMAGE_RELAY_START);
 
-    disconnect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
-               this, SLOT(compareStartImageTransfer(CommandMessage::Commands)));
+    disconnect(this, SIGNAL(receivedCommand(CommandMessage::Commands, std::vector<uint8_t>)),
+               this, SLOT(compareStartImageTransfer(CommandMessage::Commands,
+                                                    std::vector<uint8_t>)));
 }
 
-void TestGcomControllerImageFetcher::compareStopImageTransfer(CommandMessage::Commands command)
+void TestGcomControllerImageFetcher::compareStopImageTransfer(CommandMessage::Commands command,
+                                                              std::vector<uint8_t> args)
 {
     QCOMPARE(command, CommandMessage::Commands::IMAGE_RELAY_STOP);
 
-    disconnect(this, SIGNAL(receivedCommand(CommandMessage::Commands)),
-               this, SLOT(compareStopImageTransfer(CommandMessage::Commands)));
+    disconnect(this, SIGNAL(receivedCommand(CommandMessage::Commands, std::vector<uint8_t>)),
+               this, SLOT(compareStopImageTransfer(CommandMessage::Commands,
+                                                   std::vector<uint8_t>)));
 }
 
 void TestGcomControllerImageFetcher::testImageTransfer()
@@ -525,4 +540,47 @@ void TestGcomControllerImageFetcher::testImageTransfer()
 
     gcom->ui->fetcherPathField->setText(REAL_PATH);
     startImageTransferSuccess();
+
+    stopImageTransfer();
+}
+
+void TestGcomControllerImageFetcher::testPhotoFreq_data()
+{
+    QTest::addColumn<float>("photoFreq");
+
+    for (int i = PHOTO_FREQ_TEST_START_INDEX; i <= PHOTO_FREQ_TEST_STOP_INDEX; i++)
+    {
+        QTest::newRow(qPrintable(QString::number(i))) << PHOTO_FREQ_TEST[i];
+    }
+}
+
+void TestGcomControllerImageFetcher::testPhotoFreq()
+{
+    connect(this, &TestGcomControllerImageFetcher::receivedCommand,
+            this, &TestGcomControllerImageFetcher::comparePhotoFreq);
+
+    QFETCH(float, photoFreq);
+    expectedPhotoFreq = photoFreq;
+
+    QSignalSpy commandSpy(this, &TestGcomControllerImageFetcher::receivedCommand);
+    QVERIFY(commandSpy.isValid());
+
+    gcom->ui->fetcherPhotoFreqField->setValue(photoFreq);
+    gcom->on_fetcherImageTransferButton_clicked();
+
+    QVERIFY(commandSpy.wait());
+    QCOMPARE(commandSpy.count(), 1);
+}
+
+void TestGcomControllerImageFetcher::comparePhotoFreq(CommandMessage::Commands command,
+                                                      std::vector<uint8_t> args)
+{
+    float photoFreq = UNPACK_PHOTO_FREQ(args.at(0));
+
+    QCOMPARE(photoFreq, expectedPhotoFreq);
+
+    disconnect(this, SIGNAL(receivedCommand(CommandMessage::Commands,std::vector<uint8_t>)),
+               this, SLOT(comparePhotoFreq(CommandMessage::Commands,std::vector<uint8_t>)));
+
+    gcom->on_fetcherImageTransferButton_clicked();
 }

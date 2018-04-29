@@ -13,6 +13,7 @@
 #include "modules/uas_message/capabilities_message.hpp"
 #include "modules/uas_message/command_message.hpp"
 
+#define PACK_PHOTO_FREQ(x) qRound(x*1e1)
 
 //===================================================================
 // Public Class Declaration
@@ -155,9 +156,13 @@ bool DCNC::sendUASMessage(UASMessage& outgoingMessage)
     return true;
 }
 
-void DCNC::startImageRelay()
+void DCNC::startImageRelay(float photoFreq)
 {
-    CommandMessage outgoingMessage(CommandMessage::Commands::IMAGE_RELAY_START);
+    std::vector<uint8_t> args;
+    args.push_back(PACK_PHOTO_FREQ(photoFreq));
+
+    CommandMessage outgoingMessage(CommandMessage::Commands::IMAGE_RELAY_START,
+                                   args);
     sendUASMessage(outgoingMessage);
 }
 

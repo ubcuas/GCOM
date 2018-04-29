@@ -14,13 +14,14 @@
 
 Q_DECLARE_METATYPE(CapabilitiesMessage::Capabilities)
 Q_DECLARE_METATYPE(CommandMessage::Commands)
+Q_DECLARE_METATYPE(std::vector<uint8_t>)
 
 class TestGcomControllerImageFetcher : public QObject
 {
     Q_OBJECT
 
 signals:
-    void receivedCommand(CommandMessage::Commands command);
+    void receivedCommand(CommandMessage::Commands command, std::vector<uint8_t> args);
 
 private Q_SLOTS:
     void initTestCase();
@@ -33,14 +34,21 @@ private slots:
     void testRegexInvalidPath_data();
     void testRegexInvalidPath();
     void testImageTransfer();
+    void testPhotoFreq_data();
+    void testPhotoFreq();
 
 public slots:
     // Receive handlers
     void handleClientData();
     void handleClientMessage(std::shared_ptr<UASMessage> message);
 
-    void compareStartImageTransfer(CommandMessage::Commands command);
-    void compareStopImageTransfer(CommandMessage::Commands command);
+    void compareStartImageTransfer(CommandMessage::Commands command,
+                                   std::vector<uint8_t> args);
+    void compareStopImageTransfer(CommandMessage::Commands command,
+                                  std::vector<uint8_t> args);
+
+    void comparePhotoFreq(CommandMessage::Commands command,
+                          std::vector<uint8_t> args);
 
 private:
     void checkDCNCStatus(QString statusField,
@@ -70,6 +78,8 @@ private:
     QDataStream connectionDataStream;
     UASMessageTCPFramer messageFramer;
     QTcpSocket* socket;
+
+    float expectedPhotoFreq;
 };
 
 #endif // TEST_GCOM_CONTROLLER_IMAGE_FETCHER_HPP
