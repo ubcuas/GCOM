@@ -16,15 +16,6 @@ const int WAYPOINT_REQUEST_TIMEOUT = 7000; // ms
 //===================================================================
 MAVLinkRelay::MAVLinkRelay()
 {
-    // Set defualt values
-    ipaddress = "127.0.0.1";
-    port = 14550;
-    relayStatus = MAVLinkRelayStatus::DISCONNECTED;
-    sendingStatus = MAVLinkRelaySendingStatus::READY;
-    systemSysID = 2;
-    systemCompID = 1;
-    targetSysID = 1;
-    targetCompID = 1;
     // Build the sockets and connect the signals/slots
     connect(&missionplannerSocket, SIGNAL(connected()),
             this, SLOT(connected()));

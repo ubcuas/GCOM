@@ -143,19 +143,19 @@ private:
 
     // Private Member Variables
     QTcpSocket missionplannerSocket;
-    MAVLinkRelayStatus relayStatus;
-    QString ipaddress;
-    qint16 port;
+    MAVLinkRelayStatus relayStatus = MAVLinkRelayStatus::DISCONNECTED;
+    QString ipaddress = "127.0.0.1";
+    qint16 port = 14550;
     mavlink_status_t lastStatus;
 
     // sys and comp id of ground
-    uint8_t systemSysID;
-    uint8_t systemCompID;
+    uint8_t systemSysID = 2;
+    uint8_t systemCompID = 1;
     // sys and comp id of drone
-    uint8_t targetSysID;
-    uint8_t targetCompID;
+    uint8_t targetSysID = 1;
+    uint8_t targetCompID = 1;
 
-    MAVLinkRelaySendingStatus sendingStatus;
+    MAVLinkRelaySendingStatus sendingStatus = MAVLinkRelaySendingStatus::READY;
     QElapsedTimer waypointRequestTimer;
 
     QList<InteropMission::Waypoint> waypointList;
