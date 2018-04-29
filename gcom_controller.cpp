@@ -217,7 +217,7 @@ void GcomController::on_mavlinkConnectionButton_clicked()
 {
     // If the MAVLink relay was disconnected the state machine progresses to
     // the connection stage
-    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCCONNECTED)
+    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCONNECTED)
     {
         // Disable all input fields
         ui->mavlinkIPField->setDisabled(true);
