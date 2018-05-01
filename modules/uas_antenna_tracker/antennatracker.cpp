@@ -16,10 +16,10 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QString>
 #include <QList>
-#include <QtMath>
 #include <QElapsedTimer>
 #include <QDebug>
 #include <QThread>
+#include <QtMath>
 // System Includes
 #include <vector>
 #include <math.h>

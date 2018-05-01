@@ -28,6 +28,6 @@ public:
 
     std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
     std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
-}
+};
 
 #endif // UAS_UTILITY_HPP
