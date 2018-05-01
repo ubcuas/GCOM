@@ -97,7 +97,6 @@ AntennaTracker::~AntennaTracker()
 }
 
 bool AntennaTracker::setupArduino(QString port, QSerialPort::BaudRate baud) {
-
     if (antennaTrackerConnected)
         stopTracking();
 
@@ -112,7 +111,6 @@ bool AntennaTracker::setupArduino(QString port, QSerialPort::BaudRate baud) {
     arduinoSerial.setParity(QSerialPort::NoParity);
     arduinoSerial.setStopBits(QSerialPort::OneStop);
     arduinoSerial.setFlowControl(QSerialPort::NoFlowControl);
-
     if(!arduinoSerial.open(QIODevice::ReadWrite))
         return false;
 
