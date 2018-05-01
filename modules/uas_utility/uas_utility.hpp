@@ -25,13 +25,9 @@ public:
     static float calcVertical(std::shared_ptr<mavlink_global_position_int_t> gpsData, float pitchIMU, float latBase,
                        float lonBase, float elevationBase);
 
-<<<<<<< HEAD:modules/uas_utility/uas_utility.h
-};
-=======
 
     std::shared_ptr<ImageTaggedMessage> toImageTaggedMessage(PathTaggedMessage& message);
     std::shared_ptr<PathTaggedMessage> toPathTaggedMessage(QString filePath, ImageTaggedMessage& message);
 }
->>>>>>> master:modules/uas_utility/uas_utility.hpp
 
 #endif // UAS_UTILITY_HPP
