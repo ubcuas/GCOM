@@ -5,8 +5,12 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <QFile>
+#include <memory>
+#include <QDir>
 // GCOM Includes
 #include "modules/uas_message/image_tagged_message.hpp"
+#include "modules/uas_message/path_tagged_message.hpp"
 
 //===================================================================
 // Defines
@@ -209,3 +213,24 @@ float ImageTaggedMessage::altitude_rel() {
 float ImageTaggedMessage::heading() {
     return UNPACK_HDG(headingRaw);
 }
+
+UASMessage::MessageID PathTaggedMessage::type()
+{
+    return MessageID::DATA_PATH_TAGGED;
+}
+
+std::vector<uint8_t> PathTaggedMessage::serialize()
+{
+    throw std::invalid_argument("Cannot serialize TaggedPathMessage");
+}
+
+PathTaggedMessage::PathTaggedMessage(uint8_t sequenceNumber, int32_t latitude, int32_t longitude,
+                                     int32_t altitudeAbs, int32_t altitudeRel, uint16_t heading,
+                                     uint8_t* imageData, size_t dataSize) :
+                                    ImageTaggedMessage(sequenceNumber, latitude, longitude,
+                                                       altitudeAbs, altitudeRel, heading,
+                                                       imageData, dataSize)
+{
+
+}
+

@@ -36,8 +36,6 @@ public:
     {
         UNDEFINED_STATE,
         SUCCESS,
-        ARDUINO_UNINITIALIZED,
-        ZABER_UNITIALIZED,
         ARDUINO_NOT_OPEN,
         ZABER_NOT_OPEN,
         RELAY_NOT_OPEN,
@@ -162,10 +160,10 @@ private:
     // ================
     // Member Variables
     // ================
-    QSerialPort *arduinoSerial;
-    QSerialPort *zaberSerial;
-    QDataStream *arduinoDataStream;
-    UASMessageSerialFramer *arduinoFramer;
+    QSerialPort arduinoSerial;
+    QSerialPort zaberSerial;
+    QDataStream arduinoDataStream;
+    UASMessageSerialFramer arduinoFramer;
 
     // Base station GPS
     float latBase;

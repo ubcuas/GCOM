@@ -105,14 +105,16 @@ public:
     void cancelConnection();
 
     // Data Methods
-    bool sendUASMessage(std::shared_ptr<UASMessage> outgoingMessage);
-    void startImageRelay();
+    bool sendUASMessage(UASMessage& outgoingMessage);
+    void startImageRelay(float photoFreq);
     void stopImageRelay();
 
 signals:
     // DCNC Control Signals
     void receivedConnection();
     void droppedConnection();
+    void reestablishedConnection(CommandMessage::Commands command,
+                                 ResponseMessage::ResponseCodes response);
     // Data Signals
     void receivedImageUntaggedData(std::shared_ptr<ImageUntaggedMessage> imageUntaggedMessage);
     void receivedImageTaggedData(std::shared_ptr<ImageTaggedMessage> imageTaggedMessage);
@@ -129,7 +131,7 @@ private slots:
      * \brief handleConection is a slot that gets notified whenever a new
      *        connection is received.
      */
-    void handleClientConection();
+    void handleClientConnection();
 
     /*!
      * \brief droppedConnection sets the system variables in the case we lose
@@ -152,7 +154,7 @@ private slots:
 
     void handleResponse(CommandMessage::Commands command,
                                ResponseMessage::ResponseCodes responses);
-    UASMessage* handleInfo(std::string systemId, bool dropped, bool autoResume);
+    std::shared_ptr<UASMessage> handleInfo(std::string systemId, bool dropped, bool autoResume);
 
 
 private:
@@ -160,11 +162,10 @@ private:
     int port;
     QString address;
     QHostAddress hostAddress;
-    QTcpServer *server;
+    QTcpServer server;
     QTcpSocket *clientConnection;
     QDataStream connectionDataStream;
     UASMessageTCPFramer messageFramer;
-    std::unique_ptr<UASMessage> message;
     DCNCStatus serverStatus;
     bool autoResume;
     std::string preSysID; // store previous id to check when resume

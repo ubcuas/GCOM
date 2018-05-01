@@ -40,6 +40,13 @@ class CommandMessage : public UASMessage
         CommandMessage(Commands command);
 
         /*!
+         * \brief CommandMessage's constructor creates a command message to send to the drone
+         * \param [in] command, The command to send to the Gremlin
+         * \param [in] args that are command specific, it is up to the receiver to interpret them.
+         */
+        CommandMessage(Commands command, std::vector<uint8_t> args);
+
+        /*!
          * \brief CommandMessage constructor designed to initialize a message using a serialized payload
          * \param [in] serializedMessage a byte vector containing the object's serialized contents
          */
@@ -67,6 +74,11 @@ class CommandMessage : public UASMessage
          * \brief The type of command that was requested
          */
         Commands command;
+
+        /*!
+         * \brief Command Specific Args
+         */
+        std::vector<uint8_t> args;
 };
 
 #endif // COMMANDMESSAGE_H
