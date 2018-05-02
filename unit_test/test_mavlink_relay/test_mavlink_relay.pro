@@ -27,6 +27,10 @@ HEADERS += \
         ../../modules/uas_interop_system/interop.hpp \
         ../../modules/uas_interop_system/InteropObjects/interop_odlc.hpp \
         ../../modules/uas_interop_system/interop_json_interpreter.hpp \
+        ../../modules/uas_message/uas_message.hpp \
+        ../../modules/uas_message/image_untagged_message.hpp \
+        ../../modules/uas_message/image_tagged_message.hpp \
+        ../../modules/uas_message/path_tagged_message.hpp \
         ../../modules/uas_utility/uas_utility.h \
 
 
@@ -40,4 +44,7 @@ SOURCES += \
         ../../modules/uas_interop_system/interop.cpp \
         ../../modules/uas_interop_system/InteropObjects/interop_odlc.cpp \
         ../../modules/uas_interop_system/interop_json_interpreter.cpp \
+        ../../modules/uas_message/image_untagged_message.cpp \
+        ../../modules/uas_message/image_tagged_message.cpp \
+        ../../modules/uas_message/path_tagged_message.cpp \
         ../../modules/uas_utility/uas_utility.cpp \
