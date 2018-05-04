@@ -179,7 +179,7 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
     // Setup desired speed for Zaber horizontal movement
     zaberSerial.write(zaberSetHorizontalMoveSpeed.toStdString().c_str());
     zaberSerial.flush();
-\   connect(relay,
+    connect(relay,
             SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
             this, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
 
