@@ -36,7 +36,7 @@
 //===================================================================
 // Defines
 //===================================================================
-#define HORIZ_DEGREE_TO_MICROSTEPS 1599.722
+#define HORIZ_DEGREE_TO_MICROSTEPS 1638.88888889
 #define HORIZ_ANGLE_TO_MICROSTEPS(x) (x * HORIZ_DEGREE_TO_MICROSTEPS)
 #define VERT_DEGREE_TO_MICROSTEPS 10630.55555555556
 #define VERT_ANGLE_TO_MICROSTEPS(x) (x * VERT_DEGREE_TO_MICROSTEPS)
@@ -54,7 +54,8 @@ const QString zaberStopCommandTemplate= "/1 %1 stop\n";
 const QString zaberMoveCommandTemplate= "/1 %1 move rel %2\n";
 const QString zaberCheckStatusCommand = "/\n";
 // Zaber Setup
-const QString zaberSetVerticalMoveSpeed = "/1 1 set maxspeed 120000\n";
+const QString zaberSetVerticalMoveSpeed = "/1 1 set maxspeed 50000\n";
+const QString zaberSetHorizontalMoveSpeed = "/1 2 set maxspeed 50000\n";
 
 //===================================================================
 // Class Definitions
@@ -175,7 +176,10 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
     zaberSerial.write(zaberSetVerticalMoveSpeed.toStdString().c_str());
     zaberSerial.flush();
 
-    connect(relay,
+    // Setup desired speed for Zaber horizontal movement
+    zaberSerial.write(zaberSetHorizontalMoveSpeed.toStdString().c_str());
+    zaberSerial.flush();
+\   connect(relay,
             SIGNAL(mavlinkRelayGPSInfo(std::shared_ptr<mavlink_global_position_int_t>)),
             this, SLOT(receiveHandler(std::shared_ptr<mavlink_global_position_int_t>)));
 
