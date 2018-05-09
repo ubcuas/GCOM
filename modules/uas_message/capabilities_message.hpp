@@ -6,7 +6,7 @@
 // System Includes
 #include <vector>
 #include <cstdint>
-#include <string>
+#include <QString>
 // GCOM Includes
 #include "uas_message.hpp"
 
@@ -35,7 +35,7 @@ class CapabilitiesMessage : public UASMessage
             MAVLINK_RELAY           = 0x08,
         };
 
-        static std::string capabilitiesToString(Capabilities &capabilities);
+        static QString capabilitiesToString(Capabilities capabilities);
 
         //Public Methods
         /*!

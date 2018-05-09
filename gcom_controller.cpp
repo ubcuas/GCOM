@@ -59,11 +59,6 @@ const QString START_SERVER_FAIL_TEXT(
 const QString SYSTEM_RESUME_FAIL_TEXT(
         "Cannot resume previous connection.");
 
-// Capabilities Constants
-const int SIZE_CAPABILITY = 8;
-const QString CAMERA_TAGGED_TEXT("Camera with tags");
-const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
-
 // Image Fetcher Constants
 #if defined(Q_OS_WIN)
     const QRegExp PATH_REGEX(
@@ -155,6 +150,16 @@ GcomController::GcomController(QWidget *parent) :
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
+    QSizePolicy retainSize = ui->fetcherPhotoFreqLabel->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqLabel->setSizePolicy(retainSize);
+
+    retainSize = ui->fetcherPhotoFreqField->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqField->setSizePolicy(retainSize);
+
+    ui->fetcherPhotoFreqLabel->hide();
+    ui->fetcherPhotoFreqField->hide();
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 
     // Antenna Tracker Setup
@@ -445,9 +450,13 @@ void GcomController::dcncReestablishedConnection(CommandMessage::Commands comman
 
             // If Gremlin previously had camera capabilities, activate fetcher tab
             if (ui->dcncCapabilitiesField->findItems(
-                CAMERA_TAGGED_TEXT, Qt::MatchExactly).length() > 0 ||
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_TAGGED),
+                Qt::MatchExactly).length() > 0 ||
                 ui->dcncCapabilitiesField->findItems(
-                CAMERA_UNTAGGED_TEXT, Qt::MatchExactly).length() > 0)
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED),
+                Qt::MatchExactly).length() > 0)
             {
                 enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
             }
@@ -468,20 +477,42 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
+
     if (ui->dcncCapabilitiesField->count() != 0)
         ui->dcncCapabilitiesField->clear();
 
-    // May have several capabilities, so loop through all of them
-     while (static_cast<uint32_t>(capabilities)) {
-         if (static_cast<uint32_t>(capabilities &
-                                   CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
-         {
-             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
-             setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
-             ui->dcncCapabilitiesField->addItem(CAMERA_TAGGED_TEXT);
-         }
-         // Remove capabilities that have already been used
-         capabilities = capabilities >> SIZE_CAPABILITY;
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TAGGED)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
+     {
+         enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+         setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TAGGED));
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_DISTANCE)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_DISTANCE))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_DISTANCE));
+         ui->fetcherPhotoFreqLabel->show();
+         ui->fetcherPhotoFreqField->show();
+     }
+
+     else if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TIMER)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TIMER))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TIMER));
+         ui->fetcherPhotoFreqLabel->hide();
+         ui->fetcherPhotoFreqField->hide();
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::MAVLINK_RELAY)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::MAVLINK_RELAY))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::MAVLINK_RELAY));
      }
 }
 
