@@ -115,7 +115,6 @@ private:
     // Methods
     void updateStartTrackerButton();
 
-<<<<<<< HEAD
     // Image Fetcher Variables
     ImageFetcher *fetcher;
     int fetcherStatus;
@@ -151,9 +150,7 @@ private:
      */
     void enableTabMain(const int tab, const bool enable);
 
-=======
     // Interop
->>>>>>> origin/auvsi_interop
     Interop *interop;
 };
 
