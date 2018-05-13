@@ -73,6 +73,7 @@ private slots:
     void disableAntennaTrackingGUI(bool toggle);
     // AUVSI Interop Slots
     void on_interopConnectButton_clicked();
+    void interopLoginHandler(Interop::RequestStatus reqStatus);
 
     // Image Fetcher Slots
     void on_fetcherPathField_returnPressed();
@@ -114,6 +115,7 @@ private:
     // Methods
     void updateStartTrackerButton();
 
+<<<<<<< HEAD
     // Image Fetcher Variables
     ImageFetcher *fetcher;
     int fetcherStatus;
@@ -149,6 +151,9 @@ private:
      */
     void enableTabMain(const int tab, const bool enable);
 
+=======
+    // Interop
+>>>>>>> origin/auvsi_interop
     Interop *interop;
 };
 
