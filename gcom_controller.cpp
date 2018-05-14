@@ -42,11 +42,14 @@ const QRegExp ELEV_HEADING_REGEX("^-?[0-9]*(\\.[0-9]*)?$");
 const bool TAB_ENABLE = true;
 const bool TAB_DISABLE = false;
 const int TAB_IMAGE_FETCHER = 2;
+const int TAB_MAVLINK = 3;
 
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
 const QString CONNECTING_BUTTON_TEXT("Cancel Connecting");
 const QString DISCONNECT_BUTTON_TEXT("Disconnect");
+const QString MAVLINK_COMMAND_SUCCESS_LABEL("<font color='#05c400'> Success </font>");
+const QString MAVLINK_COMMAND_FAIL_LABEL("<font color='#D52D2D'> Failed </font>");
 
 // DCNC Constants
 const QString START_SEARCHING_BUTTON_TEXT("Start Searching");
@@ -123,6 +126,10 @@ GcomController::GcomController(QWidget *parent) :
     mavlinkButtonDisconnect = false;
     mavlinkConnectingMovie = new QMovie (":/connection/mavlink_connecting.gif");
     mavlinkConnectedMovie = new QMovie (":/connection/mavlink_connected.gif");
+
+    connect(mavlinkRelay, SIGNAL(mavlinkCommandSuccess(bool)),
+            this, SLOT(handleMavlinkCommandStatus(bool)));
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
 
     // DCNC Setup
     dcnc = new DCNC();
@@ -211,6 +218,7 @@ void GcomController::restMavlinkGUI()
     // Enable all input fields
     ui->mavlinkIPField->setDisabled(false);
     ui->mavlinkPortField->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
 }
 
 void GcomController::mavlinkTimerTimeout()
@@ -263,12 +271,14 @@ void GcomController::mavlinkRelayConnected()
     mavlinkConnectionTimer->start(1000);
     // Enable the antenna tracker
     ui->antennaTrackerTab->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_ENABLE);
 }
 
 void GcomController::mavlinkRelayDisconnected()
 {
     if (ui->mavlinkAutoReconnect->isChecked() && mavlinkButtonDisconnect != true)
     {
+        enableTabMain(TAB_MAVLINK, TAB_DISABLE);
         on_mavlinkConnectionButton_clicked();
         return;
     }
@@ -285,6 +295,50 @@ void GcomController::mavlinkRelayDisconnected()
     ui->antennaTrackerTab->setDisabled(true);
     // Reset the button method
     mavlinkButtonDisconnect = false;
+}
+
+void GcomController::on_mavlinkModeButton_clicked()
+{
+    if (!mavlinkRelay->setFlightMode(ui->mavlinkModeComboBox->currentIndex()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkSpeedButton_clicked()
+{
+    if (!mavlinkRelay->changeSpeed(ui->mavlinkSpeedField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkArmButton_clicked()
+{
+    if (!mavlinkRelay->arm())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkMissionStartButton_clicked()
+{
+    if (!mavlinkRelay->missionStart())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkTakeoffButton_clicked()
+{
+    if (!mavlinkRelay->takeoff(ui->mavlinkTakeoffAltField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkLandButton_clicked()
+{
+    if (!mavlinkRelay->land())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::handleMavlinkCommandStatus(bool status)
+{
+    if (status)
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_SUCCESS_LABEL);
+    else
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_FAIL_LABEL);
 }
 
 //===================================================================
