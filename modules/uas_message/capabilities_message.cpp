@@ -38,7 +38,7 @@ std::vector<uint8_t> CapabilitiesMessage::serialize()
 // Enum Operator Definitions
 //===================================================================
 
-std::string CapabilitiesMessage::capabilitiesToString(Capabilities &capabilities)
+QString CapabilitiesMessage::capabilitiesToString(Capabilities capabilities)
 {
     switch(capabilities)
     {
@@ -53,6 +53,9 @@ std::string CapabilitiesMessage::capabilitiesToString(Capabilities &capabilities
             break;
         case Capabilities::CAMERA_DISTANCE:
             return "Distance camera triggering";
+            break;
+        case Capabilities::MAVLINK_RELAY:
+            return "Mavlink relay";
             break;
         default:
             return "Invalid Capability";

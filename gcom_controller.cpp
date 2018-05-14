@@ -42,11 +42,14 @@ const QRegExp ELEV_HEADING_REGEX("^-?[0-9]*(\\.[0-9]*)?$");
 const bool TAB_ENABLE = true;
 const bool TAB_DISABLE = false;
 const int TAB_IMAGE_FETCHER = 2;
+const int TAB_MAVLINK = 3;
 
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
 const QString CONNECTING_BUTTON_TEXT("Cancel Connecting");
 const QString DISCONNECT_BUTTON_TEXT("Disconnect");
+const QString MAVLINK_COMMAND_SUCCESS_LABEL("<font color='#05c400'> Success </font>");
+const QString MAVLINK_COMMAND_FAIL_LABEL("<font color='#D52D2D'> Failed </font>");
 
 // DCNC Constants
 const QString START_SEARCHING_BUTTON_TEXT("Start Searching");
@@ -58,11 +61,6 @@ const QString START_SERVER_FAIL_TEXT(
         "Cannot listen on the given server ip address and port.");
 const QString SYSTEM_RESUME_FAIL_TEXT(
         "Cannot resume previous connection.");
-
-// Capabilities Constants
-const int SIZE_CAPABILITY = 8;
-const QString CAMERA_TAGGED_TEXT("Camera with tags");
-const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
 
 // Image Fetcher Constants
 #if defined(Q_OS_WIN)
@@ -129,6 +127,10 @@ GcomController::GcomController(QWidget *parent) :
     mavlinkConnectingMovie = new QMovie (":/connection/mavlink_connecting.gif");
     mavlinkConnectedMovie = new QMovie (":/connection/mavlink_connected.gif");
 
+    connect(mavlinkRelay, SIGNAL(mavlinkCommandSuccess(bool)),
+            this, SLOT(handleMavlinkCommandStatus(bool)));
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
+
     // DCNC Setup
     dcnc = new DCNC();
     connect(dcnc, SIGNAL(receivedConnection()), this, SLOT(dcncConnected()));
@@ -155,6 +157,16 @@ GcomController::GcomController(QWidget *parent) :
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
+    QSizePolicy retainSize = ui->fetcherPhotoFreqLabel->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqLabel->setSizePolicy(retainSize);
+
+    retainSize = ui->fetcherPhotoFreqField->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqField->setSizePolicy(retainSize);
+
+    ui->fetcherPhotoFreqLabel->hide();
+    ui->fetcherPhotoFreqField->hide();
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 
     // Antenna Tracker Setup
@@ -206,6 +218,7 @@ void GcomController::restMavlinkGUI()
     // Enable all input fields
     ui->mavlinkIPField->setDisabled(false);
     ui->mavlinkPortField->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
 }
 
 void GcomController::mavlinkTimerTimeout()
@@ -258,12 +271,14 @@ void GcomController::mavlinkRelayConnected()
     mavlinkConnectionTimer->start(1000);
     // Enable the antenna tracker
     ui->antennaTrackerTab->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_ENABLE);
 }
 
 void GcomController::mavlinkRelayDisconnected()
 {
     if (ui->mavlinkAutoReconnect->isChecked() && mavlinkButtonDisconnect != true)
     {
+        enableTabMain(TAB_MAVLINK, TAB_DISABLE);
         on_mavlinkConnectionButton_clicked();
         return;
     }
@@ -280,6 +295,50 @@ void GcomController::mavlinkRelayDisconnected()
     ui->antennaTrackerTab->setDisabled(true);
     // Reset the button method
     mavlinkButtonDisconnect = false;
+}
+
+void GcomController::on_mavlinkModeButton_clicked()
+{
+    if (!mavlinkRelay->setFlightMode(ui->mavlinkModeComboBox->currentIndex()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkSpeedButton_clicked()
+{
+    if (!mavlinkRelay->changeSpeed(ui->mavlinkSpeedField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkArmButton_clicked()
+{
+    if (!mavlinkRelay->arm())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkMissionStartButton_clicked()
+{
+    if (!mavlinkRelay->missionStart())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkTakeoffButton_clicked()
+{
+    if (!mavlinkRelay->takeoff(ui->mavlinkTakeoffAltField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkLandButton_clicked()
+{
+    if (!mavlinkRelay->land())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::handleMavlinkCommandStatus(bool status)
+{
+    if (status)
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_SUCCESS_LABEL);
+    else
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_FAIL_LABEL);
 }
 
 //===================================================================
@@ -445,9 +504,13 @@ void GcomController::dcncReestablishedConnection(CommandMessage::Commands comman
 
             // If Gremlin previously had camera capabilities, activate fetcher tab
             if (ui->dcncCapabilitiesField->findItems(
-                CAMERA_TAGGED_TEXT, Qt::MatchExactly).length() > 0 ||
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_TAGGED),
+                Qt::MatchExactly).length() > 0 ||
                 ui->dcncCapabilitiesField->findItems(
-                CAMERA_UNTAGGED_TEXT, Qt::MatchExactly).length() > 0)
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED),
+                Qt::MatchExactly).length() > 0)
             {
                 enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
             }
@@ -468,20 +531,42 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
+
     if (ui->dcncCapabilitiesField->count() != 0)
         ui->dcncCapabilitiesField->clear();
 
-    // May have several capabilities, so loop through all of them
-     while (static_cast<uint32_t>(capabilities)) {
-         if (static_cast<uint32_t>(capabilities &
-                                   CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
-         {
-             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
-             setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
-             ui->dcncCapabilitiesField->addItem(CAMERA_TAGGED_TEXT);
-         }
-         // Remove capabilities that have already been used
-         capabilities = capabilities >> SIZE_CAPABILITY;
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TAGGED)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
+     {
+         enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+         setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TAGGED));
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_DISTANCE)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_DISTANCE))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_DISTANCE));
+         ui->fetcherPhotoFreqLabel->show();
+         ui->fetcherPhotoFreqField->show();
+     }
+
+     else if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TIMER)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TIMER))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TIMER));
+         ui->fetcherPhotoFreqLabel->hide();
+         ui->fetcherPhotoFreqField->hide();
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::MAVLINK_RELAY)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::MAVLINK_RELAY))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::MAVLINK_RELAY));
      }
 }
 
