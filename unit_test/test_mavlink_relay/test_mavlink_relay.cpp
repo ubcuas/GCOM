@@ -10,7 +10,7 @@
 // GCOM Includes
 #include "test_mavlink_relay.hpp"
 
-#define PACK_LAT_LON(x) (int32_t) (x*1e7)
+#define PACK_LAT_LON(x) qRound(x*1e7)
 
 const QString IP_ADDRESS("127.0.0.1");
 const int PORT = 14550;

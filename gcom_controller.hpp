@@ -49,6 +49,14 @@ private slots:
     void mavlinkRelayConnected();
     void mavlinkRelayDisconnected();
     void mavlinkTimerTimeout();
+
+    void on_mavlinkModeButton_clicked();
+    void on_mavlinkSpeedButton_clicked();
+    void on_mavlinkArmButton_clicked();
+    void on_mavlinkMissionStartButton_clicked();
+    void on_mavlinkTakeoffButton_clicked();
+    void on_mavlinkLandButton_clicked();
+    void handleMavlinkCommandStatus(bool status);
     // DCNC Slots
     void dcncConnected();
     void dcncDisconnected();

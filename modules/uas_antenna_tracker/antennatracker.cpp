@@ -165,10 +165,9 @@ AntennaTracker::AntennaTrackerConnectionState AntennaTracker::startTracking(MAVL
     arduinoDataStream.setDevice(&arduinoSerial);
 
     // if the GPS is not overrided retrieve the gps location from arduino
-    if (!overrideGPSToggle && !retrieveStationPos())
-    {
-        return AntennaTrackerConnectionState::FAILED;
-    }
+    if (!overrideGPSToggle)
+        if(!retrieveStationPos())
+            return AntennaTrackerConnectionState::FAILED;
 
     // Setup desired speed for Zaber vertical movement
     zaberSerial.write(zaberSetVerticalMoveSpeed.toStdString().c_str());
