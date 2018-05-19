@@ -20,7 +20,6 @@
 #include "modules/uas_dcnc/dcnc.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
 #include "modules/uas_message/uas_message_serial_framer.hpp"
-#include "modules/image_processing/image_processing.hpp"
 
 //===================================================================
 // Constants
@@ -43,11 +42,14 @@ const QRegExp ELEV_HEADING_REGEX("^-?[0-9]*(\\.[0-9]*)?$");
 const bool TAB_ENABLE = true;
 const bool TAB_DISABLE = false;
 const int TAB_IMAGE_FETCHER = 2;
+const int TAB_MAVLINK = 3;
 
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
 const QString CONNECTING_BUTTON_TEXT("Cancel Connecting");
 const QString DISCONNECT_BUTTON_TEXT("Disconnect");
+const QString MAVLINK_COMMAND_SUCCESS_LABEL("<font color='#05c400'> Success </font>");
+const QString MAVLINK_COMMAND_FAIL_LABEL("<font color='#D52D2D'> Failed </font>");
 
 // DCNC Constants
 const QString START_SEARCHING_BUTTON_TEXT("Start Searching");
@@ -59,11 +61,6 @@ const QString START_SERVER_FAIL_TEXT(
         "Cannot listen on the given server ip address and port.");
 const QString SYSTEM_RESUME_FAIL_TEXT(
         "Cannot resume previous connection.");
-
-// Capabilities Constants
-const int SIZE_CAPABILITY = 8;
-const QString CAMERA_TAGGED_TEXT("Camera with tags");
-const QString CAMERA_UNTAGGED_TEXT("Camera without tags");
 
 // Image Fetcher Constants
 #if defined(Q_OS_WIN)
@@ -92,9 +89,6 @@ const int FETCHER_STATUS_UNAVAILABLE = 0;
 const int FETCHER_STATUS_READY = 1;
 const int FETCHER_STATUS_TRANSFERRING = 2;
 
-const int SAVE_IMAGE = 0;
-const int IMAGE_SCRIPT = 1;
-const int OUTPUT = 2;
 
 // Antenna Tracker Constants
 const QString START_TRACKING_BUTTON_TEXT("Start Tracking");
@@ -105,8 +99,7 @@ const QString STOP_TRACKING_BUTTON_TEXT("Stop Tracking");
 //===================================================================
 GcomController::GcomController(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::GcomController),
-    imp(QDir::currentPath(),QDir::currentPath())
+    ui(new Ui::GcomController)
 {
     // General UI Setup
     ui->setupUi(this);
@@ -134,6 +127,10 @@ GcomController::GcomController(QWidget *parent) :
     mavlinkConnectingMovie = new QMovie (":/connection/mavlink_connecting.gif");
     mavlinkConnectedMovie = new QMovie (":/connection/mavlink_connected.gif");
 
+    connect(mavlinkRelay, SIGNAL(mavlinkCommandSuccess(bool)),
+            this, SLOT(handleMavlinkCommandStatus(bool)));
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
+
     // DCNC Setup
     dcnc = new DCNC();
     connect(dcnc, SIGNAL(receivedConnection()), this, SLOT(dcncConnected()));
@@ -160,6 +157,16 @@ GcomController::GcomController(QWidget *parent) :
     fetcher = nullptr;
     fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
 
+    QSizePolicy retainSize = ui->fetcherPhotoFreqLabel->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqLabel->setSizePolicy(retainSize);
+
+    retainSize = ui->fetcherPhotoFreqField->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqField->setSizePolicy(retainSize);
+
+    ui->fetcherPhotoFreqLabel->hide();
+    ui->fetcherPhotoFreqField->hide();
     enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 
     // Antenna Tracker Setup
@@ -211,6 +218,7 @@ void GcomController::restMavlinkGUI()
     // Enable all input fields
     ui->mavlinkIPField->setDisabled(false);
     ui->mavlinkPortField->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
 }
 
 void GcomController::mavlinkTimerTimeout()
@@ -222,7 +230,7 @@ void GcomController::on_mavlinkConnectionButton_clicked()
 {
     // If the MAVLink relay was disconnected the state machine progresses to
     // the connection stage
-    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCCONNECTED)
+    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCONNECTED)
     {
         // Disable all input fields
         ui->mavlinkIPField->setDisabled(true);
@@ -263,12 +271,14 @@ void GcomController::mavlinkRelayConnected()
     mavlinkConnectionTimer->start(1000);
     // Enable the antenna tracker
     ui->antennaTrackerTab->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_ENABLE);
 }
 
 void GcomController::mavlinkRelayDisconnected()
 {
     if (ui->mavlinkAutoReconnect->isChecked() && mavlinkButtonDisconnect != true)
     {
+        enableTabMain(TAB_MAVLINK, TAB_DISABLE);
         on_mavlinkConnectionButton_clicked();
         return;
     }
@@ -285,6 +295,50 @@ void GcomController::mavlinkRelayDisconnected()
     ui->antennaTrackerTab->setDisabled(true);
     // Reset the button method
     mavlinkButtonDisconnect = false;
+}
+
+void GcomController::on_mavlinkModeButton_clicked()
+{
+    if (!mavlinkRelay->setFlightMode(ui->mavlinkModeComboBox->currentIndex()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkSpeedButton_clicked()
+{
+    if (!mavlinkRelay->changeSpeed(ui->mavlinkSpeedField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkArmButton_clicked()
+{
+    if (!mavlinkRelay->arm())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkMissionStartButton_clicked()
+{
+    if (!mavlinkRelay->missionStart())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkTakeoffButton_clicked()
+{
+    if (!mavlinkRelay->takeoff(ui->mavlinkTakeoffAltField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkLandButton_clicked()
+{
+    if (!mavlinkRelay->land())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::handleMavlinkCommandStatus(bool status)
+{
+    if (status)
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_SUCCESS_LABEL);
+    else
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_FAIL_LABEL);
 }
 
 //===================================================================
@@ -450,9 +504,13 @@ void GcomController::dcncReestablishedConnection(CommandMessage::Commands comman
 
             // If Gremlin previously had camera capabilities, activate fetcher tab
             if (ui->dcncCapabilitiesField->findItems(
-                CAMERA_TAGGED_TEXT, Qt::MatchExactly).length() > 0 ||
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_TAGGED),
+                Qt::MatchExactly).length() > 0 ||
                 ui->dcncCapabilitiesField->findItems(
-                CAMERA_UNTAGGED_TEXT, Qt::MatchExactly).length() > 0)
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED),
+                Qt::MatchExactly).length() > 0)
             {
                 enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
             }
@@ -473,20 +531,42 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
+
     if (ui->dcncCapabilitiesField->count() != 0)
         ui->dcncCapabilitiesField->clear();
 
-    // May have several capabilities, so loop through all of them
-     while (static_cast<uint32_t>(capabilities)) {
-         if (static_cast<uint32_t>(capabilities &
-                                   CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
-         {
-             enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
-             setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
-             ui->dcncCapabilitiesField->addItem(CAMERA_TAGGED_TEXT);
-         }
-         // Remove capabilities that have already been used
-         capabilities = capabilities >> SIZE_CAPABILITY;
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TAGGED)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
+     {
+         enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+         setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TAGGED));
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_DISTANCE)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_DISTANCE))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_DISTANCE));
+         ui->fetcherPhotoFreqLabel->show();
+         ui->fetcherPhotoFreqField->show();
+     }
+
+     else if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TIMER)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TIMER))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TIMER));
+         ui->fetcherPhotoFreqLabel->hide();
+         ui->fetcherPhotoFreqField->hide();
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::MAVLINK_RELAY)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::MAVLINK_RELAY))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::MAVLINK_RELAY));
      }
 }
 
@@ -738,47 +818,11 @@ void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera)
 
     ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
     ui->fetcherPathInvalidLabel->hide();
-
-
-    ui->imageScriptField->setText(currentDir);
-
-    ui->imageScriptField->setValidator(new QRegExpValidator(PATH_REGEX));
-
-    // Prevent layout from changing when labels are hidden
-    retainSize = ui->imageScriptPathInvalidLabel->sizePolicy();
-    retainSize.setRetainSizeWhenHidden(true);
-    ui->imageScriptPathInvalidLabel->setSizePolicy(retainSize);
-
-    ui->imageScriptPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->imageScriptPathInvalidLabel->hide();
-
-
-    ui->outputField->setText(currentDir);
-
-    ui->outputField->setValidator(new QRegExpValidator(PATH_REGEX));
-
-    // Prevent layout from changing when labels are hidden
-    retainSize = ui->outputPathInvalidLabel->sizePolicy();
-    retainSize.setRetainSizeWhenHidden(true);
-    ui->outputPathInvalidLabel->setSizePolicy(retainSize);
-
-    ui->outputPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-    ui->outputPathInvalidLabel->hide();
 }
 
 void GcomController::on_fetcherPathButton_clicked()
 {
-    fetcherBrowseDir(SAVE_IMAGE);
-}
-
-void GcomController::on_imageScriptPathButton_clicked()
-{
-    fetcherBrowseDir(IMAGE_SCRIPT);
-}
-
-void GcomController::on_outputPathButton_clicked()
-{
-    fetcherBrowseDir(OUTPUT);
+    fetcherBrowseDir();
 }
 
 void GcomController::on_fetcherPathField_returnPressed()
@@ -786,31 +830,12 @@ void GcomController::on_fetcherPathField_returnPressed()
     ui->fetcherPathField->clearFocus();
 }
 
-void GcomController::on_imageScriptField_returnPressed()
-{
-    ui->imageScriptField->clearFocus();
-}
-
-void GcomController::on_outputField_returnPressed()
-{
-    ui->outputField->clearFocus();
-}
-
 void GcomController::on_fetcherPathField_textChanged()
 {
-    validatePath(ui->fetcherPathField->text(), SAVE_IMAGE);
-}
-void GcomController::on_imageScriptField_textChanged()
-{
-    validatePath(ui->imageScriptField->text(), IMAGE_SCRIPT);
+    validatePath(ui->fetcherPathField->text());
 }
 
-void GcomController::on_outputField_textChanged()
-{
-    validatePath(ui->outputField->text(), OUTPUT);
-}
-
-void GcomController::fetcherBrowseDir(const int mode) {
+void GcomController::fetcherBrowseDir() {
     QString currentDir = QDir::currentPath();
 
     // Open file dialog, allows user to select a folder
@@ -824,70 +849,29 @@ void GcomController::fetcherBrowseDir(const int mode) {
     // Check if directory has been changed
     if (!folderPath.length())
         return;
+
     // Update path field
-    switch(mode)
-    {
-        case SAVE_IMAGE:
-            ui->fetcherPathField->setText(folderPath);
-        break;
-        case IMAGE_SCRIPT:
-            ui->imageScriptField->setText(folderPath);
-        break;
-        case OUTPUT:
-            ui->outputField->setText(folderPath);
-        break;
-    }
+    ui->fetcherPathField->setText(folderPath);
 }
 
-void GcomController::validatePath(QString path, const int mode) {
+void GcomController::validatePath(QString path) {
     // If the path is invalid or is empty, show error message and
     // disable the start image transfer button
     // If the path is valid and the error message is showing,
     // hide the error message
     if(!PATH_REGEX.exactMatch(path) || path.length() == 0)
     {
-        switch(mode)
-        {
-            case SAVE_IMAGE:
-                ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->fetcherPathInvalidLabel->show();
-                ui->fetcherImageTransferButton->setEnabled(false);
-            break;
-            case IMAGE_SCRIPT:
-                ui->imageScriptPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->imageScriptPathInvalidLabel->show();
-                ui->fetcherImageTransferButton->setEnabled(false);
-            break;
-            case OUTPUT:
-                ui->outputPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
-                ui->outputPathInvalidLabel->show();
-                ui->fetcherImageTransferButton->setEnabled(false);
-            break;
-        }
+        ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+        ui->fetcherPathInvalidLabel->show();
+        ui->fetcherImageTransferButton->setEnabled(false);
     }
-    else
+    else if (!ui->fetcherPathInvalidLabel->isHidden())
     {
-        switch(mode)
-        {
-            case SAVE_IMAGE:
-                if(!ui->fetcherPathInvalidLabel->isHidden())
-                ui->fetcherPathInvalidLabel->hide();
-            break;
-            case IMAGE_SCRIPT:
-                if(!ui->imageScriptPathInvalidLabel->isHidden())
-                ui->imageScriptPathInvalidLabel->hide();
-            break;
-            case OUTPUT:
-                if(!ui->outputPathInvalidLabel->isHidden())
-                ui->outputPathInvalidLabel->hide();
-            break;
-        }
+        ui->fetcherPathInvalidLabel->hide();
     }
 
     if (ui->fetcherImageTransferButton->isEnabled() ||
-        !ui->fetcherPathInvalidLabel->isHidden() ||
-        !ui->imageScriptPathInvalidLabel->isHidden() ||
-        !ui->outputPathInvalidLabel->isHidden())
+        !ui->fetcherPathInvalidLabel->isHidden())
         return;
 
     // If the start image transfer button is disabled and
@@ -905,37 +889,21 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             {
                 ui->fetcherPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
                 ui->fetcherPathInvalidLabel->show();
-            }
-            if (!imp.changeImageScriptDir(ui->imageScriptField->text()))
-            {
-                ui->imageScriptPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
-                ui->fetcherPathInvalidLabel->show();
-            }
-            if (!imp.changeOutputDir(ui->outputField->text()))
-            {
-                ui->outputPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
-                ui->outputPathInvalidLabel->show();
-            }
-            if (ui->fetcherImageTransferButton->isEnabled() &&
-                (!ui->fetcherPathInvalidLabel->isHidden() ||
-                !ui->imageScriptPathInvalidLabel->isHidden() ||
-                !ui->outputPathInvalidLabel->isHidden()))
-            {
-                ui->fetcherImageTransferButton->clearFocus();
-                ui->fetcherImageTransferButton->setEnabled(false);
+
+                if (ui->fetcherImageTransferButton->isEnabled()) {
+                    ui->fetcherImageTransferButton->clearFocus();
+                    ui->fetcherImageTransferButton->setEnabled(false);  
+                }
                 return;
             }
 
-            dcnc->startImageRelay();
+            dcnc->startImageRelay(ui->fetcherPhotoFreqField->value());
             ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
             ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_STOP_TEXT);
             fetcherStatus = FETCHER_STATUS_TRANSFERRING;
             ui->fetcherPathField->setEnabled(false);
             ui->fetcherPathButton->setEnabled(false);
-            ui->imageScriptField->setEnabled(false);
-            ui->imageScriptPathButton->setEnabled(false);
-            ui->outputField->setEnabled(false);
-            ui->outputPathButton->setEnabled(false);
+            ui->fetcherPhotoFreqField->setEnabled(false);
         }
         break;
 
@@ -947,10 +915,7 @@ void GcomController::on_fetcherImageTransferButton_clicked()
             fetcherStatus = FETCHER_STATUS_READY;
             ui->fetcherPathField->setEnabled(true);
             ui->fetcherPathButton->setEnabled(true);
-            ui->imageScriptField->setEnabled(true);
-            ui->imageScriptPathButton->setEnabled(true);
-            ui->outputField->setEnabled(true);
-            ui->outputPathButton->setEnabled(true);
+            ui->fetcherPhotoFreqField->setEnabled(true);
         }
     }
 }

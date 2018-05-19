@@ -101,8 +101,6 @@ void SendCommandMessageTest::handleClientMessage(std::shared_ptr<UASMessage> mes
               std::shared_ptr<CommandMessage> commandMesg = std::static_pointer_cast<CommandMessage>(message);
               qDebug() <<("This is a command message");
               QCOMPARE(commandMesg->command,CommandMessage::Commands::IMAGE_RELAY_START);
-              QCOMPARE(commandMesg->trigger,CommandMessage::Triggers::TIME);
-              QCOMPARE(commandMesg->parameter,(uint8_t)0xFF);
               qDebug()<<("Command message received succeed");
               QVERIFY(true);
               break;

@@ -15,8 +15,8 @@ test {
         unit_test/sendCommandMessage \
         unit_test/test_image_tagged_message \
         unit_test/test_image_fetcher \
-        unit_test/test_gcom_controller_image_fetcher
-
+        unit_test/test_gcom_controller_image_fetcher \
+        unit_test/test_mavlink_relay
 }
 else {
     TEMPLATE = app
