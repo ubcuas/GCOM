@@ -40,17 +40,6 @@ public:
         CONNECTING          = 2,
     };
 
-    enum class FlightModeIndex : int
-    {
-        STABILIZE           = 0,
-        AUTO                = 1,
-        GUIDED              = 2,
-        LOITER              = 3,
-        RTL                 = 4,
-        ALTHOLD             = 5,
-        MANUAL              = 6,
-    };
-
     // Public Methods
     MAVLinkRelay();
 
@@ -193,10 +182,6 @@ private:
      * \return true if successful, false if unsuccessful
      */
     bool writeData(mavlink_message_t outgoingMessage);
-
-    // Returns the correct code used by ardupilot for each flight mode
-    int handleMultiRotorFlightMode(int mode);
-    int handleFixedWingFlightMode(int mode);
 
     // Private Member Variables
     QTcpSocket missionplannerSocket;

@@ -231,11 +231,15 @@ bool MAVLinkRelay::setFlightMode(int mode)
 {
     mavlink_message_t outgoingMessage;
 
+    // maps each flight mode index to the correct code used by ardupilot
+    const int multiRotorFlightMode[] = {0, 3, 4, 5, 6, 2, -1};
+    const int fixedWingFlightMode[] = {2, 10, 15, 12, 11, -1, 0};
+
     // get correct code for the flight mode
     if (vehicleType == MAV_TYPE_FIXED_WING)
-        mode = handleFixedWingFlightMode(mode);
+        mode = fixedWingFlightMode[mode];
     else
-        mode = handleMultiRotorFlightMode(mode);
+        mode = multiRotorFlightMode[mode];
 
     if (mode == -1)
         return false;
@@ -248,50 +252,6 @@ bool MAVLinkRelay::setFlightMode(int mode)
         return false;
 
     return true;
-}
-
-int MAVLinkRelay::handleMultiRotorFlightMode(int mode)
-{
-    // Returns the flight mode code used by arducopter
-    switch (static_cast<FlightModeIndex>(mode))
-    {
-        case FlightModeIndex::STABILIZE:
-            return 0;
-        case FlightModeIndex::AUTO:
-            return 3;
-        case FlightModeIndex::GUIDED:
-            return 4;
-        case FlightModeIndex::LOITER:
-            return 5;
-        case FlightModeIndex::RTL:
-            return 6;
-        case FlightModeIndex::ALTHOLD:
-            return 2;
-        default:
-            return -1;
-    }
-}
-
-int MAVLinkRelay::handleFixedWingFlightMode(int mode)
-{
-    // Returns the flight mode code used by arduplane
-    switch (static_cast<FlightModeIndex>(mode))
-    {
-        case FlightModeIndex::STABILIZE:
-            return 2;
-        case FlightModeIndex::AUTO:
-            return 10;
-        case FlightModeIndex::GUIDED:
-            return 15;
-        case FlightModeIndex::LOITER:
-            return 12;
-        case FlightModeIndex::RTL:
-            return 11;
-        case FlightModeIndex::MANUAL:
-            return 0;
-        default:
-            return -1;
-    }
 }
 
 bool MAVLinkRelay::changeSpeed(float speed)
@@ -415,12 +375,11 @@ bool MAVLinkRelay::writeMission(float takeoffAlt,
     mavlink_msg_mission_count_pack(systemSysID, systemCompID, &outgoingMessage,
                                    targetSysID, targetCompID, waypointList.size()+3);
 
-    if (writeData(outgoingMessage))
-    {
-        sendingStatus = MAVLinkRelaySendingStatus::SENDING;
-        return true;
-    }
-    return false;
+    if (!writeData(outgoingMessage))
+        return false;
+
+    sendingStatus = MAVLinkRelaySendingStatus::SENDING;
+    return true;
 }
 
 void MAVLinkRelay::handleMissionRequest(uint16_t seq)
