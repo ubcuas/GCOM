@@ -2,7 +2,12 @@
 
 InteropOdlc::InteropOdlc()
 {
-    //do nothing
+    //initialize default values
+    id = INT_MIN;
+    user = INT_MIN;
+    latitude = INT_MIN;
+    longitude = INT_MIN;
+    autonomous = false;
 }
 
 InteropOdlc::~InteropOdlc()
