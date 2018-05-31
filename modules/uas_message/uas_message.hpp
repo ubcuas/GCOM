@@ -36,6 +36,7 @@ class UASMessage
             DATA_IMAGE_UNTAGGED     = 0x13,
             DATA_CAPABILITIES       = 0x14,
             DATA_IMAGE_TAGGED       = 0x15,
+            DATA_PATH_TAGGED        = 0X16,
             DEBUG                   = 0xFF,
             UNSPECIFIED             = 0xFF
         };

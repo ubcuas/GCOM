@@ -9,6 +9,9 @@
 #include <QRegExp>
 #include <QTimer>
 #include <QDebug>
+#include <QDir>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QThread>
 // GCOM Includes
 #include "gcom_controller.hpp"
@@ -35,10 +38,18 @@ const QRegExp IP_REGEX("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$");
 const QRegExp LATLON_REGEX("^-?[0-9]*\\.[0-9]*$");
 const QRegExp ELEV_HEADING_REGEX("^-?[0-9]*(\\.[0-9]*)?$");
 
+// tabMain Constants
+const bool TAB_ENABLE = true;
+const bool TAB_DISABLE = false;
+const int TAB_IMAGE_FETCHER = 2;
+const int TAB_MAVLINK = 3;
+
 // MAVLink Constants
 const QString CONNECT_BUTTON_TEXT("Connect");
 const QString CONNECTING_BUTTON_TEXT("Cancel Connecting");
 const QString DISCONNECT_BUTTON_TEXT("Disconnect");
+const QString MAVLINK_COMMAND_SUCCESS_LABEL("<font color='#05c400'> Success </font>");
+const QString MAVLINK_COMMAND_FAIL_LABEL("<font color='#D52D2D'> Failed </font>");
 
 // DCNC Constants
 const QString START_SEARCHING_BUTTON_TEXT("Start Searching");
@@ -46,6 +57,38 @@ const QString STOP_SEARCHING_BUTTON_TEXT("Stop Searching");
 const QString STOP_SERVER_BUTTON_TEXT("Stop Server");
 const QString UNKNOWN_LABEL("Unknown");
 const QString DISCONNECTED_LABEL("Disconnected");
+const QString START_SERVER_FAIL_TEXT(
+        "Cannot listen on the given server ip address and port.");
+const QString SYSTEM_RESUME_FAIL_TEXT(
+        "Cannot resume previous connection.");
+
+// Image Fetcher Constants
+#if defined(Q_OS_WIN)
+    const QRegExp PATH_REGEX(
+            "^([a-zA-Z]:/)([^. <>:\"/\\\\|?*][^<>:\"/\\\\|?*]*/?)*$");
+#elif defined(Q_OS_MACOS)
+    const QRegExp PATH_REGEX("^/([^.:/][^:/]*/?)+$");
+#elif defined(Q_OS_LINUX)
+    const QRegExp PATH_REGEX("^/([^/]+/?)*$");
+#else
+#error
+#endif
+
+const int PATH_IMAGES = 0;
+const int PATH_TAGS = 1;
+
+const QString FETCHER_READY_LABEL("<font color='#05c400'> READY </font>");
+const QString FETCHER_TRANSFER_LABEL("<font color='#05c400'> TRANSFERRING </font>");
+const QString FETCHER_INVALID_PATH_LABEL("<font color='#D52D2D'> *Invalid Path </font>");
+const QString FETCHER_NONREAL_PATH_LABEL("<font color='#D52D2D'> *Path does not exist</font>");
+
+const QString IMAGE_TRANSFER_START_TEXT("Start Image Transfer");
+const QString IMAGE_TRANSFER_STOP_TEXT("Stop Image Transfer");
+
+const int FETCHER_STATUS_UNAVAILABLE = 0;
+const int FETCHER_STATUS_READY = 1;
+const int FETCHER_STATUS_TRANSFERRING = 2;
+
 
 // Antenna Tracker Constants
 const QString START_TRACKING_BUTTON_TEXT("Start Tracking");
@@ -84,10 +127,18 @@ GcomController::GcomController(QWidget *parent) :
     mavlinkConnectingMovie = new QMovie (":/connection/mavlink_connecting.gif");
     mavlinkConnectedMovie = new QMovie (":/connection/mavlink_connected.gif");
 
+    connect(mavlinkRelay, SIGNAL(mavlinkCommandSuccess(bool)),
+            this, SLOT(handleMavlinkCommandStatus(bool)));
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
+
     // DCNC Setup
     dcnc = new DCNC();
     connect(dcnc, SIGNAL(receivedConnection()), this, SLOT(dcncConnected()));
     connect(dcnc, SIGNAL(droppedConnection()), this, SLOT(dcncDisconnected()));
+    connect(dcnc, SIGNAL(reestablishedConnection(CommandMessage::Commands,
+                                                 ResponseMessage::ResponseCodes)),
+            this, SLOT(dcncReestablishedConnection(CommandMessage::Commands,
+                                                   ResponseMessage::ResponseCodes)));
     connect(dcnc, SIGNAL(receivedGremlinInfo(QString,uint16_t,bool)),
             this, SLOT(gremlinInfo(QString,uint16_t,bool)));
     connect(dcnc, SIGNAL(receivedGremlinCapabilities(CapabilitiesMessage::Capabilities)),
@@ -101,9 +152,27 @@ GcomController::GcomController(QWidget *parent) :
     connect(ui->dcncServerAutoResume, SIGNAL(clicked(bool)), dcnc, SLOT(changeAutoResume(bool)));
     resetDCNCGUI();
 
+    // Image Fetcher Setup
+    // Set fetcher to nullptr so it is only initialized once
+    fetcher = nullptr;
+    fetcherStatus = FETCHER_STATUS_UNAVAILABLE;
+
+    QSizePolicy retainSize = ui->fetcherPhotoFreqLabel->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqLabel->setSizePolicy(retainSize);
+
+    retainSize = ui->fetcherPhotoFreqField->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPhotoFreqField->setSizePolicy(retainSize);
+
+    ui->fetcherPhotoFreqLabel->hide();
+    ui->fetcherPhotoFreqField->hide();
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+
     // Antenna Tracker Setup
     tracker = new AntennaTracker();
     ui->antennaTrackerTab->setDisabled(true);
+
     ui->startTrackButton->setEnabled(false);
     ui->antennaTrackerCalibrateIMUButton->setEnabled(false);
 
@@ -136,6 +205,7 @@ GcomController::~GcomController()
     delete mavlinkConnectingMovie;
     delete dcnc;
     delete tracker;
+    delete fetcher;
     delete interop;
 }
 
@@ -153,6 +223,7 @@ void GcomController::restMavlinkGUI()
     // Enable all input fields
     ui->mavlinkIPField->setDisabled(false);
     ui->mavlinkPortField->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_DISABLE);
 }
 
 void GcomController::mavlinkTimerTimeout()
@@ -164,7 +235,7 @@ void GcomController::on_mavlinkConnectionButton_clicked()
 {
     // If the MAVLink relay was disconnected the state machine progresses to
     // the connection stage
-    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCCONNECTED)
+    if (mavlinkRelay->status() == MAVLinkRelay::MAVLinkRelayStatus::DISCONNECTED)
     {
         // Disable all input fields
         ui->mavlinkIPField->setDisabled(true);
@@ -205,12 +276,14 @@ void GcomController::mavlinkRelayConnected()
     mavlinkConnectionTimer->start(1000);
     // Enable the antenna tracker
     ui->antennaTrackerTab->setDisabled(false);
+    enableTabMain(TAB_MAVLINK, TAB_ENABLE);
 }
 
 void GcomController::mavlinkRelayDisconnected()
 {
     if (ui->mavlinkAutoReconnect->isChecked() && mavlinkButtonDisconnect != true)
     {
+        enableTabMain(TAB_MAVLINK, TAB_DISABLE);
         on_mavlinkConnectionButton_clicked();
         return;
     }
@@ -227,6 +300,50 @@ void GcomController::mavlinkRelayDisconnected()
     ui->antennaTrackerTab->setDisabled(true);
     // Reset the button method
     mavlinkButtonDisconnect = false;
+}
+
+void GcomController::on_mavlinkModeButton_clicked()
+{
+    if (!mavlinkRelay->setFlightMode(ui->mavlinkModeComboBox->currentIndex()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkSpeedButton_clicked()
+{
+    if (!mavlinkRelay->changeSpeed(ui->mavlinkSpeedField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkArmButton_clicked()
+{
+    if (!mavlinkRelay->arm())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkMissionStartButton_clicked()
+{
+    if (!mavlinkRelay->missionStart())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkTakeoffButton_clicked()
+{
+    if (!mavlinkRelay->takeoff(ui->mavlinkTakeoffAltField->value()))
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::on_mavlinkLandButton_clicked()
+{
+    if (!mavlinkRelay->land())
+        handleMavlinkCommandStatus(false);
+}
+
+void GcomController::handleMavlinkCommandStatus(bool status)
+{
+    if (status)
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_SUCCESS_LABEL);
+    else
+        ui->mavlinkCommandStatusField->setText(MAVLINK_COMMAND_FAIL_LABEL);
 }
 
 //===================================================================
@@ -246,8 +363,6 @@ void GcomController::resetDCNCGUI()
     ui->dcncIPVersionField->setText(DISCONNECTED_LABEL);
     ui->dcncVersionNumberField->setText(DISCONNECTED_LABEL);
     ui->dcncDeviceIDField->setText(DISCONNECTED_LABEL);
-    // Clear Capabilities
-    ui->dcncCapabilitiesField->clear();
     // Enable all input input fields
     ui->dcncServerIPField->setDisabled(false);
     ui->dcncServerPortField->setDisabled(false);
@@ -255,12 +370,12 @@ void GcomController::resetDCNCGUI()
     // Reset the animations
     dcncConnectedMovie->stop();
     dcncConnectingMovie->stop();
+    dcncConnectionTimer->stop();
     ui->dcncStatusMovie->setText(" ");
     // Deactivate the drop gremlin button
     ui->dcncDropGremlin->setDisabled(false);
 
-    // Clear capabilities field
-    ui->dcncCapabilitiesField->clear();
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
 }
 
 void GcomController::on_dcncConnectionButton_clicked()
@@ -273,16 +388,22 @@ void GcomController::on_dcncConnectionButton_clicked()
         {
             // Lock the input fields
             ui->dcncServerIPField->setDisabled(true);
-            ui->dcncServerIPField->setDisabled(false);
-            ui->dcncServerTimeoutField->setDisabled(false);
+            ui->dcncServerPortField->setDisabled(true);
+            ui->dcncServerTimeoutField->setDisabled(true);
 
             status = dcnc->startServer(
                         ui->dcncServerIPField->text(),
                         ui->dcncServerPortField->text().toInt());
 
             // TODO Add a warning message
-            if (status == false)
+            if (status == false) {
+                QMessageBox::information(
+                            this,
+                            GcomController::objectName().toStdString().c_str(),
+                            START_SERVER_FAIL_TEXT.toStdString().c_str());
                 resetDCNCGUI();
+                return;
+            }
 
             // Update UI text to indicate searching
             ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
@@ -346,6 +467,12 @@ void GcomController::dcncConnected()
 
 void GcomController::dcncDisconnected()
 {
+    if (dcnc->status() == DCNC::DCNCStatus::OFFLINE)
+    {
+        resetDCNCGUI();
+        return;
+    }
+
     // Update the UI
     ui->dcncConnectionButton->setText(STOP_SEARCHING_BUTTON_TEXT);
     ui->dcncStatusField->setText(SEARCHING_LABEL);
@@ -360,8 +487,44 @@ void GcomController::dcncDisconnected()
     // Start the connection timeout timer.
     dcncSearchTimeoutTimer->start(ui->dcncServerTimeoutField->text().toULong() * 1000);
 
-    // Clear capabilities field
-    ui->dcncCapabilitiesField->clear();
+    enableTabMain(TAB_IMAGE_FETCHER, TAB_DISABLE);
+}
+
+void GcomController::dcncReestablishedConnection(CommandMessage::Commands command,
+                                                 ResponseMessage::ResponseCodes response)
+{
+    switch(command)
+    {
+        case CommandMessage::Commands::SYSTEM_RESUME:
+        {
+            // If there is an error, show an error popup
+            if (response != ResponseMessage::ResponseCodes::NO_ERROR)
+            {
+                QMessageBox::information(
+                        this,
+                        GcomController::objectName().toStdString().c_str(),
+                        SYSTEM_RESUME_FAIL_TEXT.toStdString().c_str());
+                return;
+            }
+
+            // If Gremlin previously had camera capabilities, activate fetcher tab
+            if (ui->dcncCapabilitiesField->findItems(
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_TAGGED),
+                Qt::MatchExactly).length() > 0 ||
+                ui->dcncCapabilitiesField->findItems(
+                CapabilitiesMessage::capabilitiesToString(
+                CapabilitiesMessage::Capabilities::CAMERA_UNTAGGED),
+                Qt::MatchExactly).length() > 0)
+            {
+                enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+            }
+        }
+        break;
+
+        default:
+        break;
+    }
 }
 
 void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped)
@@ -373,16 +536,43 @@ void GcomController::gremlinInfo(QString systemId, uint16_t versionNumber, bool 
 
 void GcomController::gremlinCapabilities(CapabilitiesMessage::Capabilities capabilities)
 {
-    // May have several capabilities, so loop through all of them
-    do {
-        if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::IMAGE_RELAY))
-        {
-            ui->dcncCapabilitiesField->addItem("Image Relay");
-            dcnc->startImageRelay();
-        }
 
-        capabilities = capabilities >> 8;
-    } while (static_cast<uint32_t>(capabilities) > 0);
+    if (ui->dcncCapabilitiesField->count() != 0)
+        ui->dcncCapabilitiesField->clear();
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TAGGED)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TAGGED))
+     {
+         enableTabMain(TAB_IMAGE_FETCHER, TAB_ENABLE);
+         setupImageFetcher(CapabilitiesMessage::Capabilities::CAMERA_TAGGED);
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TAGGED));
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_DISTANCE)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_DISTANCE))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_DISTANCE));
+         ui->fetcherPhotoFreqLabel->show();
+         ui->fetcherPhotoFreqField->show();
+     }
+
+     else if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::CAMERA_TIMER)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::CAMERA_TIMER))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::CAMERA_TIMER));
+         ui->fetcherPhotoFreqLabel->hide();
+         ui->fetcherPhotoFreqField->hide();
+     }
+
+     if (static_cast<uint32_t>(capabilities & CapabilitiesMessage::Capabilities::MAVLINK_RELAY)
+         == static_cast<uint32_t>(CapabilitiesMessage::Capabilities::MAVLINK_RELAY))
+     {
+         ui->dcncCapabilitiesField->addItem(CapabilitiesMessage::capabilitiesToString(
+                                            CapabilitiesMessage::Capabilities::MAVLINK_RELAY));
+     }
 }
 
 void GcomController::dcncTimerTimeout()
@@ -502,8 +692,6 @@ void GcomController::on_startTrackButton_clicked()
         // checks the tracking status
         if(status == AntennaTracker::AntennaTrackerConnectionState::SUCCESS)
             qDebug() << "both devices started";
-        else if(status == AntennaTracker::AntennaTrackerConnectionState::ARDUINO_UNINITIALIZED)
-            qDebug() << "arduino not initialized";
         else if(status == AntennaTracker::AntennaTrackerConnectionState::ARDUINO_NOT_OPEN)
             qDebug() << "arduino not open";
         else
@@ -613,6 +801,143 @@ void GcomController::interopLoginHandler(Interop::RequestStatus reqStatus)
 }
 
 //===================================================================
+// Image Fetcher Methods
+//===================================================================
+void GcomController::setupImageFetcher(CapabilitiesMessage::Capabilities camera) {
+    fetcherStatus = FETCHER_STATUS_READY;
+    ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+    ui->fetcherPathField->setEnabled(true);
+    ui->fetcherPathButton->setEnabled(true);
+    ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_START_TEXT);
+
+    if (fetcher != nullptr)
+        return;
+
+    QString currentDir = QDir::currentPath();
+
+    // Initialize fetcher with default current working directory paths
+    switch(camera) {
+        case CapabilitiesMessage::Capabilities::CAMERA_TAGGED:
+            fetcher = new ImageFetcher(currentDir, dcnc);
+            break;
+        default:
+            break;
+    }
+
+    ui->fetcherPathField->setText(currentDir);
+
+    ui->fetcherPathField->setValidator(new QRegExpValidator(PATH_REGEX));
+
+    // Prevent layout from changing when labels are hidden
+    QSizePolicy retainSize = ui->fetcherPathInvalidLabel->sizePolicy();
+    retainSize.setRetainSizeWhenHidden(true);
+    ui->fetcherPathInvalidLabel->setSizePolicy(retainSize);
+
+    ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+    ui->fetcherPathInvalidLabel->hide();
+}
+
+void GcomController::on_fetcherPathButton_clicked()
+{
+    fetcherBrowseDir();
+}
+
+void GcomController::on_fetcherPathField_returnPressed()
+{
+    ui->fetcherPathField->clearFocus();
+}
+
+void GcomController::on_fetcherPathField_textChanged()
+{
+    validatePath(ui->fetcherPathField->text());
+}
+
+void GcomController::fetcherBrowseDir() {
+    QString currentDir = QDir::currentPath();
+
+    // Open file dialog, allows user to select a folder
+    // and saves the path to a string
+    QString folderPath = QFileDialog::getExistingDirectory(
+                            this,
+                            "Select Folder",
+                            currentDir,
+                            QFileDialog::ShowDirsOnly);
+
+    // Check if directory has been changed
+    if (!folderPath.length())
+        return;
+
+    // Update path field
+    ui->fetcherPathField->setText(folderPath);
+}
+
+void GcomController::validatePath(QString path) {
+    // If the path is invalid or is empty, show error message and
+    // disable the start image transfer button
+    // If the path is valid and the error message is showing,
+    // hide the error message
+    if(!PATH_REGEX.exactMatch(path) || path.length() == 0)
+    {
+        ui->fetcherPathInvalidLabel->setText(FETCHER_INVALID_PATH_LABEL);
+        ui->fetcherPathInvalidLabel->show();
+        ui->fetcherImageTransferButton->setEnabled(false);
+    }
+    else if (!ui->fetcherPathInvalidLabel->isHidden())
+    {
+        ui->fetcherPathInvalidLabel->hide();
+    }
+
+    if (ui->fetcherImageTransferButton->isEnabled() ||
+        !ui->fetcherPathInvalidLabel->isHidden())
+        return;
+
+    // If the start image transfer button is disabled and
+    // path errors have been fixed, enable it
+    ui->fetcherImageTransferButton->setEnabled(true);
+}
+
+void GcomController::on_fetcherImageTransferButton_clicked()
+{
+    switch(fetcherStatus)
+    {
+        case FETCHER_STATUS_READY:
+        {
+            if (!fetcher->changeDir(ui->fetcherPathField->text()))
+            {
+                ui->fetcherPathInvalidLabel->setText(FETCHER_NONREAL_PATH_LABEL);
+                ui->fetcherPathInvalidLabel->show();
+
+                if (ui->fetcherImageTransferButton->isEnabled()) {
+                    ui->fetcherImageTransferButton->clearFocus();
+                    ui->fetcherImageTransferButton->setEnabled(false);  
+                }
+                return;
+            }
+
+            dcnc->startImageRelay(ui->fetcherPhotoFreqField->value());
+            ui->fetcherStatusField->setText(FETCHER_TRANSFER_LABEL);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_STOP_TEXT);
+            fetcherStatus = FETCHER_STATUS_TRANSFERRING;
+            ui->fetcherPathField->setEnabled(false);
+            ui->fetcherPathButton->setEnabled(false);
+            ui->fetcherPhotoFreqField->setEnabled(false);
+        }
+        break;
+
+        case FETCHER_STATUS_TRANSFERRING:
+        {
+            dcnc->stopImageRelay();
+            ui->fetcherStatusField->setText(FETCHER_READY_LABEL);
+            ui->fetcherImageTransferButton->setText(IMAGE_TRANSFER_START_TEXT);
+            fetcherStatus = FETCHER_STATUS_READY;
+            ui->fetcherPathField->setEnabled(true);
+            ui->fetcherPathButton->setEnabled(true);
+            ui->fetcherPhotoFreqField->setEnabled(true);
+        }
+    }
+}
+
+//===================================================================
 // Utility Methods
 //===================================================================
 QString GcomController::formatDuration(unsigned long seconds)
@@ -626,11 +951,15 @@ QString GcomController::formatDuration(unsigned long seconds)
     return QString("%1:%2:%3").arg(hours).arg(minutes).arg(seconds);
 }
 
-void GcomController::on_tabWidget_tabBarClicked(int index)
+void GcomController::on_tabMain_tabBarClicked(int index)
 {
     if (index == 1)
     {
         on_arduinoRefreshButton_clicked();
         on_zaberRefreshButton_clicked();
     }
+}
+
+void GcomController::enableTabMain(const int tab, const bool enable) {
+     ui->tabMain->setTabEnabled(tab, enable);
 }

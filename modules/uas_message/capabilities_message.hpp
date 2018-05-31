@@ -6,6 +6,7 @@
 // System Includes
 #include <vector>
 #include <cstdint>
+#include <QString>
 // GCOM Includes
 #include "uas_message.hpp"
 
@@ -27,8 +28,14 @@ class CapabilitiesMessage : public UASMessage
          */
         enum class Capabilities : uint32_t
         {
-            IMAGE_RELAY             = 0x01,
+            CAMERA_TAGGED           = 0x01,
+            CAMERA_UNTAGGED         = 0x02,
+            CAMERA_TIMER            = 0x04,
+            CAMERA_DISTANCE         = 0x06,
+            MAVLINK_RELAY           = 0x08,
         };
+
+        static QString capabilitiesToString(Capabilities capabilities);
 
         //Public Methods
         /*!
@@ -77,6 +84,9 @@ class CapabilitiesMessage : public UASMessage
 //===================================================================
 CapabilitiesMessage::Capabilities operator|(const CapabilitiesMessage::Capabilities &a,
                                             const CapabilitiesMessage::Capabilities &b);
+
+CapabilitiesMessage::Capabilities operator|=(CapabilitiesMessage::Capabilities &a,
+                                             const CapabilitiesMessage::Capabilities &b);
 
 CapabilitiesMessage::Capabilities operator&(const CapabilitiesMessage::Capabilities &a,
                                             const CapabilitiesMessage::Capabilities &b);

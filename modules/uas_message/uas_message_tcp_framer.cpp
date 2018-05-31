@@ -160,7 +160,7 @@ QDataStream& operator>>(QDataStream& inputStream, UASMessageTCPFramer& uasMessag
     messageSize = messageHeader[1] << 24 | messageHeader[2] <<  16 | messageHeader[3] << 8 |
                   messageHeader[4];
 
-    qDebug() << messageSize;
+    // qDebug() << messageSize;
 
     // Change the message buffer to the appropriate size
 

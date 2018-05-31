@@ -14,6 +14,7 @@
 #include "modules/uas_dcnc/dcnc.hpp"
 #include "modules/uas_message/image_untagged_message.hpp"
 #include "modules/uas_antenna_tracker/antennatracker.hpp"
+#include "modules/uas_image_fetcher/image_fetcher.hpp"
 #include "modules/uas_interop_system/interop.hpp"
 
 //===================================================================
@@ -29,6 +30,8 @@ namespace Ui
 //===================================================================
 class GcomController : public QMainWindow
 {
+    friend class TestGcomControllerImageFetcher;
+
     Q_OBJECT
 
 public:
@@ -40,15 +43,25 @@ private slots:
     void on_mavlinkConnectionButton_clicked();
     void on_dcncConnectionButton_clicked();
     void on_arduinoRefreshButton_clicked();
-    void on_tabWidget_tabBarClicked(int index);
+    void on_tabMain_tabBarClicked(int index);
     void on_dcncDropGremlin_clicked();
     // MAVLinkRelay Slots
     void mavlinkRelayConnected();
     void mavlinkRelayDisconnected();
     void mavlinkTimerTimeout();
+
+    void on_mavlinkModeButton_clicked();
+    void on_mavlinkSpeedButton_clicked();
+    void on_mavlinkArmButton_clicked();
+    void on_mavlinkMissionStartButton_clicked();
+    void on_mavlinkTakeoffButton_clicked();
+    void on_mavlinkLandButton_clicked();
+    void handleMavlinkCommandStatus(bool status);
     // DCNC Slots
     void dcncConnected();
     void dcncDisconnected();
+    void dcncReestablishedConnection(CommandMessage::Commands command,
+                                     ResponseMessage::ResponseCodes response);
     void dcncTimerTimeout();
     void dcncSearchTimeout();
     void gremlinInfo(QString systemId, uint16_t versionNumber, bool dropped);
@@ -69,6 +82,15 @@ private slots:
     // AUVSI Interop Slots
     void on_interopConnectButton_clicked();
     void interopLoginHandler(Interop::RequestStatus reqStatus);
+
+    // Image Fetcher Slots
+    void on_fetcherPathField_returnPressed();
+
+    void on_fetcherPathField_textChanged();
+
+    void on_fetcherPathButton_clicked();
+
+    void on_fetcherImageTransferButton_clicked();
 
 private:
     // Private Member Variables
@@ -101,6 +123,41 @@ private:
     // Methods
     void updateStartTrackerButton();
 
+    // Image Fetcher Variables
+    ImageFetcher *fetcher;
+    int fetcherStatus;
+
+    // Image Fetcher methods
+
+    /*!
+     * \brief setupImageFetcher, initialize image fetcher based on which camera the drone has
+     * \param camera, camera type - with or without tags
+     */
+    void setupImageFetcher(CapabilitiesMessage::Capabilities camera);
+
+    /*!
+     * \brief fetcherBrowseDir, open file dialog, allow user to change directories
+     */
+    void fetcherBrowseDir();
+
+    /*!
+     * \brief validatePath, validate path against regex
+     * \details If path is invalid, show error message and disable start image transfer button
+     *          If path is valid and error message is still showing, hide error message
+     *          If start image transfer button is disabled and no error messages are showing,
+     *          enable it
+     * \param path, path to validate
+     */
+    void validatePath(QString path);
+
+    // Utility Methods
+    /*!
+     * \brief enableTabMain, enables or disables tabs in the tab group tabMain
+     * \param tab, tab to enable or disable
+     * \param enable, true to enable, false to disable
+     */
+    void enableTabMain(const int tab, const bool enable);
+    
     // Interop
     Interop *interop;
 };
