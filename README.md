@@ -13,7 +13,7 @@ This is a repository for UBC Unmanned Aircraft Systems' ground control station s
 *	Perform analytics on retrieved images
 *	Keep a reliable/recoverable communication with the drone
 
-To keep the program as sreamlined and optimized as possible, the software uses a modular design, with a solid and well-documented framework to hold everything together. This allows for the deployment of numerous versions of GCOM, one for each of our drones, where each version will have different modules enabled.
+To keep the program as streamlined and optimized as possible, the software uses a modular design, with a solid and well-documented framework to hold everything together. This allows for the deployment of numerous versions of GCOM, one for each of our drones, where each version will have different modules enabled.
 
 ### Prerequisities
 
