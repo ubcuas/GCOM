@@ -30,6 +30,9 @@ Any functions related to interfacing with ODLC are declared here.
 ## pathfinding.go
 Any functions related to interfacing with pathfinding are declared here.
 
+## rcomms.go
+Any functions related to interfacing with the RCOMMS system are declared here. Most likely, this include instantiation of socket connections via a middleware to allow for endpoints in the form of controllers to be reached. 
+
 # Tests
 Tests are ran on a per file basis. For example, tests for `odlc.go` will be in `odlc_test.go`.
 
