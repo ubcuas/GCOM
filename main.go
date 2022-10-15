@@ -1,15 +1,21 @@
 package main
 
 import (
-	"flag"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
 
-var SkyScannerPath *string
+var SkyScannerPath string
 
 func main() {
-	SkyScannerPath = flag.String("qr", "", "Absolute Path to SkyScanner qr_code.py")
-	flag.Parse()
+	err := godotenv.Load(".env")
+  	if err != nil {
+    	log.Fatal("Error loading .env file")
+  	}
+	SkyScannerPath = os.Getenv("PATH_TO_SKYSCANNER_FOLDER") + "\\src\\qr_code.py"
 
 	e := echo.New()
 

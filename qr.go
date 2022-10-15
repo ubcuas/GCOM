@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"os/exec"
-
 	"github.com/labstack/echo/v4"
 )
 
 func InitializeQR(c echo.Context) error {
-	cmd := exec.Command("cmd", "/C", "python", *SkyScannerPath, "-c", "0", "-a", "http://localhost:1323/qr/return")
+	cmd := exec.Command("cmd", "/C", "python", SkyScannerPath, "-c", "0", "-a", "http://localhost:1323/qr/return")
 
 	if err := cmd.Run(); err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to Execute Command!")
