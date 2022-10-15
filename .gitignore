@@ -1,3 +1,4 @@
 gcomlite
 gcomlite.exe
 db.sqlite
+.env
