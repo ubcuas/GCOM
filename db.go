@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -348,18 +349,178 @@ func deleteAllWaypoints() error {
 
 // Definitions for AEACRoutes DB methods
 // Follow the same general procedure as the Waypoints methods
-func (AEACRoutes) Create() {
+func (r *AEACRoutes) Create() error {
+	db := connectToDB()
 
+	if r.ID != -1 {
+		errMsg := "Non-Sentinel ID passed into AEACRoutes.Create()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO aeac_routes 
+		(number, start_waypoint, end_waypoint, passengers, max_weight, value, remarks, odr) VALUES 
+		(?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer stmt.Close()
+	err = stmt.QueryRow(r.Number,
+		r.StartWaypoint,
+		r.EndWaypoint,
+		r.Passengers,
+		r.MaxVehicleWeight,
+		r.Value,
+		r.Remarks,
+		r.Order).Scan(&r.ID)
+
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+	
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+	return nil
 }
 
-func (AEACRoutes) Update() {
+func (r AEACRoutes) Update() error {
+	db := connectToDB()
 
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into AEACRoutes.Update()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	stmt, err := db.Prepare(`UPDATE aeac_routes SET 
+		number = ?,
+		start_waypoint = ?,
+		end_waypoint = ?,
+		passengers = ?,
+		max_weight = ?,
+		value = ?,
+		remarks = ?,
+		odr = ? WHERE
+		id = ?`)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = tx.Stmt(stmt).Exec(r.Number,
+		r.StartWaypoint,
+		r.EndWaypoint,
+		r.Passengers,
+		r.MaxVehicleWeight,
+		r.Value,
+		r.Remarks,
+		r.Order,
+		r.ID)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+		return err;
+	} else {
+		err = tx.Commit()
+		return err;
+	}
 }
 
-func (AEACRoutes) Delete() {
+func (r AEACRoutes) Delete() error {
+	db := connectToDB()
 
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into AEACRoutes.Delete()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	stmt, err := db.Prepare(`DELETE FROM aeac_routes WHERE id = ?`)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = tx.Stmt(stmt).Exec(r.ID)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+		return err;
+	} else {
+		err = tx.Commit()
+		return err;
+	}
 }
 
-func (*AEACRoutes) Get() {
+func (r *AEACRoutes) Get() error {
+	db := connectToDB()
 
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into AEACRoutes.Get()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	query := `SELECT * FROM aeac_routes WHERE id = ?`
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer tx.Rollback();
+
+	row := tx.QueryRow(query, r.ID)
+
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+
+	err = row.Scan(&r.ID, 
+		&r.Number,
+		&r.StartWaypoint,
+		&r.EndWaypoint,
+		&r.Passengers,
+		&r.MaxVehicleWeight,
+		&r.Value,
+		&r.Remarks,
+		&r.Order, 
+	)
+
+	if err == sql.ErrNoRows {
+		log.Printf("No Entry for ID %s", fmt.Sprint(r.ID))
+		return err
+	} else if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+	return nil;
 }
+
