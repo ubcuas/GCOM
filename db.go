@@ -107,7 +107,10 @@ func (*Waypoint) Get() {
 }
 
 // Definitions for AEACRoutes DB methods
-// Follow the same general procedure as the Waypoints methods
+
+// Initializes an AEACRoute in the database 
+// and assigns it a non-sentinel ID
+// requires: ID == -1
 func (r *AEACRoutes) Create() error {
 	db := connectToDB()
 
@@ -154,6 +157,9 @@ func (r *AEACRoutes) Create() error {
 	return nil
 }
 
+// Updates the database entry with id == ID 
+// with data in the AEACRoute struct.
+// requires: ID != -1
 func (r AEACRoutes) Update() error {
 	db := connectToDB()
 
@@ -204,6 +210,9 @@ func (r AEACRoutes) Update() error {
 	}
 }
 
+// Deletes all AEACRoute from the database
+// with id == ID
+// requires: ID != -1
 func (r AEACRoutes) Delete() error {
 	db := connectToDB()
 
@@ -237,6 +246,10 @@ func (r AEACRoutes) Delete() error {
 	}
 }
 
+// Fetches data of an AEACRoute with id == iD 
+// from the database and populates the struct
+// requires: ID != -1
+// returns: sql.ErrNoRows if no such entry exists
 func (r *AEACRoutes) Get() error {
 	db := connectToDB()
 
