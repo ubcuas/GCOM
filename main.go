@@ -22,6 +22,7 @@ func getEnvVariable(key string) string {
 }
 
 func main() {
+	GetQueue()
 
 	e := echo.New()
 

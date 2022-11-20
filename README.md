@@ -13,7 +13,7 @@ To build a binary for the project, run:
 go build
 ```
 
-When running, the root of the projecti s available at `localhost:1323`.
+When running, the root of the project is available at `localhost:1323`.
 
 For testing endpoints for development, it's highly recommended that you use an API client. [Insomnia](https://insomnia.rest/) is a great choice.
 

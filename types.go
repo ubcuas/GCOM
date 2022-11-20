@@ -1,5 +1,9 @@
 package main
 
+import (
+	"gopkg.in/guregu/null.v4"
+)
+
 // General purpose structures
 type AircraftStatus struct { // not stored in the database! maintained in memory, live
 	Velocity       float64 `json:"velocity"`
@@ -11,11 +15,15 @@ type AircraftStatus struct { // not stored in the database! maintained in memory
 }
 
 type Waypoint struct {
-	ID        int     `json:"id"`
-	Name      string  `json:"name"`
-	Longitude float64 `json:"longitude"`
-	Latitude  float64 `json:"latitude"`
-	Altitude  float64 `json:"altitude"`
+	ID        int        `json:"id"`
+	Name      string     `json:"name"`
+	Longitude float64    `json:"longitude"`
+	Latitude  float64    `json:"latitude"`
+	Altitude  null.Float `json:"altitude"`
+}
+
+type Query struct {
+	Query []Waypoint `json:"query"`
 }
 
 // AEAC specific structures
