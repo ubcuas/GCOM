@@ -22,8 +22,10 @@ type Waypoint struct {
 	Altitude  null.Float `json:"altitude"`
 }
 
-type Query struct {
-	Query []Waypoint `json:"query"`
+// type Queue []Waypoint
+
+type Queue struct {
+	Queue []Waypoint `json:"queue"`
 }
 
 // AEAC specific structures
