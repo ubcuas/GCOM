@@ -5,11 +5,12 @@ import (
 	"testing"
 	"log"
 	"strings"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(t *testing.T) {
+func TestAEACMain(t *testing.T) {
 
 	db := connectToDB()
 
@@ -121,7 +122,7 @@ func TestCreateDBFile(t *testing.T) {
 	os.Remove("database.sqlite")
 }
 
-// test if tables are properly created
+// test if waypoint tables are properly created
 func TestCreateDBTables(t *testing.T) {
 
 	db := connectToDB()
@@ -143,21 +144,6 @@ func TestCreateDBTables(t *testing.T) {
 		assert.ElementsMatch(t, columns, expected)
 	}
 	defer waypointQuery.Close()
-
-	aeacQuery, err := db.Query(`SELECT * FROM aeac_routes`)
-	if assert.NoError(t, err) {
-		columns, err := aeacQuery.Columns()
-		if err != nil {
-			panic(err)
-		}
-
-		expected := []string{"id", "number", "start_waypoint_name",
-			"end_waypoint_name", "passengers", "max_vehicle_weight",
-			"value", "remarks", "order"}
-
-		assert.ElementsMatch(t, columns, expected)
-
-	}
 }
 
 // test registering a waypoint with sentinel id into database
