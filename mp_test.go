@@ -51,7 +51,7 @@ func TestGetQueue(t *testing.T) {
 	fmt.Println(queue)
 
 	err := PostQueue(&queue)
-	time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Second) //to ensure that MP server has the updated route
 
 	if assert.NoError(t, err) {
 		getQueue, err := GetQueue()
@@ -89,7 +89,7 @@ func TestPostQueue(t *testing.T) {
 	currQueue.Queue[0].Latitude = -30.330300303300
 
 	err = PostQueue(currQueue)
-	time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
 
 	if assert.NoError(t, err) {
 		getQueue, err := GetQueue()
@@ -108,11 +108,22 @@ func TestGetAircraftStatus(t *testing.T) {
 	status, err := GetAircraftStatus()
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, status.Velocity, 0.0)
-		assert.Equal(t, status.Latitude, 0.0)
-		assert.Equal(t, status.Longitude, 0.0)
-		assert.Equal(t, status.Altitude, 0.0)
-		assert.Equal(t, status.Heading, 0.0)
+		//assuming these values for the SITL
+		/*
+			{
+				"velocity": "0.0",
+				"latitude": "-35.3627175",
+				"longitude": "149.1514354",
+				"altitude": "17.0569992065",
+				"heading": "265.771789551"
+			}
+		*/
+
+		assert.True(t, status.Velocity >= 0.0)
+		assert.True(t, status.Latitude >= -40.0 && status.Latitude <= -30.0)
+		assert.True(t, status.Longitude >= 145.0 && status.Longitude <= 155.0)
+		assert.True(t, status.Altitude >= 10.0 && status.Altitude <= 30.0)
+		assert.True(t, status.Heading >= 240.0 && status.Heading <= 300.0)
 		//TODO: get MP scripts to add BatteryVoltage to status response
 	}
 

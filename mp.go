@@ -44,8 +44,6 @@ func GetQueue() (*Queue, error) {
 	}
 
 	return &Queue{Queue: queue}, nil
-
-	// return string(body), nil
 }
 
 // take a pointer to a Queue struct and post those waypoints to MP
