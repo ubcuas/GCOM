@@ -26,6 +26,11 @@ func main() {
 	e := echo.New()
 
 	e.GET("/", Hello)
+	e.GET("/waypoints", GetWaypoints)
+	e.POST("/waypoints", PostWaypoints)
+
+	e.GET("/routes", GetRoutes)
+	e.POST("/routes", PostRoutes)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
