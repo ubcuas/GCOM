@@ -5,13 +5,13 @@ import (
 )
 
 // General purpose structures
-type AircraftStatus struct { // not stored in the database! maintained in memory, live
-	Velocity       float64 `json:"velocity"`
-	Longitude      float64 `json:"longitude"`
-	Latitude       float64 `json:"latitude"`
-	Altitude       float64 `json:"altitude"`
-	Heading        float64 `json:"heading"`
-	BatteryVoltage float64 `json:"voltage"`
+type AircraftStatus struct { // not stored in the database! maintained in memory, live,
+	Velocity  float64 `json:"velocity,string"`
+	Longitude float64 `json:"longitude,string"`
+	Latitude  float64 `json:"latitude,string"`
+	Altitude  float64 `json:"altitude,string"`
+	Heading   float64 `json:"heading,string"`
+	// BatteryVoltage float64 `json:"voltage"`
 }
 
 type Waypoint struct {

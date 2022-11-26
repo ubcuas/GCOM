@@ -38,7 +38,10 @@ func GetQueue() (*Queue, error) {
 
 	var queue []Waypoint
 
-	_ = json.Unmarshal(body, &queue)
+	err = json.Unmarshal(body, &queue)
+	if err != nil {
+		panic(err)
+	}
 
 	return &Queue{Queue: queue}, nil
 
@@ -76,7 +79,7 @@ func PostQueue(queue *Queue) error {
 	return nil
 }
 
-// get the aircraft status from MP
+// returns a pointer to an AircraftStatus struct with the current AircraftStatus from MP
 func GetAircraftStatus() (*AircraftStatus, error) {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/status"
 
@@ -102,9 +105,12 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 		return nil, errors.New("response not OK: " + resp.Status)
 	}
 
-	status := new(AircraftStatus)
+	stat := AircraftStatus{}
 
-	_ = json.Unmarshal(body, &status)
+	err = json.Unmarshal(body, &stat)
+	if err != nil {
+		panic(err)
+	}
 
-	return status, nil
+	return &stat, nil
 }

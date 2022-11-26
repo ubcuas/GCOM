@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -23,20 +22,6 @@ func getEnvVariable(key string) string {
 }
 
 func main() {
-	queue, err := GetQueue()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(queue)
-
-	// for i := 0; i < len(queue.Queue); i++ {
-	// 	fmt.Println(queue.Queue[i].ID)
-	// 	fmt.Println(queue.Queue[i].Name)
-	// 	fmt.Println(queue.Queue[i].Longitude)
-	// 	fmt.Println(queue.Queue[i].Latitude)
-	// 	fmt.Println(queue.Queue[i].Altitude)
-	// }
 
 	e := echo.New()
 

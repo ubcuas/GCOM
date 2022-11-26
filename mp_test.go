@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
@@ -10,10 +12,17 @@ import (
 // test posting and reading the queue from MP
 func TestGetQueue(t *testing.T) {
 
+	//save current queue
+	currQueue, err := GetQueue()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("currQue ", currQueue)
+
 	wp1 := Waypoint{
 		ID:        -1,
 		Name:      "TestGETWP1",
-		Longitude: -35.3627798,
+		Longitude: -6.2,
 		Latitude:  149.1651830,
 		Altitude:  null.FloatFrom(20.0),
 	}
@@ -37,34 +46,60 @@ func TestGetQueue(t *testing.T) {
 	wpslice := []Waypoint{wp1, wp2, wp3}
 	queue := Queue{Queue: wpslice}
 
-	err := PostQueue(&queue)
+	fmt.Println(queue)
+
+	err = PostQueue(&queue)
+	time.Sleep(1000000)
 
 	if assert.NoError(t, err) {
-		queue, err := GetQueue()
+		getQueue, err := GetQueue()
 
 		if assert.NoError(t, err) {
-			assert.Equal(t, len(queue.Queue), 3)
-			assert.Equal(t, queue.Queue[0].Name, "TestGETWP1")
-			assert.Equal(t, queue.Queue[1].Name, "TestGETWP2")
-			assert.Equal(t, queue.Queue[2].Name, "TestGETWP3")
+			assert.Equal(t, len(getQueue.Queue), 3)
+			assert.Equal(t, getQueue.Queue[0].Name, "TestGETWP1")
+			assert.Equal(t, getQueue.Queue[1].Name, "TestGETWP2")
+			assert.Equal(t, getQueue.Queue[2].Name, "TestGETWP3")
 
-			assert.Equal(t, queue.Queue[0].Longitude, -35.3627798)
-			assert.Equal(t, queue.Queue[1].Longitude, -36.3637798)
-			assert.Equal(t, queue.Queue[2].Longitude, -37.3637798)
+			assert.Equal(t, getQueue.Queue[0].Longitude, -6.2)
+			assert.Equal(t, getQueue.Queue[1].Longitude, -36.3637798)
+			assert.Equal(t, getQueue.Queue[2].Longitude, -37.3637798)
 
-			assert.Equal(t, queue.Queue[0].Latitude, 149.1651830)
-			assert.Equal(t, queue.Queue[1].Latitude, 147.1651830)
-			assert.Equal(t, queue.Queue[2].Latitude, 146.1641830)
+			assert.Equal(t, getQueue.Queue[0].Latitude, 149.1651830)
+			assert.Equal(t, getQueue.Queue[1].Latitude, 147.1651830)
+			assert.Equal(t, getQueue.Queue[2].Latitude, 146.1641830)
 
-			assert.Equal(t, queue.Queue[0].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, queue.Queue[1].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, queue.Queue[2].Altitude, null.FloatFrom(10.0))
+			assert.Equal(t, getQueue.Queue[0].Altitude, null.FloatFrom(20.0))
+			assert.Equal(t, getQueue.Queue[1].Altitude, null.FloatFrom(20.0))
+			assert.Equal(t, getQueue.Queue[2].Altitude, null.FloatFrom(10.0))
+		}
+	}
+}
+
+// test post queue
+func TestPostQueue(t *testing.T) {
+
+	currQueue, err := GetQueue()
+	if err != nil {
+		panic(err)
+	}
+
+	currQueue.Queue[0].Name = "CHANGED_NAME"
+	currQueue.Queue[0].Latitude = -30.330300303300
+
+	err = PostQueue(currQueue)
+
+	if assert.NoError(t, err) {
+		getQueue, err := GetQueue()
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, "CHANGED_NAME", getQueue.Queue[0].Name)
+			assert.Equal(t, -30.330300303300, getQueue.Queue[0].Latitude)
 		}
 	}
 
 }
 
-// test getting the aircraft status from MP
+// test getting the aircraft status from MP, only works when aircraft is not launched
 func TestGetAircraftStatus(t *testing.T) {
 
 	status, err := GetAircraftStatus()
