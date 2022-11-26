@@ -1,0 +1,35 @@
+image: golang:latest
+
+.go-cache:
+    variables:
+        GOPATH: $CI_PROJECT_DIR/.go
+    cache:
+      paths:
+        - .go/pkg/mod/
+
+variables:
+  OUTPUT_NAME: __bin__/$CI_PROJECT_NAME
+
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  script:
+    - go fmt $(go list ./... | grep -v /vendor/)
+    - go vet $(go list ./... | grep -v /vendor/)
+    - go test -race $(go list ./... | grep -v /vendor/)
+  only:
+    - master
+
+build:
+  stage: build
+  script:
+    - mkdir -p $OUTPUT_NAME
+    - go build -o $OUTPUT_NAME ./...
+  artifacts:
+    paths:
+      - $OUTPUT_NAME
+  only:
+    - master
