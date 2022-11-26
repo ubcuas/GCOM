@@ -24,7 +24,7 @@ func TestCreateDBFile(t *testing.T) {
 	os.Remove("database.sqlite")
 }
 
-// test if tables are properly created
+// test if waypoint tables are properly created
 func TestCreateDBTables(t *testing.T) {
 
 	db := connectToDB()
