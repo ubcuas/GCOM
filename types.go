@@ -5,13 +5,14 @@ import (
 )
 
 // General purpose structures
+// the "__,string" nomer is necessary due to MP endpoint returning numbers as strings, will remove when thats updated
 type AircraftStatus struct { // not stored in the database! maintained in memory, live,
-	Velocity  float64 `json:"velocity,string"`
-	Longitude float64 `json:"longitude,string"`
-	Latitude  float64 `json:"latitude,string"`
-	Altitude  float64 `json:"altitude,string"`
-	Heading   float64 `json:"heading,string"`
-	// BatteryVoltage float64 `json:"voltage"`
+	Velocity       float64 `json:"velocity,string"`
+	Longitude      float64 `json:"longitude,string"`
+	Latitude       float64 `json:"latitude,string"`
+	Altitude       float64 `json:"altitude,string"`
+	Heading        float64 `json:"heading,string"`
+	BatteryVoltage float64 `json:"voltage"`
 }
 
 type Waypoint struct {

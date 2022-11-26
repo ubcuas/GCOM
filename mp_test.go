@@ -13,11 +13,13 @@ import (
 func TestGetQueue(t *testing.T) {
 
 	//save current queue
-	currQueue, err := GetQueue()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("currQue ", currQueue)
+	/*
+		currQueue, err := GetQueue()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("currQue ", currQueue)
+	*/
 
 	wp1 := Waypoint{
 		ID:        -1,
@@ -48,8 +50,8 @@ func TestGetQueue(t *testing.T) {
 
 	fmt.Println(queue)
 
-	err = PostQueue(&queue)
-	time.Sleep(1000000)
+	err := PostQueue(&queue)
+	time.Sleep(2 * time.Second)
 
 	if assert.NoError(t, err) {
 		getQueue, err := GetQueue()
@@ -87,6 +89,7 @@ func TestPostQueue(t *testing.T) {
 	currQueue.Queue[0].Latitude = -30.330300303300
 
 	err = PostQueue(currQueue)
+	time.Sleep(2 * time.Second)
 
 	if assert.NoError(t, err) {
 		getQueue, err := GetQueue()
