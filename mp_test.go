@@ -124,7 +124,27 @@ func TestGetAircraftStatus(t *testing.T) {
 		assert.True(t, status.Longitude >= 145.0 && status.Longitude <= 155.0)
 		assert.True(t, status.Altitude >= 10.0 && status.Altitude <= 30.0)
 		assert.True(t, status.Heading >= 240.0 && status.Heading <= 300.0)
-		//TODO: get MP scripts to add BatteryVoltage to status response
+		assert.True(t, status.BatteryVoltage >= 0.0 && status.BatteryVoltage <= 100.0)
 	}
 
+}
+
+// aircraft starts and ends unlocked
+// tests locking and unlocking
+// test that repeated locks and repeated unlocks throw errors
+func TestLockAndUnlockAircraft(t *testing.T) {
+	err := lockAircraft()
+	assert.NoError(t, err)
+	err = lockAircraft()
+	assert.Error(t, err)
+
+	err = unlockAircraft()
+	assert.NoError(t, err)
+	err = unlockAircraft()
+	assert.Error(t, err)
+
+	err = lockAircraft()
+	assert.NoError(t, err)
+	err = unlockAircraft()
+	assert.NoError(t, err)
 }

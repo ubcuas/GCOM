@@ -149,3 +149,73 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 
 	return &stat, nil
 }
+
+/**
+ * Locks the aircraft (prevent the aircraft from moving based on the MP queue)
+ *
+ * Returns: - Error if anything goes wrong (ex. if the aircraft is already locked)
+ */
+func lockAircraft() error {
+	var endpoint = getEnvVariable("MP_ROUTE") + "/lock"
+
+	req, err := http.NewRequest("GET", endpoint, nil)
+	req.Header.Set("Content-Type", "application-json")
+	if err != nil {
+		// panic(err)
+		// log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		// panic(err)
+		// log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		Error.Println("Aircraft already locked: " + resp.Status)
+		return errors.New("Aircraft already locked: " + resp.Status)
+	}
+
+	return nil
+}
+
+/**
+ * Unlocks the aircraft (resume aircraft movement based on the MP queue)
+ *
+ * Returns: - Error if anything goes wrong (ex. if the aircraft is already unlocked)
+ */
+func unlockAircraft() error {
+	var endpoint = getEnvVariable("MP_ROUTE") + "/unlock"
+
+	req, err := http.NewRequest("GET", endpoint, nil)
+	req.Header.Set("Content-Type", "application-json")
+	if err != nil {
+		// panic(err)
+		// log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		// panic(err)
+		// log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		Error.Println("Aircraft already unlocked: " + resp.Status)
+		return errors.New("Aircraft already unlocked: " + resp.Status)
+	}
+
+	return nil
+}
