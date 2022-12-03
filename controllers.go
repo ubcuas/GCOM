@@ -38,9 +38,6 @@ func PostWaypoints(c echo.Context) error {
 		return err
 	}
 
-	// waypoints[0].Create()
-	// fmt.Println(waypoints)
-
 	fmt.Println("Registering waypoints...")
 	for _, wp := range waypoints {
 		err = wp.Create()
@@ -53,26 +50,22 @@ func PostWaypoints(c echo.Context) error {
 	}
 	Info.Println("Registered waypoints: ", waypoints, "to the database")
 	return c.String(http.StatusOK, "Waypoints successfully registered!")
-	// return c.JSON(http.StatusOK, waypoints)
 }
 
 // endpoint we serve that responds with a list of all the routes currently in the database
 func GetRoutes(c echo.Context) error {
+
 	return nil
 }
 
 // endpoint we serve that takes a JSON list of Routes and registers them all in the database
 func PostRoutes(c echo.Context) error {
+
 	return nil
 }
 
-/*
-func StartAEAC(c echo.Context) error {
-	c.Request().Response.Request() -> routes
+// endpoint we serve that returns the next route to be taken (the one with the lowest 'order' value)
+func GetNextRoute(c echo.Context) error {
 
-
-	 optimal_routes := FindOptimalRoutes()
-
-	 SendRouteToMP(optimal_routes)
+	return nil
 }
-*/
