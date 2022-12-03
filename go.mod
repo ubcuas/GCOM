@@ -4,10 +4,14 @@ go 1.18
 
 require github.com/labstack/echo/v4 v4.9.0
 
-require golang.org/x/exp v0.0.0-20221028150844-83b7d23a625f // indirect
+require (
+	golang.org/x/exp v0.0.0-20221028150844-83b7d23a625f // indirect
+	gopkg.in/guregu/null.v4 v4.0.0 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

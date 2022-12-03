@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/guregu/null.v4"
 )
 
 func TestAEACMain(t *testing.T) {
@@ -153,7 +154,8 @@ func TestCreateValidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  12.2}
+		Altitude:  null.FloatFrom(12.2),
+	}
 
 	err := wp.Create()
 	if assert.NoError(t, err) {
@@ -176,7 +178,7 @@ func TestCreateValidWaypoint(t *testing.T) {
 			name      string
 			longitude float64
 			latitude  float64
-			altitude  float64
+			altitude  null.Float
 		)
 
 		err = row.Scan(&id, &name, &longitude, &latitude, &altitude)
@@ -211,7 +213,7 @@ func TestCreateInvalidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  12.2}
+		Altitude:  null.FloatFrom(12.2)}
 
 	err := wp.Create()
 	if assert.Error(t, err) {
@@ -226,7 +228,7 @@ func TestGetWaypointID(t *testing.T) {
 		Name:      "Original Waypoint",
 		Longitude: 12.12,
 		Latitude:  13.13,
-		Altitude:  5.5,
+		Altitude:  null.FloatFrom(12.2),
 	}
 
 	if assert.NoError(t, startWP.Create()) {
@@ -235,7 +237,8 @@ func TestGetWaypointID(t *testing.T) {
 			Name:      "",
 			Longitude: 0,
 			Latitude:  0,
-			Altitude:  0}
+			Altitude:  null.FloatFrom(0.0),
+		}
 
 		endWP.Get()
 
@@ -256,7 +259,8 @@ func TestDeleteWaypoint(t *testing.T) {
 		Name:      "Garbage",
 		Longitude: -1,
 		Latitude:  -1,
-		Altitude:  -1}
+		Altitude:  null.FloatFrom(-1.0),
+	}
 
 	if assert.NoError(t, wp.Create()) {
 		if assert.NoError(t, wp.Delete()) {
@@ -297,13 +301,14 @@ func TestUpdateWaypoint(t *testing.T) {
 		Name:      "Original Waypoint",
 		Longitude: 0.0,
 		Latitude:  0.0,
-		Altitude:  0.0}
+		Altitude:  null.FloatFrom(0.0),
+	}
 
 	if assert.NoError(t, wp.Create()) {
 		wp.Name = "Edited Waypoint"
 		wp.Longitude = 1.1
 		wp.Latitude = 2.2
-		wp.Altitude = 3.3
+		wp.Altitude = null.FloatFrom(3.3)
 
 		if assert.NoError(t, wp.Update()) {
 
@@ -312,7 +317,7 @@ func TestUpdateWaypoint(t *testing.T) {
 				name      string
 				longitude float64
 				latitude  float64
-				altitude  float64
+				altitude  null.Float
 			)
 
 			db := connectToDB()
@@ -356,7 +361,8 @@ func TestUpdateInvalidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  12.2}
+		Altitude:  null.FloatFrom(12.2),
+	}
 
 	err := wp.Update()
 	if assert.Error(t, err) {
