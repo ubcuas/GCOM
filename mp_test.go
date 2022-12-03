@@ -133,18 +133,18 @@ func TestGetAircraftStatus(t *testing.T) {
 // tests locking and unlocking
 // test that repeated locks and repeated unlocks throw errors
 func TestLockAndUnlockAircraft(t *testing.T) {
-	err := lockAircraft()
+	err := LockAircraft()
 	assert.NoError(t, err)
-	err = lockAircraft()
+	err = LockAircraft()
 	assert.Error(t, err)
 
-	err = unlockAircraft()
+	err = UnlockAircraft()
 	assert.NoError(t, err)
-	err = unlockAircraft()
+	err = UnlockAircraft()
 	assert.Error(t, err)
 
-	err = lockAircraft()
+	err = LockAircraft()
 	assert.NoError(t, err)
-	err = unlockAircraft()
+	err = UnlockAircraft()
 	assert.NoError(t, err)
 }
