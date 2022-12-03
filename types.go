@@ -19,6 +19,7 @@ type Waypoint struct {
 }
 
 // AEAC specific structures
+
 type AEACRoutes struct {
 	ID               int     `json:"id"`
 	Number           int     `json:"number"`
@@ -30,5 +31,4 @@ type AEACRoutes struct {
 	Remarks          string  `json:"remarks"`
 	Order            int     `json:"order"`
 }
-
 // SUAS specific structures
