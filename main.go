@@ -21,9 +21,17 @@ func getEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
+var (
+	DEBUG_FLAG = true
+)
+
 func main() {
 
 	e := echo.New()
+
+	if DEBUG_FLAG {
+		deleteAllWaypoints()
+	}
 
 	e.GET("/", Hello)
 	e.GET("/waypoints", GetWaypoints)
