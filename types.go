@@ -1,21 +1,32 @@
 package main
 
+import (
+	"gopkg.in/guregu/null.v4"
+)
+
 // General purpose structures
-type AircraftStatus struct { // not stored in the database! maintained in memory, live
-	Velocity       float64 `json:"velocity"`
-	Longitude      float64 `json:"longitude"`
-	Latitude       float64 `json:"latitude"`
-	Altitude       float64 `json:"altitude"`
-	Heading        float64 `json:"heading"`
+// the "__,string" nomer is necessary due to MP endpoint returning numbers as strings, will remove when thats updated
+type AircraftStatus struct { // not stored in the database! maintained in memory, live,
+	Velocity       float64 `json:"velocity,string"`
+	Longitude      float64 `json:"longitude,string"`
+	Latitude       float64 `json:"latitude,string"`
+	Altitude       float64 `json:"altitude,string"`
+	Heading        float64 `json:"heading,string"`
 	BatteryVoltage float64 `json:"voltage"`
 }
 
 type Waypoint struct {
-	ID        int     `json:"id"`
-	Name      string  `json:"name"`
-	Longitude float64 `json:"longitude"`
-	Latitude  float64 `json:"latitude"`
-	Altitude  float64 `json:"altitude"`
+	ID        int        `json:"id"`
+	Name      string     `json:"name"`
+	Longitude float64    `json:"longitude"`
+	Latitude  float64    `json:"latitude"`
+	Altitude  null.Float `json:"altitude"`
+}
+
+// type Queue []Waypoint
+
+type Queue struct {
+	Queue []Waypoint `json:"queue"`
 }
 
 // AEAC specific structures

@@ -301,6 +301,51 @@ func (wp *Waypoint) Get() error {
 	return nil
 }
 
+// returns a pointer to a Queue struct that contains all the waypoints currently registered in the database
+func getAllWaypoints() (*Queue, error) {
+	db := connectToDB()
+
+	query := `SELECT * FROM Waypoints`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var waypoints []Waypoint
+
+	for rows.Next() {
+		var wp Waypoint
+		err = rows.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		waypoints = append(waypoints, wp)
+	}
+
+	q := Queue{waypoints}
+
+	return &q, nil
+}
+
+// delete all currently registered waypoints from the database
+// for debugging purposes
+func deleteAllWaypoints() error {
+	db := connectToDB()
+
+	query := `DELETE FROM Waypoints`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
 // Definitions for AEACRoutes DB methods
 // Follow the same general procedure as the Waypoints methods
 func (AEACRoutes) Create() {
