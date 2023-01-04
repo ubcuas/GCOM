@@ -1,2 +1,2 @@
 CREATE TABLE if not EXISTS Waypoints ('id' INTEGER PRIMARY KEY, 'name' TEXT, 'longitude' DOUBLE, 'latitude' DOUBLE, 'altitude' DOUBLE);
-CREATE TABLE if not exists aeac_routes ('id' INTEGER PRIMARY KEY,'number' INTEGER,'start_waypoint_name' TEXT,'end_waypoint_name' TEXT,'passengers' INTEGER,'max_vehicle_weight' DOUBLE,'value' DOUBLE,'remarks' TEXT,'order' INTEGER);
+CREATE TABLE IF NOT EXISTS `aeac_routes` (`id` INTEGER PRIMARY KEY, `number` INT NOT NULL, `start_waypoint` TEXT NOT NULL, `end_waypoint` TEXT NOT NULL, `passengers` FLOAT NOT NULL, `max_weight` FLOAT NOT NULL, `value` INT NOT NULL, `remarks` TEXT, `odr` INT);
