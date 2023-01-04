@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -420,7 +419,7 @@ func (r AEACRoutes) Update() error {
 		max_weight = ?,
 		value = ?,
 		remarks = ?,
-		odr = ? WHERE
+		odr= ? WHERE
 		id = ?`)
 	if err != nil {
 		log.Fatal(err)

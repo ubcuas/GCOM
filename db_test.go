@@ -57,7 +57,7 @@ func TestCreateDBTables(t *testing.T) {
 
 		expected := []string{"id", "number", "start_waypoint",
 			"end_waypoint", "passengers", "max_weight",
-			"value", "remarks", "order"}
+			"value", "remarks", "odr"}
 
 		assert.ElementsMatch(t, columns, expected)
 
