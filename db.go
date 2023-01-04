@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
 
 // Creates a local sqlite database file "database.sqlite" in the root directory
 // if it does not already exist, and starts a database connection

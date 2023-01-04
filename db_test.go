@@ -1,11 +1,11 @@
 package main
 
 import (
+	"database/sql"
+	"testing"
 	"log"
 	"os"
 	"strings"
-	"testing"
-	"database/sql"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/guregu/null.v4"
