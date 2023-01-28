@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
@@ -30,7 +30,7 @@ func main() {
 	e := echo.New()
 
 	if DEBUG_FLAG {
-		deleteAllWaypoints()
+		cleanDB()
 	}
 
 	e.GET("/", Hello)

@@ -12,6 +12,22 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// delete all currently registered waypoints and routes from the database
+// for debugging purposes
+func cleanDB() error {
+	err := os.Remove("database.sqlite")
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	err = Migrate()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	return nil
+}
 
 // Creates a local sqlite database file "database.sqlite" in the root directory
 // if it does not already exist, and starts a database connection
@@ -332,25 +348,9 @@ func getAllWaypoints() (*Queue, error) {
 	return &q, nil
 }
 
-// delete all currently registered waypoints from the database
-// for debugging purposes
-func deleteAllWaypoints() error {
-	db := connectToDB()
-
-	query := `DELETE FROM Waypoints`
-
-	_, err := db.Exec(query)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	return nil
-}
-
 // Definitions for AEACRoutes DB methods
 
-// Initializes an AEACRoute in the database 
+// Initializes an AEACRoute in the database
 // and assigns it a non-sentinel ID
 // requires: ID == -1
 func (r *AEACRoutes) Create() error {
@@ -362,7 +362,7 @@ func (r *AEACRoutes) Create() error {
 		return errors.New(errMsg)
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -388,18 +388,18 @@ func (r *AEACRoutes) Create() error {
 
 	if err != nil {
 		log.Fatal(err)
-		return err;
+		return err
 	}
-	
+
 	err = tx.Commit()
 	if err != nil {
 		log.Fatal(err)
-		return err;
+		return err
 	}
 	return nil
 }
 
-// Updates the database entry with id == ID 
+// Updates the database entry with id == ID
 // with data in the AEACRoute struct.
 // requires: ID != -1
 func (r AEACRoutes) Update() error {
@@ -426,7 +426,7 @@ func (r AEACRoutes) Update() error {
 		return err
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -445,10 +445,10 @@ func (r AEACRoutes) Update() error {
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
-		return err;
+		return err
 	} else {
 		err = tx.Commit()
-		return err;
+		return err
 	}
 }
 
@@ -470,7 +470,7 @@ func (r AEACRoutes) Delete() error {
 		return err
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -481,14 +481,14 @@ func (r AEACRoutes) Delete() error {
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
-		return err;
+		return err
 	} else {
 		err = tx.Commit()
-		return err;
+		return err
 	}
 }
 
-// Fetches data of an AEACRoute with id == iD 
+// Fetches data of an AEACRoute with id == iD
 // from the database and populates the struct
 // requires: ID != -1
 // returns: sql.ErrNoRows if no such entry exists
@@ -502,22 +502,22 @@ func (r *AEACRoutes) Get() error {
 	}
 
 	query := `SELECT * FROM aeac_routes WHERE id = ?`
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	defer tx.Rollback();
+	defer tx.Rollback()
 
 	row := tx.QueryRow(query, r.ID)
 
 	if err != nil {
 		log.Fatal(err)
-		return err;
+		return err
 	}
 
-	err = row.Scan(&r.ID, 
+	err = row.Scan(&r.ID,
 		&r.Number,
 		&r.StartWaypoint,
 		&r.EndWaypoint,
@@ -525,7 +525,7 @@ func (r *AEACRoutes) Get() error {
 		&r.MaxVehicleWeight,
 		&r.Value,
 		&r.Remarks,
-		&r.Order, 
+		&r.Order,
 	)
 
 	if err == sql.ErrNoRows {
@@ -533,8 +533,47 @@ func (r *AEACRoutes) Get() error {
 		return err
 	} else if err != nil {
 		log.Fatal(err)
-		return err;
+		return err
 	}
-	return nil;
+	return nil
 }
 
+// returns a pointer to an AEACRoutes array that contains all the routes currently registered in the database
+func getAllRoutes() (*[]AEACRoutes, error) {
+	db := connectToDB()
+
+	query := `SELECT * FROM aeac_routes`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var routes []AEACRoutes
+
+	for rows.Next() {
+		var r AEACRoutes
+		err = rows.Scan(&r.ID, &r.Number, &r.StartWaypoint, &r.EndWaypoint, &r.Passengers,
+			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		routes = append(routes, r)
+	}
+
+	return &routes, nil
+}
+
+func execQuery(query string) (*sql.Rows, error) {
+	db := connectToDB()
+
+	rows, err := db.Query(query)
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	return rows, nil
+}
