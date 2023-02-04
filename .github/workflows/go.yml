@@ -5,6 +5,7 @@ name: Go
 
 on:
   push:
+    #TODO delete go-workflow once merged with master
     branches: [ "master", "go-workflow" ]
   pull_request:
     branches: [ "master" ]
@@ -24,7 +25,10 @@ jobs:
     - name: Build
       run: go build 
 
+#We cannot run go test because the mp_test.go file requires a connection with mission planner which this workflow cannot support.
+#Instead we must run each test manually
     - name: Test
+    # run: go test 
       run: | 
         go test -run "^controllers_test.go$"
         go test -run "^db_test.go$"
@@ -32,5 +36,5 @@ jobs:
         go test -run "^odlc_test.go$"
         go test -run "^rcomms_test.go$"
     
-     # run: go test controllers_test.go controllers.go db.go mp.go log.go odlc.go rcomms.go pathfinding.go
+    
       
