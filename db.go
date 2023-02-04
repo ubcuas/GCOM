@@ -122,16 +122,10 @@ func (wp *Waypoint) Create() error {
 
 	db := connectToDB()
 
-	id := wp.ID
-	name := wp.Name
-	longitude := wp.Longitude
-	latitude := wp.Latitude
-	altitude := wp.Altitude
-
-	if id != -1 {
+	if wp.ID != -1 {
 		return errors.New(
 			"non-sentinel ID passed to Waypoint.Create()" +
-				"\n Expected ID: -1 but got ID: " + strconv.Itoa(id))
+				"\n Expected ID: -1 but got ID: " + strconv.Itoa(wp.ID))
 	}
 
 	query := `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
@@ -150,7 +144,7 @@ func (wp *Waypoint) Create() error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, longitude, latitude, altitude)
+	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -175,13 +169,7 @@ func (wp Waypoint) Update() error {
 
 	db := connectToDB()
 
-	id := wp.ID
-	name := wp.Name
-	longitude := wp.Longitude
-	latitude := wp.Latitude
-	altitude := wp.Altitude
-
-	if id == -1 {
+	if wp.ID == -1 {
 		return errors.New(
 			"sentinel ID (-1) passed to Waypoint.Update(). " +
 				"Did you remember to call Waypoint.Create() beforehand?")
@@ -201,7 +189,7 @@ func (wp Waypoint) Update() error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, longitude, latitude, altitude, id)
+	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude, wp.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -220,8 +208,6 @@ func (wp Waypoint) Delete() error {
 
 	db := connectToDB()
 
-	id := wp.ID
-
 	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -238,7 +224,7 @@ func (wp Waypoint) Delete() error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(id)
+	_, err = stmt.Exec(wp.ID)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -566,7 +552,7 @@ func getAllRoutes() (*[]AEACRoutes, error) {
 	return &routes, nil
 }
 
-func execQuery(query string) (*sql.Rows, error) {
+func querySelect(query string) (*sql.Rows, error) {
 	db := connectToDB()
 
 	rows, err := db.Query(query)
@@ -577,3 +563,8 @@ func execQuery(query string) (*sql.Rows, error) {
 
 	return rows, nil
 }
+
+// func queryExec(query string) error {
+// 	db := connectToDB()
+
+// }
