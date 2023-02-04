@@ -24,7 +24,6 @@ func GetQueue() (*Queue, error) {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Content-Type", "application-json")
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -34,7 +33,6 @@ func GetQueue() (*Queue, error) {
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
-		// panic(err)
 	}
 	defer resp.Body.Close()
 
@@ -53,7 +51,6 @@ func GetQueue() (*Queue, error) {
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
-		// panic(err)
 	}
 
 	return &Queue{Queue: queue}, nil
@@ -81,7 +78,6 @@ func PostQueue(queue *Queue) error {
 	if err != nil {
 		log.Fatal(err)
 		return err
-		// panic(err)
 	}
 
 	client := &http.Client{}
@@ -89,7 +85,6 @@ func PostQueue(queue *Queue) error {
 	if err != nil {
 		log.Fatal(err)
 		return err
-		// panic(err)
 	}
 	defer resp.Body.Close()
 
@@ -116,7 +111,6 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Content-Type", "application-json")
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -124,7 +118,6 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -143,7 +136,6 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 
 	err = json.Unmarshal(body, &stat)
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -162,8 +154,6 @@ func LockAircraft() error {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Content-Type", "application-json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -171,8 +161,6 @@ func LockAircraft() error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -197,8 +185,6 @@ func UnlockAircraft() error {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Content-Type", "application-json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -206,8 +192,6 @@ func UnlockAircraft() error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -232,8 +216,6 @@ func ReturnToLaunch() error {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req.Header.Set("Content-Type", "application-json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
