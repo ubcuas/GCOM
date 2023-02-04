@@ -34,8 +34,7 @@ jobs:
 #Instead we must run each test manually
     - name: Test
     # run: go test 
-      run: | 
-        go test controllers_test.go controllers.go db.go
+      run: go test controllers_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
         # go test -run "^db_test.go$"
         # go test -run "^pathfinding_test.go$"
         # go test -run "^odlc_test.go$"
