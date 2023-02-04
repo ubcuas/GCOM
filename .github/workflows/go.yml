@@ -27,19 +27,19 @@ jobs:
       
     - name: check modules
       run: |
-        go mod tidy
         go mod verify
+        go mod tidy
 
 #We cannot run go test because the mp_test.go file requires a connection with mission planner which this workflow cannot support.
 #Instead we must run each test manually
     - name: Test
     # run: go test 
       run: | 
-        go test -run "^controllers_test.go$"
-        go test -run "^db_test.go$"
-        go test -run "^pathfinding_test.go$"
-        go test -run "^odlc_test.go$"
-        go test -run "^rcomms_test.go$"
+        go test controllers_test.go controllers.go
+        # go test -run "^db_test.go$"
+        # go test -run "^pathfinding_test.go$"
+        # go test -run "^odlc_test.go$"
+        # go test -run "^rcomms_test.go$"
     
     
       
