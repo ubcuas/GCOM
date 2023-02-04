@@ -99,7 +99,7 @@ func GetNextRoute(c echo.Context) error {
 
 	query := `SELECT * FROM aeac_routes ORDER BY odr ASC LIMIT 1`
 
-	rows, err := execQuery(query)
+	rows, err := querySelect(query)
 	if err != nil {
 		Error.Println(err)
 		return err
