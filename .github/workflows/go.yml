@@ -5,7 +5,7 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "go-workflow" ]
   pull_request:
     branches: [ "master" ]
 
