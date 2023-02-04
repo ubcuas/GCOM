@@ -25,5 +25,5 @@ jobs:
       run: go build 
 
     - name: Test
-      run: go test controllers_test.go controllers.go db.go mp.go
+      run: go test controllers_test.go controllers.go db.go mp.go log.go odlc.go rcomms.go pathfinding.go
       
