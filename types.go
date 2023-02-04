@@ -1,9 +1,5 @@
 package main
 
-import (
-	"gopkg.in/guregu/null.v4"
-)
-
 // General purpose structures
 // the "__,string" nomer is necessary due to MP endpoint returning numbers as strings, will remove when thats updated
 type AircraftStatus struct { // not stored in the database! maintained in memory, live,
@@ -16,14 +12,15 @@ type AircraftStatus struct { // not stored in the database! maintained in memory
 }
 
 type Waypoint struct {
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	Longitude float64    `json:"longitude"`
-	Latitude  float64    `json:"latitude"`
-	Altitude  null.Float `json:"altitude"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Altitude  float64 `json:"altitude"`
 }
 
 // type Queue []Waypoint
+// wraps a []Waypoint for easier MP compatibility
 
 type Queue struct {
 	Queue []Waypoint `json:"queue"`

@@ -26,7 +26,7 @@ func TestGetQueue(t *testing.T) {
 		Name:      "TestGETWP1",
 		Longitude: -6.2,
 		Latitude:  149.1651830,
-		Altitude:  null.FloatFrom(20.0),
+		Altitude:  20.0,
 	}
 
 	wp2 := Waypoint{
@@ -34,7 +34,7 @@ func TestGetQueue(t *testing.T) {
 		Name:      "TestGETWP2",
 		Longitude: -36.3637798,
 		Latitude:  147.1651830,
-		Altitude:  null.FloatFromPtr(nil),
+		Altitude:  20.0,
 	}
 
 	wp3 := Waypoint{
@@ -42,7 +42,7 @@ func TestGetQueue(t *testing.T) {
 		Name:      "TestGETWP3",
 		Longitude: -37.3637798,
 		Latitude:  146.1641830,
-		Altitude:  null.FloatFrom(10.0),
+		Altitude:  10.0,
 	}
 
 	wpslice := []Waypoint{wp1, wp2, wp3}

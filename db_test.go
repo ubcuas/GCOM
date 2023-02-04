@@ -2,13 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"testing"
 	"log"
 	"os"
 	"strings"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v4"
 )
 
 // test if sqlite database file is properly created
@@ -71,7 +70,7 @@ func TestCreateValidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  null.FloatFrom(12.2),
+		Altitude:  12.2,
 	}
 
 	err := wp.Create()
@@ -95,7 +94,7 @@ func TestCreateValidWaypoint(t *testing.T) {
 			name      string
 			longitude float64
 			latitude  float64
-			altitude  null.Float
+			altitude  float64
 		)
 
 		err = row.Scan(&id, &name, &longitude, &latitude, &altitude)
@@ -130,7 +129,7 @@ func TestCreateInvalidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  null.FloatFrom(12.2)}
+		Altitude:  12.2}
 
 	err := wp.Create()
 	if assert.Error(t, err) {
@@ -145,7 +144,7 @@ func TestGetWaypointID(t *testing.T) {
 		Name:      "Original Waypoint",
 		Longitude: 12.12,
 		Latitude:  13.13,
-		Altitude:  null.FloatFrom(12.2),
+		Altitude:  12.2,
 	}
 
 	if assert.NoError(t, startWP.Create()) {
@@ -154,7 +153,7 @@ func TestGetWaypointID(t *testing.T) {
 			Name:      "",
 			Longitude: 0,
 			Latitude:  0,
-			Altitude:  null.FloatFrom(0.0),
+			Altitude:  0.0,
 		}
 
 		endWP.Get()
@@ -176,7 +175,7 @@ func TestDeleteWaypoint(t *testing.T) {
 		Name:      "Garbage",
 		Longitude: -1,
 		Latitude:  -1,
-		Altitude:  null.FloatFrom(-1.0),
+		Altitude:  -1.0,
 	}
 
 	if assert.NoError(t, wp.Create()) {
@@ -218,14 +217,14 @@ func TestUpdateWaypoint(t *testing.T) {
 		Name:      "Original Waypoint",
 		Longitude: 0.0,
 		Latitude:  0.0,
-		Altitude:  null.FloatFrom(0.0),
+		Altitude:  0.0,
 	}
 
 	if assert.NoError(t, wp.Create()) {
 		wp.Name = "Edited Waypoint"
 		wp.Longitude = 1.1
 		wp.Latitude = 2.2
-		wp.Altitude = null.FloatFrom(3.3)
+		wp.Altitude = 3.3
 
 		if assert.NoError(t, wp.Update()) {
 
@@ -234,7 +233,7 @@ func TestUpdateWaypoint(t *testing.T) {
 				name      string
 				longitude float64
 				latitude  float64
-				altitude  null.Float
+				altitude  float64
 			)
 
 			db := connectToDB()
@@ -278,7 +277,7 @@ func TestUpdateInvalidWaypoint(t *testing.T) {
 		Name:      "Test Waypoint",
 		Longitude: -79.347015,
 		Latitude:  43.651070,
-		Altitude:  null.FloatFrom(12.2),
+		Altitude:  12.2,
 	}
 
 	err := wp.Update()
@@ -287,7 +286,6 @@ func TestUpdateInvalidWaypoint(t *testing.T) {
 	}
 
 }
-
 
 func TestAEACCreate(t *testing.T) {
 	createTestRoute(t)
@@ -298,17 +296,17 @@ func TestAEACGet(t *testing.T) {
 	createTestRoute(t)
 
 	route1 := AEACRoutes{
-		ID: 1,
-		Number: 1,
-		StartWaypoint: "Alpha",
-		EndWaypoint: "Zeta",
-		Passengers: 4,
+		ID:               1,
+		Number:           1,
+		StartWaypoint:    "Alpha",
+		EndWaypoint:      "Zeta",
+		Passengers:       4,
 		MaxVehicleWeight: 500.00,
-		Value: 200.00,
-		Order: 1,
+		Value:            200.00,
+		Order:            1,
 	}
 
-	route3 := AEACRoutes {ID: 1}
+	route3 := AEACRoutes{ID: 1}
 	err := route3.Get()
 	assert.Nil(t, err)
 	assert.Equal(t, route1, route3)
@@ -316,26 +314,26 @@ func TestAEACGet(t *testing.T) {
 }
 
 func TestAEACGetNonExistentID(t *testing.T) {
-	route := AEACRoutes {ID: 45}
+	route := AEACRoutes{ID: 45}
 	err := route.Get()
 	assert.Equal(t, sql.ErrNoRows, err)
 }
 
 func TestAEACDelete(t *testing.T) {
 	cleanUp()
-	route := AEACRoutes {ID: 1}
+	route := AEACRoutes{ID: 1}
 	err := route.Get()
 	assert.Equal(t, sql.ErrNoRows, err)
 }
 
 func TestAEACUpdate(t *testing.T) {
 	createTestRoute(t)
-	route := AEACRoutes {ID: 1}
+	route := AEACRoutes{ID: 1}
 	route.Get()
 	route.Order = 10
 	route.Update()
 
-	route1 := AEACRoutes {ID: 1}
+	route1 := AEACRoutes{ID: 1}
 	route1.Get()
 	assert.Equal(t, 10, route1.Order)
 	cleanUp()
@@ -343,21 +341,21 @@ func TestAEACUpdate(t *testing.T) {
 
 func createTestRoute(t *testing.T) {
 	route1 := AEACRoutes{
-		ID: -1,
-		Number: 1,
-		StartWaypoint: "Alpha",
-		EndWaypoint: "Zeta",
-		Passengers: 4,
+		ID:               -1,
+		Number:           1,
+		StartWaypoint:    "Alpha",
+		EndWaypoint:      "Zeta",
+		Passengers:       4,
 		MaxVehicleWeight: 500.00,
-		Value: 200.00,
-		Order: 1,
+		Value:            200.00,
+		Order:            1,
 	}
 
 	err := route1.Create()
-	assert.Nil(t, err);
+	assert.Nil(t, err)
 }
 
 func cleanUp() {
-	route := AEACRoutes {ID: 1}
+	route := AEACRoutes{ID: 1}
 	route.Delete()
 }
