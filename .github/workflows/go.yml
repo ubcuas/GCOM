@@ -25,5 +25,5 @@ jobs:
       run: go build 
 
     - name: Test
-      run: go test controllers_test.go
+      run: go test -v 
       
