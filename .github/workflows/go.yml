@@ -25,6 +25,12 @@ jobs:
       run: go build 
 
     - name: Test
-      run: go test -run "^controllers_test.go$"
+      run: | 
+        go test -run "^controllers_test.go$"
+        go test -run "^db_test.go$"
+        go test -run "^pathfinding_test.go$"
+        go test -run "^odlc_test.go$"
+        go test -run "^rcomms_test.go$"
+    
      # run: go test controllers_test.go controllers.go db.go mp.go log.go odlc.go rcomms.go pathfinding.go
       
