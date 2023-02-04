@@ -26,7 +26,9 @@ jobs:
       run: go build 
       
     - name: check modules
-      run: go mod
+      run: |
+        go mod tidy
+        go mod verify
 
 #We cannot run go test because the mp_test.go file requires a connection with mission planner which this workflow cannot support.
 #Instead we must run each test manually
