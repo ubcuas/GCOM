@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -56,7 +57,7 @@ func Migrate() error {
 	//read queries from "migrate.sql" line by line
 	file, err := os.Open("./migrate.sql")
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer file.Close()
@@ -68,33 +69,33 @@ func Migrate() error {
 
 		tx, err := db.Begin()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer tx.Rollback()
 
 		stmt, err := tx.Prepare(queryText)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 
 		err = tx.Commit()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -121,6 +122,7 @@ func (wp *Waypoint) Create() error {
 	// and describe it as something like "non-sentinel ID passed to Waypoint.create()"
 
 	db := connectToDB()
+	var query string
 
 	if wp.ID != -1 {
 		return errors.New(
@@ -128,35 +130,39 @@ func (wp *Waypoint) Create() error {
 				"\n Expected ID: -1 but got ID: " + strconv.Itoa(wp.ID))
 	}
 
-	query := `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
-
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer tx.Rollback()
 
+	query = `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
+
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
-	wp.Get()
+	err = wp.Get()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
 
 	return nil
 }
@@ -177,7 +183,7 @@ func (wp Waypoint) Update() error {
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 	defer tx.Rollback()
 
@@ -185,18 +191,18 @@ func (wp Waypoint) Update() error {
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude, wp.ID)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 
 	return nil
@@ -210,7 +216,7 @@ func (wp Waypoint) Delete() error {
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer tx.Rollback()
@@ -219,20 +225,20 @@ func (wp Waypoint) Delete() error {
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(wp.ID)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -266,16 +272,12 @@ func (wp *Waypoint) Get() error {
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
 		row = stmt.QueryRow(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
-		if err != nil {
-			log.Fatal(err)
-			return err
-		}
 
 	} else {
 		//do based off ID
@@ -284,21 +286,21 @@ func (wp *Waypoint) Get() error {
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
 		row = stmt.QueryRow(wp.ID)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 	}
 
 	err := row.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -313,7 +315,7 @@ func getAllWaypoints() (*Queue, error) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return nil, err
 	}
 
@@ -323,7 +325,7 @@ func getAllWaypoints() (*Queue, error) {
 		var wp Waypoint
 		err = rows.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return nil, err
 		}
 		waypoints = append(waypoints, wp)
@@ -344,13 +346,13 @@ func (r *AEACRoutes) Create() error {
 
 	if r.ID != -1 {
 		errMsg := "Non-Sentinel ID passed into AEACRoutes.Create()"
-		log.Fatal(errMsg)
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO aeac_routes 
@@ -358,7 +360,7 @@ func (r *AEACRoutes) Create() error {
 		(?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
 
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -373,13 +375,13 @@ func (r *AEACRoutes) Create() error {
 		r.Order).Scan(&r.ID)
 
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	return nil
@@ -392,8 +394,8 @@ func (r AEACRoutes) Update() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Update()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Update()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
@@ -408,13 +410,13 @@ func (r AEACRoutes) Update() error {
 		odr= ? WHERE
 		id = ?`)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -430,7 +432,7 @@ func (r AEACRoutes) Update() error {
 
 	if err != nil {
 		tx.Rollback()
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	} else {
 		err = tx.Commit()
@@ -445,20 +447,20 @@ func (r AEACRoutes) Delete() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Delete()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Delete()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
 	stmt, err := db.Prepare(`DELETE FROM aeac_routes WHERE id = ?`)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -466,7 +468,7 @@ func (r AEACRoutes) Delete() error {
 
 	if err != nil {
 		tx.Rollback()
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	} else {
 		err = tx.Commit()
@@ -482,15 +484,15 @@ func (r *AEACRoutes) Get() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Get()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Get()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
 	query := `SELECT * FROM aeac_routes WHERE id = ?`
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -499,7 +501,7 @@ func (r *AEACRoutes) Get() error {
 	row := tx.QueryRow(query, r.ID)
 
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -518,7 +520,7 @@ func (r *AEACRoutes) Get() error {
 		log.Printf("No Entry for ID %s", fmt.Sprint(r.ID))
 		return err
 	} else if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	return nil
@@ -526,13 +528,12 @@ func (r *AEACRoutes) Get() error {
 
 // returns a pointer to an AEACRoutes array that contains all the routes currently registered in the database
 func getAllRoutes() (*[]AEACRoutes, error) {
-	db := connectToDB()
-
+	defer timeTrack(time.Now(), "getAllRoutes")
 	query := `SELECT * FROM aeac_routes`
 
-	rows, err := db.Query(query)
+	rows, err := querySelect(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return nil, err
 	}
 
@@ -543,7 +544,7 @@ func getAllRoutes() (*[]AEACRoutes, error) {
 		err = rows.Scan(&r.ID, &r.Number, &r.StartWaypoint, &r.EndWaypoint, &r.Passengers,
 			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return nil, err
 		}
 		routes = append(routes, r)
@@ -552,6 +553,7 @@ func getAllRoutes() (*[]AEACRoutes, error) {
 	return &routes, nil
 }
 
+// execute a select query and return the rows
 func querySelect(query string) (*sql.Rows, error) {
 	db := connectToDB()
 
@@ -564,7 +566,8 @@ func querySelect(query string) (*sql.Rows, error) {
 	return rows, nil
 }
 
-// func queryExec(query string) error {
+// execute a transaction aganist the database
+// func transactionExec(query string) error {
 // 	db := connectToDB()
 
 // }
