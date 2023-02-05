@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -21,7 +22,13 @@ func GetWaypoints(c echo.Context) error {
 		return err
 	}
 
-	Info.Println("all waypoints in DB: ", allWaypoints)
+	prettyJson, err := json.MarshalIndent(allWaypoints, "", "    ")
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	Info.Println("all waypoints in DB:\n", string(prettyJson))
 	return c.JSON(http.StatusOK, allWaypoints)
 
 }
@@ -35,12 +42,11 @@ func PostWaypoints(c echo.Context) error {
 
 	err := c.Bind(&waypoints)
 	if err != nil {
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
 
-	Info.Println("Registering waypoints...", waypoints)
+	// Info.Println("Registering waypoints...", waypoints)
 
 	for _, wp := range waypoints {
 		err = wp.Create()
