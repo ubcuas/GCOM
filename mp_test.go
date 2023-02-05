@@ -12,15 +12,6 @@ import (
 // test posting and reading the queue from MP
 func TestGetQueue(t *testing.T) {
 
-	//save current queue
-	/*
-		currQueue, err := GetQueue()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("currQue ", currQueue)
-	*/
-
 	wp1 := Waypoint{
 		ID:        -1,
 		Name:      "TestGETWP1",
