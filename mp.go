@@ -12,7 +12,7 @@ import (
 )
 
 /**
- * Gets the current route ("Queue" of Waypoints) that constitute the path the drone is folllowing, from Mission Planner
+ * Gets the current route ("Queue" of Waypoints) that constitute the path the drone is following, from Mission Planner
  *
  * Returns: - Pointer to a Queue struct containing Waypoints generated from the Waypoint data
  * 				given in the response from Mission Planner
