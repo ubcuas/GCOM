@@ -68,6 +68,8 @@ func TestPostWaypoints(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "Waypoints successfully registered!", rec.Body.String())
 	}
+
+	cleanDB()
 }
 
 func TestGetWaypoints(t *testing.T) {
@@ -127,7 +129,6 @@ func TestGetWaypoints(t *testing.T) {
 	}
 
 	cleanDB()
-
 }
 
 func TestPostRoutes(t *testing.T) {
@@ -173,4 +174,6 @@ func TestPostRoutes(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, "AEACRoutes registered!", rec.Body.String())
 	}
+
+	cleanDB()
 }

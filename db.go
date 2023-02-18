@@ -16,7 +16,15 @@ import (
 // delete all currently registered waypoints and routes from the database
 // for debugging purposes
 func cleanDB() error {
-	err := os.Remove("database.sqlite")
+	query := `DELETE FROM Waypoints`
+	err := transactionExec(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	query = `DELETE FROM aeac_routes`
+	err = transactionExec(query)
 	if err != nil {
 		Error.Println(err)
 		return err
@@ -35,7 +43,17 @@ func cleanDB() error {
 func connectToDB() *sql.DB {
 	// check if db file exists, and if necessary, create it
 	if _, err := os.Stat("./database.sqlite"); err != nil {
-		os.Create("./database.sqlite")
+		tmpFile, err := os.Create("./database.sqlite")
+		if err != nil {
+			Error.Println(err)
+			panic(err)
+		}
+		// defer tmpFile.Close()
+		err = tmpFile.Close()
+		if err != nil {
+			Error.Println(err)
+			panic(err)
+		}
 	}
 
 	// open connection to db file
@@ -567,7 +585,34 @@ func querySelect(query string) (*sql.Rows, error) {
 }
 
 // execute a transaction aganist the database
-// func transactionExec(query string) error {
-// 	db := connectToDB()
+func transactionExec(query string) error {
+	db := connectToDB()
 
-// }
+	tx, err := db.Begin()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	return nil
+}
