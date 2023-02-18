@@ -4,15 +4,17 @@ go 1.18
 
 require (
 	github.com/labstack/echo/v4 v4.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	gopkg.in/guregu/null.v4 v4.0.0
 )
 
-require github.com/mattn/go-sqlite3 v1.14.16
+require (
+	github.com/joho/godotenv v1.4.0
+	github.com/mattn/go-sqlite3 v1.14.16
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
