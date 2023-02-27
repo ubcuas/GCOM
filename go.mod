@@ -3,7 +3,7 @@ module gcomlite
 go 1.18
 
 require (
-	github.com/labstack/echo/v4 v4.10.1
+	github.com/labstack/echo/v4 v4.10.2
 	github.com/stretchr/testify v1.8.1
 	gopkg.in/guregu/null.v4 v4.0.0
 )
