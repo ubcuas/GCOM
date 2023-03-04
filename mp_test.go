@@ -138,3 +138,36 @@ func TestLockAndUnlockAircraft(t *testing.T) {
 	err = UnlockAircraft()
 	assert.NoError(t, err)
 }
+
+func TestTakeoff(t *testing.T) {
+	takeoff_alt := 150.2
+	err := Takeoff(takeoff_alt)
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestRTL(t *testing.T) {
+	err := ReturnToLaunch()
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestLandImmediately(t *testing.T) {
+	err := LandImmediately()
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestPostHome(t *testing.T) {
+	home := Waypoint{
+		ID:        -1,
+		Name:      "TestHome",
+		Longitude: -6.2,
+		Latitude:  149.1651830,
+		Altitude:  20.0,
+	}
+
+	err := PostHome(&home)
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}

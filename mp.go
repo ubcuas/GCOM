@@ -309,3 +309,39 @@ func PostHome(home *Waypoint) error {
 
 	return nil
 }
+
+func Takeoff(altitude float64) error {
+	var endpoint = getEnvVariable("MP_ROUTE") + "/takeoff"
+
+	jsonMap := map[string]interface{}{
+		"altitude": altitude,
+	}
+	reqBody, err := json.Marshal(jsonMap)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	fmt.Println(string(reqBody))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		Error.Println("Failed to takeoff: " + resp.Status)
+		return errors.New("Failed to takeoff: " + resp.Status)
+	}
+
+	return nil
+}
