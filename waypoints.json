@@ -1,0 +1,31 @@
+{
+"queue": [
+{"id": -1, "name": "Alpha", "longitude": -71.6375025, "latitude": 48.5166707 },
+{"id": -1, "name": "Bravo", "longitude": -71.6317518, "latitude": 48.5060947 },
+{"id": -1, "name": "Charlie", "longitude": -71.6358093, "latitude": 48.4950452 },
+{"id": -1, "name": "Delta", "longitude": -71.6404442, "latitude": 48.5150341 },
+{"id": -1, "name": "Echo", "longitude": -71.6407017, "latitude": 48.5028654 },
+{"id": -1, "name": "Foxtrot", "longitude": -71.6207961, "latitude": 48.5151509 },
+{"id": -1, "name": "Golf", "longitude": -71.6522101, "latitude": 48.5101473 },
+{"id": -1, "name": "Hotel", "longitude": -71.6426006, "latitude": 48.5129917 },
+{"id": -1, "name": "India", "longitude": -71.6428152, "latitude": 48.5117408 },
+{"id": -1, "name": "Juliette", "longitude": -71.648054, "latitude": 48.5113145 },
+{"id": -1, "name": "Kilo", "longitude": -71.6321754, "latitude": 48.4989742 },
+{"id": -1, "name": "Lima", "longitude": -71.6253089, "latitude": 48.5019885 },
+{"id": -1, "name": "Mike", "longitude": -71.6510581, "latitude": 48.5138731 },
+{"id": -1, "name": "November", "longitude": -71.6461702, "latitude": 48.5090567 },
+{"id": -1, "name": "Oscar", "longitude": -71.6516848, "latitude": 48.5107057 },
+{"id": -1, "name": "Papa", "longitude": -71.6298198, "latitude": 48.5039667 },
+{"id": -1, "name": "Quebec", "longitude": -71.6411893, "latitude": 48.5069003 },
+{"id": -1, "name": "Point 18", "longitude": -71.6296878, "latitude": 48.5142354 },
+{"id": -1, "name": "Romeo", "longitude": -71.6425625, "latitude": 48.4984266 },
+{"id": -1, "name": "Sierra", "longitude": -71.6463389, "latitude": 48.5045689 },
+{"id": -1, "name": "Tango", "longitude": -71.6501156, "latitude": 48.5087768 },
+{"id": -1, "name": "Uniform", "longitude": -71.6290012, "latitude": 48.4937058 },
+{"id": -1, "name": "Victor", "longitude": -71.6228085, "latitude": 48.510353 },
+{"id": -1, "name": "Whiskey", "longitude": -71.6240102, "latitude": 48.5081212 },
+{"id": -1, "name": "Xray", "longitude": -71.6391074, "latitude": 48.5089812 },
+{"id": -1, "name": "Yankee", "longitude": -71.6312968, "latitude": 48.5112557 },
+{"id": -1, "name": "Zulu", "longitude": -71.6486775, "latitude": 48.5200684 }
+]
+}
