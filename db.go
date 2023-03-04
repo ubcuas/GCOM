@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -546,7 +545,6 @@ func (r *AEACRoutes) Get() error {
 
 // returns a pointer to an AEACRoutes array that contains all the routes currently registered in the database
 func getAllRoutes() (*[]AEACRoutes, error) {
-	defer timeTrack(time.Now(), "getAllRoutes")
 	query := `SELECT * FROM aeac_routes`
 
 	rows, err := querySelect(query)
