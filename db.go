@@ -31,7 +31,7 @@ func connectToDB() *sql.DB {
 }
 
 // Reads the queries from migrate.sql line by line, and executes each
-// query against the database connected to be connectToBB() to intialize
+// query against the database connected to be connectToBB() to initialize
 // any required tables
 func Migrate() error {
 	//open db connection
@@ -239,7 +239,7 @@ func (wp Waypoint) Delete() error {
 
 // Writes the values stored in the database for this given Waypoint's ID
 // to the Waypoint object.
-// If this method is called on a Waypoint that has not yet been registed in the database,
+// If this method is called on a Waypoint that has not yet been registered in the database,
 // (i.e. Waypoint.Create() has not been called), then the method queries the database
 // for records that match all four fields of (name, longitude, latitude, altitude).
 // Otherwise, this method queries the database for records that match only the ID.
