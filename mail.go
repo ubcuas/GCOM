@@ -5,6 +5,14 @@ import (
 	"strconv"
 )
 
+func sendMail(auth smtp.Auth, to []string, msg []byte) error {
+	err := smtp.SendMail(getEnvVariable("EMAIL_HOST")+":"+getEnvVariable("EMAIL_PORT"), auth, getEnvVariable("EMAIL_FROM"), to, msg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func generateMsg(to []string, subject string, body string) []byte {
 	msg := []byte("To: " + to[0] + "\r\n" +
 		"Subject: " + subject + "\r\n" +
