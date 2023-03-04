@@ -105,44 +105,45 @@ func (wp *Waypoint) Create() error {
 	// and describe it as something like "non-sentinel ID passed to Waypoint.create()"
 
 	db := connectToDB()
+	var query string
 
-	id := wp.ID
-	name := wp.Name
-	longitude := wp.Longitude
-	latitude := wp.Latitude
-	altitude := wp.Altitude
-
-	if id != -1 {
+	if wp.ID != -1 {
 		return errors.New(
 			"non-sentinel ID passed to Waypoint.Create()" +
-				"\n Expected ID: -1 but got ID: " + strconv.Itoa(id))
+				"\n Expected ID: -1 but got ID: " + strconv.Itoa(wp.ID))
 	}
-
-	query := `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer tx.Rollback()
 
+	query = `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
+
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, longitude, latitude, altitude)
+	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+
+	err = wp.Get()
+	if err != nil {
+		Error.Println(err)
 		return err
 	}
 
