@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -22,17 +21,16 @@ func GetWaypoints(c echo.Context) error {
 		return err
 	}
 
-	prettyJson, err := json.MarshalIndent(allWaypoints, "", "    ")
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
+	/*
+		prettyJson, err := json.MarshalIndent(allWaypoints, "", "    ")
+		if err != nil {
+			Error.Println(err)
+			return err
+		}
 
-	if DEBUG_FLAG {
 		fmt.Println("all waypoints in DB:\n", string(prettyJson))
-	}
+	*/
 	return c.JSON(http.StatusOK, allWaypoints)
-
 }
 
 // endpoint we serve that takes a JSON list of Waypoints and registers them all in the database, if they
@@ -60,9 +58,8 @@ func PostWaypoints(c echo.Context) error {
 		fmt.Println(wp)
 	}
 
-	if DEBUG_FLAG {
-		fmt.Println("Registered waypoints: ", waypoints, "to the database")
-	}
+	// fmt.Println("Registered waypoints: ", waypoints, "to the database")
+
 	return c.String(http.StatusOK, "Waypoints successfully registered!")
 }
 
@@ -75,9 +72,7 @@ func GetRoutes(c echo.Context) error {
 		return err
 	}
 
-	if DEBUG_FLAG {
-		fmt.Println("All routes in DB: ", routes)
-	}
+	// fmt.Println("All routes in DB: ", routes)
 
 	return c.JSON(http.StatusOK, routes)
 }
@@ -93,9 +88,7 @@ func PostRoutes(c echo.Context) error {
 		return err
 	}
 
-	if DEBUG_FLAG {
-		fmt.Println("Registering routes: ", routes)
-	}
+	// fmt.Println("Registering routes: ", routes)
 
 	for _, r := range routes {
 		err = r.Create()
@@ -105,9 +98,7 @@ func PostRoutes(c echo.Context) error {
 		}
 	}
 
-	if DEBUG_FLAG {
-		fmt.Println("Registered AEACRoutes: ", routes, "to the database!")
-	}
+	// fmt.Println("Registered AEACRoutes: ", routes, "to the database!")
 
 	return c.String(http.StatusOK, "AEACRoutes registered!")
 }
@@ -135,14 +126,14 @@ func GetNextRoute(c echo.Context) error {
 		}
 	}
 
-	fmt.Println("Next route: ", r)
+	// fmt.Println("Next route: ", r)
 	err = r.Delete()
 	if err != nil {
 		Error.Println(err)
 		return err
 	}
 
-	Warning.Println("Deleted route with ID: ", r.ID)
+	// Warning.Println("Deleted route with ID: ", r.ID)
 	if r.StartWaypoint == "" {
 		return c.JSON(http.StatusOK, nil)
 	}
