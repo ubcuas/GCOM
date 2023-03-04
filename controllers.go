@@ -28,7 +28,9 @@ func GetWaypoints(c echo.Context) error {
 		return err
 	}
 
-	Info.Println("all waypoints in DB:\n", string(prettyJson))
+	if DEBUG_FLAG {
+		fmt.Println("all waypoints in DB:\n", string(prettyJson))
+	}
 	return c.JSON(http.StatusOK, allWaypoints)
 
 }
@@ -57,7 +59,10 @@ func PostWaypoints(c echo.Context) error {
 		}
 		fmt.Println(wp)
 	}
-	Info.Println("Registered waypoints: ", waypoints, "to the database")
+
+	if DEBUG_FLAG {
+		fmt.Println("Registered waypoints: ", waypoints, "to the database")
+	}
 	return c.String(http.StatusOK, "Waypoints successfully registered!")
 }
 
@@ -70,7 +75,10 @@ func GetRoutes(c echo.Context) error {
 		return err
 	}
 
-	Info.Println("All routes in DB: ", routes)
+	if DEBUG_FLAG {
+		fmt.Println("All routes in DB: ", routes)
+	}
+
 	return c.JSON(http.StatusOK, routes)
 }
 
@@ -85,7 +93,9 @@ func PostRoutes(c echo.Context) error {
 		return err
 	}
 
-	Info.Println("Registering routes: ", routes)
+	if DEBUG_FLAG {
+		fmt.Println("Registering routes: ", routes)
+	}
 
 	for _, r := range routes {
 		err = r.Create()
@@ -95,7 +105,10 @@ func PostRoutes(c echo.Context) error {
 		}
 	}
 
-	Info.Println("Registered AEACRoutes: ", routes, "to the database!")
+	if DEBUG_FLAG {
+		fmt.Println("Registered AEACRoutes: ", routes, "to the database!")
+	}
+
 	return c.String(http.StatusOK, "AEACRoutes registered!")
 }
 
@@ -122,7 +135,7 @@ func GetNextRoute(c echo.Context) error {
 		}
 	}
 
-	Info.Println("Next route: ", r)
+	fmt.Println("Next route: ", r)
 	err = r.Delete()
 	if err != nil {
 		Error.Println(err)
