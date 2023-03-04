@@ -39,12 +39,16 @@ func main() {
 	} else if UAS_COMP {
 		loadUASWaypoints()
 	} else if SUAS_COMP {
-		
+
 	}
 	
-	
+	e.GET("/", Hello)
+	e.GET("/waypoints", GetWaypoints)
+	e.POST("/waypoints", PostWaypoints)
 
-
+	e.GET("/routes", GetRoutes)
+	e.POST("/routes", PostRoutes)
+	e.GET("/nextroute", GetNextRoute)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
