@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v4"
 )
 
 // test posting and reading the queue from MP
@@ -61,9 +60,9 @@ func TestGetQueue(t *testing.T) {
 			assert.Equal(t, getQueue.Queue[1].Latitude, 147.1651830)
 			assert.Equal(t, getQueue.Queue[2].Latitude, 146.1641830)
 
-			assert.Equal(t, getQueue.Queue[0].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, getQueue.Queue[1].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, getQueue.Queue[2].Altitude, null.FloatFrom(10.0))
+			assert.Equal(t, getQueue.Queue[0].Altitude, 20.0)
+			assert.Equal(t, getQueue.Queue[1].Altitude, 20.0)
+			assert.Equal(t, getQueue.Queue[2].Altitude, 10.0)
 		}
 	}
 }
