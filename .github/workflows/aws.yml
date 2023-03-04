@@ -3,8 +3,7 @@ name: Push-to-EC2
 # Trigger deployment only on push to master branch
 on:
   push:
-    branches:
-      - AWS-server-integration
+    branches: ["master", "AWS-server-integration"]
 
 jobs:
   deploy:
