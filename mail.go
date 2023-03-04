@@ -43,22 +43,3 @@ func sendPaths(paths []AEACRoutes) error {
 	err := sendMail(auth, to, msg)
 	return err
 }
-
-func testEmail() error {
-	examplePaths := []AEACRoutes{
-		AEACRoutes{
-			Number: 1,
-		},
-		AEACRoutes{
-			Number: 2,
-		},
-		AEACRoutes{
-			Number: 3,
-		},
-	}
-	err := sendPaths(examplePaths)
-	if err != nil {
-		return err
-	}
-	return nil
-}

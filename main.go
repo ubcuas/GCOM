@@ -40,7 +40,5 @@ func main() {
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
-	e.GET("/email", TestEmail)
-
 	e.Logger.Fatal(e.Start(":1323"))
 }

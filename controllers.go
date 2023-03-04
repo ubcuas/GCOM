@@ -69,14 +69,3 @@ func GetNextRoute(c echo.Context) error {
 
 	return nil
 }
-
-// endpoint that sends path information to the email address provided in the request
-func TestEmail(c echo.Context) error {
-	err := testEmail()
-	if err != nil {
-		// log.Fatal(err)
-		Error.Println(err)
-		return c.String(http.StatusInternalServerError, "Error sending email! "+err.Error())
-	}
-	return c.String(http.StatusOK, "Email sent!")
-}
