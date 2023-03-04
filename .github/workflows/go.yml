@@ -36,7 +36,8 @@ jobs:
     # Instead we must run each test manually
     - name: Run Go Tests
       run: | 
-        go test -v controllers_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
-        go test -v db_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
-        go test -v odlc_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
-        go test -v rcomms_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
+        go test -v controllers_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go
+        go test -v db_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go
+        go test -v odlc_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go
+        go test -v rcomms_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go
+        go test -v mail_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go
