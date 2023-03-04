@@ -25,35 +25,27 @@ func getEnvVariable(key string) string {
 }
 
 var (
-	DEBUG_FLAG = true
-	UAS_COMP = false
+	UAS_COMP = true
 	SUAS_COMP = false
 )
 
 func main() {
-
+	
 	e := echo.New()
 	Migrate()
-	if DEBUG_FLAG {
-		deleteAllWaypoints()
-	} else if UAS_COMP {
+	deleteAllWaypoints()
+	if UAS_COMP {
 		loadUASWaypoints()
 	} else if SUAS_COMP {
 
 	}
 	
-	e.GET("/", Hello)
-	e.GET("/waypoints", GetWaypoints)
-	e.POST("/waypoints", PostWaypoints)
 
-	e.GET("/routes", GetRoutes)
-	e.POST("/routes", PostRoutes)
-	e.GET("/nextroute", GetNextRoute)
-
-	e.POST("/parser/task1", ParseTask1QRData)
-	e.POST("/parser/task2", ParseTask2QRData)
+	e.POST("/qr/task1", ParseTask1QRData)
+	e.POST("/qr/task2", ParseTask2QRData)
 
 	e.Logger.Fatal(e.Start(":1323"))
+	
 }
 
 func loadUASWaypoints() {

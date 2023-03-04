@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,18 +19,31 @@ func ParseTask1QRData(c echo.Context) error {
 		log.Panic(err)
 		return err
 	}
-	waypoint_names := strings.Split(buf.String()[13:], ";")
+	parts := strings.Split(buf.String(), ".")
+	waypoint_names := strings.Split(parts[0][26:], ";")
 	var waypoints []Waypoint;
 
 	for _, name := range waypoint_names {
 		wp_name := strings.TrimSpace(name);
 		wp := Waypoint {
+			ID: -1,
 			Name: wp_name,
 		}
 		wp.Get()
 		waypoints = append(waypoints, wp)
 	}
-	return c.String(http.StatusAccepted, "Hi!")
+
+	rejoin_name := strings.TrimSpace(parts[1][21:])
+	rejoin := Waypoint {
+		ID: -1,
+		Name: rejoin_name,
+	}
+	rejoin.Get()
+	restrict := RestrictedArea {
+		Bounds: waypoints,
+		RejoinPoint: rejoin,
+	}
+	return c.String(http.StatusAccepted, "Restricted Zone Created!")
 }
 
 func ParseTask2QRData(c echo.Context) error {
