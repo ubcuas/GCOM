@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -55,7 +54,7 @@ func PostWaypoints(c echo.Context) error {
 			Error.Println(err)
 			return err
 		}
-		fmt.Println(wp)
+		// fmt.Println(wp)
 	}
 
 	// fmt.Println("Registered waypoints: ", waypoints, "to the database")
