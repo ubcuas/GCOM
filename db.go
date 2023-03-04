@@ -15,8 +15,13 @@ import (
 // delete all currently registered waypoints and routes from the database
 // for debugging purposes
 func cleanDB() error {
+	err := Migrate()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
 	query := `DELETE FROM Waypoints`
-	err := transactionExec(query)
+	err = transactionExec(query)
 	if err != nil {
 		Error.Println(err)
 		return err
@@ -29,11 +34,6 @@ func cleanDB() error {
 		return err
 	}
 
-	err = Migrate()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
 	return nil
 }
 
