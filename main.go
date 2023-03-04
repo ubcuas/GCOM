@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-
+	
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
@@ -21,9 +21,17 @@ func getEnvVariable(key string) string {
 	return os.Getenv(key)
 }
 
+var (
+	DEBUG_FLAG = true
+)
+
 func main() {
 
 	e := echo.New()
+
+	if DEBUG_FLAG {
+		deleteAllWaypoints()
+	}
 
 	e.GET("/", Hello)
 	e.GET("/waypoints", GetWaypoints)
@@ -31,6 +39,7 @@ func main() {
 
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
+	e.GET("/nextroute", GetNextRoute)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

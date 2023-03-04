@@ -1,0 +1,42 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  merge_group:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: 'go.mod'
+
+    - name: Build
+      run: go build 
+   
+    # Check versions and clean up go.mod
+    - name: Check Modules
+      run: |
+        go mod verify
+        go mod tidy
+
+    # We cannot run go test because the mp_test.go file requires a connection with mission planner which this workflow cannot support.
+    # Instead we must run each test manually
+    - name: Run Go Tests
+      run: | 
+        go test -v controllers_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
+        go test -v db_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
+        go test -v odlc_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go
+        go test -v rcomms_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go

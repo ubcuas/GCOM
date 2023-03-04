@@ -30,7 +30,7 @@ func connectToDB() *sql.DB {
 }
 
 // Reads the queries from migrate.sql line by line, and executes each
-// query against the database connected to be connectToBB() to intialize
+// query against the database connected to be connectToBB() to initialize
 // any required tables
 func Migrate() error {
 	//open db connection
@@ -238,7 +238,7 @@ func (wp Waypoint) Delete() error {
 
 // Writes the values stored in the database for this given Waypoint's ID
 // to the Waypoint object.
-// If this method is called on a Waypoint that has not yet been registed in the database,
+// If this method is called on a Waypoint that has not yet been registered in the database,
 // (i.e. Waypoint.Create() has not been called), then the method queries the database
 // for records that match all four fields of (name, longitude, latitude, altitude).
 // Otherwise, this method queries the database for records that match only the ID.
@@ -321,6 +321,51 @@ func (wp *Waypoint) Get() error {
 	return nil
 }
 
+// returns a pointer to a Queue struct that contains all the waypoints currently registered in the database
+func getAllWaypoints() (*Queue, error) {
+	db := connectToDB()
+
+	query := `SELECT * FROM Waypoints`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var waypoints []Waypoint
+
+	for rows.Next() {
+		var wp Waypoint
+		err = rows.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		waypoints = append(waypoints, wp)
+	}
+
+	q := Queue{waypoints}
+
+	return &q, nil
+}
+
+// delete all currently registered waypoints from the database
+// for debugging purposes
+func deleteAllWaypoints() error {
+	db := connectToDB()
+
+	query := `DELETE FROM Waypoints`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
 // Definitions for AEACRoutes DB methods
 
 // Initializes an AEACRoute in the database
@@ -392,7 +437,7 @@ func (r AEACRoutes) Update() error {
 		max_weight = ?,
 		value = ?,
 		remarks = ?,
-		odr = ? WHERE
+		odr= ? WHERE
 		id = ?`)
 	if err != nil {
 		log.Fatal(err)
