@@ -43,6 +43,7 @@ func ParseTask1QRData(c echo.Context) error {
 		Bounds: waypoints,
 		RejoinPoint: rejoin,
 	}
+	fmt.Println(restrict)
 	return c.String(http.StatusAccepted, "Restricted Zone Created!")
 }
 
