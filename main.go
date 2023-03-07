@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
@@ -41,7 +42,6 @@ func main() {
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
-
 	e.Logger.Fatal(e.Start(":1323"))
 }
 
