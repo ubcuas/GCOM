@@ -44,7 +44,3 @@ func main() {
 	e.GET("/nextroute", GetNextRoute)
 	e.Logger.Fatal(e.Start(":1323"))
 }
-
-func loadUASWaypoints() {
-	
-}
