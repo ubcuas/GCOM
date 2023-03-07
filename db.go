@@ -141,12 +141,6 @@ func (wp *Waypoint) Create() error {
 		return err
 	}
 
-	err = wp.Get()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-
 	return nil
 }
 
