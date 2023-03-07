@@ -45,6 +45,7 @@ type AEACRoutes struct {
 // SUAS specific structures
 
 type RestrictedArea struct {
+	ID int `json:"id"`
 	Bounds []Waypoint `json:"bounds"`
 	RejoinPoint Waypoint `json:"rejoin_at"`
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -40,10 +39,11 @@ func ParseTask1QRData(c echo.Context) error {
 	}
 	rejoin.Get()
 	restrict := RestrictedArea {
+		ID: -1,
 		Bounds: waypoints,
 		RejoinPoint: rejoin,
 	}
-	fmt.Println(restrict)
+	restrict.Create()
 	return c.String(http.StatusAccepted, "Restricted Zone Created!")
 }
 
