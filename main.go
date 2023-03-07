@@ -3,10 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"fmt"
-	"io/ioutil"
-	
-	"encoding/json"
+
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
@@ -25,45 +23,23 @@ func getEnvVariable(key string) string {
 }
 
 var (
-	UAS_COMP = true
-	SUAS_COMP = false
+	DEBUG_FLAG = true
 )
 
 func main() {
 	
 	e := echo.New()
 	Migrate()
-	deleteAllWaypoints()
-	if UAS_COMP {
-		loadUASWaypoints()
-	} else if SUAS_COMP {
-
+	if DEBUG_FLAG {
+		deleteAllWaypoints()
 	}
 	
+	e.GET("/", Hello)
+	e.GET("/waypoints", GetWaypoints)
+	e.POST("/waypoints", PostWaypoints)
+	e.POST("/waypoints/load", LoadWaypoints)
 
 	e.POST("/qr/task1", ParseTask1QRData)
 	e.POST("/qr/task2", ParseTask2QRData)
-
 	e.Logger.Fatal(e.Start(":1323"))
-	
-}
-
-func loadUASWaypoints() {
-	jsonFile, err := os.Open("waypoints.json")
-	if err != nil {
-    	fmt.Println(err)
-	}
-	fmt.Println("Successfully opened waypoints.json")
-	defer jsonFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var waypoints Queue
-	json.Unmarshal(byteValue, &waypoints)
-	for _, waypoint := range waypoints.Queue {
-		err = waypoint.Create()
-		fmt.Printf("Loaded Waypoint %s\n", waypoint.Name)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
 }

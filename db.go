@@ -142,7 +142,7 @@ func (wp *Waypoint) Create() error {
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
