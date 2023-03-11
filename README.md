@@ -22,7 +22,129 @@ For testing endpoints for development, it's highly recommended that you use an A
 Controllers are paired routes and HTTP request methods. Middleware, logging, and everything else should be configured here.
 
 ## controllers.go
-Controllers are declared here.
+Endpoints and controllers are defined here, with sample request/response bodies (if applicable):
+
+* `(GET) /waypoints`
+    * Returns a list of all `Waypoint`s currently registered in the database.
+    * Sample response body:
+    ```json
+    [
+        {
+            "id": 1,
+            "name": "Alpha",
+            "longitude": 13.4,
+            "latitude": -4.5,
+            "altitude": 20.4
+        },
+        {
+            "id": 2,
+            "name": "Beta",
+            "longitude": 13.57,
+            "latitude": -4,
+            "altitude": 50.4
+        }
+    ]
+    ```
+
+* `(POST) /waypoints`
+    * Registers a provided list of `Waypoint`s into the database. If this request is made multiple times, any duplicate `Waypoint`s will not be re-registered into the database (a duplicate `Waypoint` is any `Waypoint` whose fields are identical, except possibly `id`).
+    * Sample request body:
+    ```json
+    [
+        {
+            "id": -1,
+            "name": "Alpha",
+            "longitude": 13.4,
+            "latitude": -4.5,
+            "altitude": 20.4
+        },
+        {
+            "id": -1,
+            "name": "Beta",
+            "longitude": 13.57,
+            "latitude": -4.0,
+            "altitude": 50.4
+        }
+    ]
+    ```
+    ---
+
+* `(GET) /routes`
+    * Returns a list of all `AEACRoutes` currently registered in the database
+    * Sample response body:
+    ```json
+    [
+        {
+            "id": 1,
+            "number": 1,
+            "start_waypoint": "alpha",
+            "end_waypoint": "delta",
+            "passengers": 5,
+            "max_vehicle_weight": 30.5,
+            "value": 13.2,
+            "remarks": "",
+            "order": 0
+        },
+        {
+            "id": 2,
+            "number": 2,
+            "start_waypoint": "delta",
+            "end_waypoint": "zeta",
+            "passengers": 10,
+            "max_vehicle_weight": 20.05,
+            "value": 17.3,
+            "remarks": "remark",
+            "order": 1
+        }
+    ]
+    ```
+* `(POST) /routes`
+     * Registers a provided list of `AEACRoutes` into the database. If this request is made multiple times, any duplicate routes will not be re-registered into the database (a duplicate route is any `AEACRoutes` whose fields are identical, except possibly `id`).
+    * Sample request body:
+    ```json
+    [
+        {
+            "id": -1,
+            "number": 1,
+            "start_waypoint": "alpha",
+            "end_waypoint": "delta",
+            "passengers": 5,
+            "max_vehicle_weight": 30.5,
+            "value": 13.2,
+            "remarks": "",
+            "order": 0
+        },
+        {
+            "id": -1,
+            "number": 2,
+            "start_waypoint": "delta",
+            "end_waypoint": "zeta",
+            "passengers": 10,
+            "max_vehicle_weight": 20.05,
+            "value": 17.3,
+            "remarks": "remark",
+            "order": 1
+        }
+    ]
+    ```
+
+* `(GET) /nextroute`
+    * Gets the next `AEACRoutes` that should be followed (the one with the lowest `order` out of the remaining `AEACRoutes`).
+    * **Deletes** the `AEACRoutes` from the database after it is returned.
+    * Sample response body:
+    ```json
+    {
+        "id": 1,
+        "number": 1,
+        "start_waypoint": "alpha",
+        "end_waypoint": "delta",
+        "passengers": 5,
+        "max_vehicle_weight": 30.5,
+        "value": 13.2,
+        "remarks": "",
+        "order": 0
+    }
+    ```
 
 ## db.go
 
@@ -46,7 +168,7 @@ Functions that manage the storage of `Waypoint` and `AEACRoutes` with the local 
 
 
 * `(wp *Waypoint) Create() error`
-    * Saves the current `Waypoint` struct in the database, and updates the current `Waypoint` struct with the correct serialized `ID`.
+    * Saves the current `Waypoint` struct in the database, and updates the current `Waypoint` struct with the correct serialized `ID`. If this `Waypoint` already exists in the database (a database record exists that has the same name, longitude, latitude, and altitude), no new record is created, but the `wp` struct this method was called on will still be updated to the correct value in the database.
     * Requires that this `Waypoint.ID == -1` (i.e. this `Waypoint` has not yet been registered into the database). 
     * Calling `wp.Create()` mutates `wp.ID` and replaces it with the ID assigned by the database serialization (primary key).
     * Must be called on a `Waypoint` struct (i.e. calling `wp.Create()`).
@@ -70,7 +192,7 @@ Functions that manage the storage of `Waypoint` and `AEACRoutes` with the local 
     * Returns a pointer to a `Queue` that contains all currently registered `Waypoints`.
 ---
 * `(r *AEACRoutes) Create() error`
-    * Saves the current `AEACRoutes` struct in the database, and updates the current `AEACRoutes` struct with the correct serialized `ID`.
+    * Saves the current `AEACRoutes` struct in the database, and updates the current `AEACRoutes` struct with the correct serialized `ID`. If this `AEACRoutes` already exists in the database (a database record exists that has the same number, start_waypoint, end_waypoint, ...), no new record is created, but the `r` struct this method was called on will still be updated to the correct value in the database.
     * Requires that this `AEACRoutes.ID == -1` (i.e. this `AEACRoutes` has not yet been registered into the database). 
     * Calling `r.Create()` mutates `r.ID` and replaces it with the ID assigned by the database serialization (primary key).
     * Must be called on a `AEACRoutes` struct (i.e. calling `r.Create()`).

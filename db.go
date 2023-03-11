@@ -140,11 +140,21 @@ func (wp *Waypoint) Create() error {
 
 	db := connectToDB()
 	var query string
+	var existingId int
 
 	if wp.ID != -1 {
 		return errors.New(
 			"non-sentinel ID passed to Waypoint.Create()" +
 				"\n Expected ID: -1 but got ID: " + strconv.Itoa(wp.ID))
+	}
+
+	//check that the waypoint does not already exist in the database
+	query = `SELECT id FROM Waypoints WHERE name = $1 AND longitude = $2 AND latitude = $3 AND altitude = $4`
+	row := db.QueryRow(query, wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
+	if (row != nil) && (row.Scan(&existingId) != sql.ErrNoRows) {
+		Warning.Println("Waypoint already exists in database, skipping")
+		wp.ID = existingId
+		return nil
 	}
 
 	tx, err := db.Begin()
@@ -356,15 +366,42 @@ func getAllWaypoints() (*Queue, error) {
 // Definitions for AEACRoutes DB methods
 
 // Initializes an AEACRoute in the database
-// and assigns it a non-sentinel ID
+// and assigns it a non-sentinel ID if it does not already exist
 // requires: ID == -1
 func (r *AEACRoutes) Create() error {
 	db := connectToDB()
+	var query string
+	var existingId int
 
 	if r.ID != -1 {
 		errMsg := "Non-Sentinel ID passed into AEACRoutes.Create()"
 		Error.Println(errMsg)
 		return errors.New(errMsg)
+	}
+
+	//check that the AEACRoute does not already exist in the database
+	query = `SELECT id FROM aeac_routes WHERE 
+				number = $1 AND 
+				start_waypoint = $2 
+				AND end_waypoint = $3 
+				AND passengers = $4
+				AND max_weight = $5
+				AND value = $6
+				AND remarks = $7
+				AND odr = $8`
+	row := db.QueryRow(query,
+		r.Number,
+		r.StartWaypoint,
+		r.EndWaypoint,
+		r.Passengers,
+		r.MaxVehicleWeight,
+		r.Value,
+		r.Remarks,
+		r.Order)
+	if (row != nil) && (row.Scan(&existingId) != sql.ErrNoRows) {
+		Warning.Println("AEACRoute already exists in database, skipping")
+		r.ID = existingId
+		return nil
 	}
 
 	tx, err := db.Begin()
