@@ -3,9 +3,13 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 )
+
+var input_filepath = "./pathfinding/Text.json"
+var output_filepath = "./pathfinding/output.json"
 
 // helper functions to convert existing types to pathfinding types
 func (r AEACRoutes) toPFRoute(startWaypointID int, endWaypointID int) PFRoute {
@@ -20,36 +24,46 @@ func (r AEACRoutes) toPFRoute(startWaypointID int, endWaypointID int) PFRoute {
  * Create the input "Text.json" file for the pathfinding binary and write it to disk
  */
 func (pfInput PathfindingInput) createPathfindingInput() error {
+	var input_filepath string
+
 	file, err := json.MarshalIndent(pfInput, "", " ")
 	if err != nil {
 		Error.Println(err)
 		return err
 	}
 
-	_ = os.WriteFile("./pathfinding/Text.json", file, 0666)
+	if DEBUG_FLAG {
+		input_filepath = "./pathfinding/Text_DEBUG.json"
+	} else {
+		input_filepath = "./pathfinding/Text.json"
+	}
+
+	_ = os.WriteFile(input_filepath, file, 0666)
 
 	return nil
 }
 
 /**
- * Execute the pathfinding binary, creating an output file "Output.json" in the process
+ * Execute the pathfinding binary, creating an output file "output.json" in the process
  */
 func runPathfinding() (bool, error) {
-	if _, err := os.Stat("./pathfinding/Text.json"); errors.Is(err, os.ErrNotExist) {
-		return false, errors.New("Text.json does not exist")
-	}
-
-	binary := exec.Command("./pathfinding/UAS-Pathfinding.exe")
-	if errors.Is(binary.Err, exec.ErrDot) {
-		binary.Err = nil
-	}
-	if err := binary.Run(); err != nil {
+	fmt.Println("before check input file")
+	if _, err := os.Stat(input_filepath); errors.Is(err, os.ErrNotExist) {
+		err := errors.New(input_filepath + " does not exist")
 		Error.Println(err)
 		return false, err
 	}
 
-	if _, err := os.Stat("Output.json"); errors.Is(err, os.ErrNotExist) {
-		return false, errors.New("Output.json was not properly created")
+	_, err := exec.Command("powershell", "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
+	if err != nil {
+		Error.Println(err)
+		return false, err
+	}
+
+	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
+		err := errors.New(output_filepath + " does not exist")
+		Error.Println(err)
+		return false, err
 	}
 
 	return true, nil
@@ -57,15 +71,16 @@ func runPathfinding() (bool, error) {
 
 /*
 *
-  - Read the output file "Output.json" and return the results in a slice of AEACRoutes,
+  - Read the output file "output.json" and return the results in a slice of AEACRoutes,
     using the route IDs from pfInput
 */
 func (pfInput PathfindingInput) readPathfindingOutput() (*[]AEACRoutes, error) {
-	if _, err := os.Stat("./pathfinding/Output.json"); errors.Is(err, os.ErrNotExist) {
-		return nil, errors.New("Output.json does not exist")
+
+	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
+		return nil, errors.New(output_filepath + " does not exist")
 	}
 
-	file, err := os.ReadFile("./pathfinding/Output.json")
+	file, err := os.ReadFile(output_filepath)
 	if err != nil {
 		Error.Println(err)
 		return nil, err

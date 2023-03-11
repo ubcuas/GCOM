@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -151,4 +153,19 @@ func TestCreateInputJson(t *testing.T) {
 	assert.NoError(t, err)
 
 	cleanDB()
+}
+
+func TestRunPathfinding(t *testing.T) {
+	//remove any old output files if they exist
+	if _, err := os.Stat(output_filepath); !errors.Is(err, os.ErrNotExist) {
+		os.Remove(output_filepath)
+	}
+
+	// time.Sleep(500 * time.Millisecond)
+	runPathfinding()
+
+	//check that the output file exists
+	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
+		t.Error("Output file does not exist")
+	}
 }
