@@ -1,7 +1,7 @@
 # Getting Started
 This project relies on the [Echo](https://echo.labstack.com/guide/) framework. Read a bit more about it if you aren't familiar.
 
-This project uses go 1.19. Details about the packages it relies on are in the `go.mod` file.
+This project uses go 1.18. Details about the packages it relies on are in the `go.mod` file.
 
 To run the project for development, simply run:
 ```
