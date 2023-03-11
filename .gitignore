@@ -24,3 +24,4 @@ __debug_bin.exe
 go.work
 pathfinding/Text.json
 pathfinding/output.json
+pathfinding/Text_DEBUG.json
