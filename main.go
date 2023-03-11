@@ -30,7 +30,7 @@ func main() {
 	e := echo.New()
 
 	if DEBUG_FLAG {
-		deleteAllWaypoints()
+		cleanDB()
 	}
 
 	e.GET("/", Hello)
@@ -40,5 +40,6 @@ func main() {
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

@@ -1,32 +1,52 @@
 package main
 
-import (
-	"gopkg.in/guregu/null.v4"
-)
-
 // General purpose structures
 // the "__,string" nomer is necessary due to MP endpoint returning numbers as strings, will remove when thats updated
 type AircraftStatus struct { // not stored in the database! maintained in memory, live,
-	Velocity       float64 `json:"velocity,string"`
-	Longitude      float64 `json:"longitude,string"`
-	Latitude       float64 `json:"latitude,string"`
-	Altitude       float64 `json:"altitude,string"`
-	Heading        float64 `json:"heading,string"`
+	Velocity       float64 `json:"velocity"`
+	Longitude      float64 `json:"longitude"`
+	Latitude       float64 `json:"latitude"`
+	Altitude       float64 `json:"altitude"`
+	Heading        float64 `json:"heading"`
 	BatteryVoltage float64 `json:"voltage"`
 }
 
 type Waypoint struct {
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	Longitude float64    `json:"longitude"`
-	Latitude  float64    `json:"latitude"`
-	Altitude  null.Float `json:"altitude"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Altitude  float64 `json:"altitude"`
 }
 
 // type Queue []Waypoint
+// wraps a []Waypoint for easier MP compatibility
 
 type Queue struct {
 	Queue []Waypoint `json:"queue"`
+}
+
+//pathfinding structures
+
+//reduced struct for pathfinding-necessary info
+type PFWaypoint struct {
+	ID        int     `json:"waypointId"`
+	Latitude  float64 `json:"refLat"`
+	Longitude float64 `json:"refLong"`
+}
+
+//reduced struct for pathfinding-necessary info
+type PFRoute struct {
+	ID          int     `json:"routeID"`
+	WaypointIDs []int   `json:"waypointIds"`
+	Value       float64 `json:"dollarValue"`
+}
+
+type PathfindingInput struct {
+	NumWaypoints int          `json:"numWaypoints"`
+	NumRoutes    int          `json:"numRoutes"`
+	WPQueue      []Waypoint   `json:"waypoints"`
+	RouteQueue   []AEACRoutes `json:"routes"`
 }
 
 // AEAC specific structures
