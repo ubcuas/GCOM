@@ -34,6 +34,13 @@ func cleanDB() error {
 		return err
 	}
 
+	query = `DELETE FROM restrictions`
+	err = transactionExec(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
 	return nil
 }
 
@@ -282,10 +289,7 @@ func (wp *Waypoint) Get() error {
 	if id == -1 {
 		//do based off fields
 		query := `SELECT * FROM Waypoints WHERE 
-			name = ($1) AND 
-			longitude = ($2) AND
-			latitude = ($3) AND
-			altitude = ($4)`
+			name = ($1)`
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
@@ -294,7 +298,7 @@ func (wp *Waypoint) Get() error {
 		}
 		defer stmt.Close()
 
-		row = stmt.QueryRow(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
+		row = stmt.QueryRow(wp.Name)
 
 	} else {
 		//do based off ID
@@ -613,4 +617,198 @@ func transactionExec(query string) error {
 	}
 
 	return nil
+}
+
+//Creates a restricted area based on the RestrictedArea struct.
+//The struct must have a non-sentinel ID of -1.
+func (r *RestrictedArea) Create() error {
+	db := connectToDB()
+
+	if r.ID != -1 {
+		errMsg := "Non-Sentinel ID passed into RestrictedArea.Create()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO restrictions 
+		(bound_1, bound_2, bound_3, bound_4, rejoin) VALUES 
+		(?, ?, ?, ?, ?) RETURNING id`)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer stmt.Close()
+	err = stmt.QueryRow(
+		r.Bounds[0].ID,
+		r.Bounds[1].ID,
+		r.Bounds[2].ID,
+		r.Bounds[3].ID,
+		r.RejoinPoint.ID,
+		).Scan(&r.ID)
+
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+	
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+	return nil
+}
+
+//Obtains a restricted area based on it's ID (which must not be -1)
+func (r *RestrictedArea) Get() error {
+	db := connectToDB()
+
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into RestrictedArea.Get()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	query := `SELECT * FROM restrictions WHERE id = ?`
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer tx.Rollback();
+
+	row := tx.QueryRow(query, r.ID)
+
+	if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+
+	var bound_ids []int
+	var rejoin_id int
+
+	err = row.Scan(
+		&r.ID, 
+		&bound_ids[0],
+		&bound_ids[1],
+		&bound_ids[2],
+		&bound_ids[3],
+		&rejoin_id,
+	)
+
+	if err == sql.ErrNoRows {
+		log.Printf("No Entry for ID %s", fmt.Sprint(r.ID))
+		return err
+	} else if err != nil {
+		log.Fatal(err)
+		return err;
+	}
+
+	var bounds []Waypoint
+	
+	for idx, id := range bound_ids {
+		tempWaypoint := Waypoint {
+			ID: id,
+		}
+		tempWaypoint.Get()
+		bounds[idx] = tempWaypoint
+	}
+
+	r.Bounds = bounds
+
+	rejoin_wpnt := Waypoint {
+		ID: rejoin_id,
+	}
+	rejoin_wpnt.Get()
+	r.RejoinPoint = rejoin_wpnt
+
+	return nil;
+}
+
+//Updates a restricted area based on it's ID (which must not be -1)
+func (r *RestrictedArea) Update() error {
+	db := connectToDB()
+
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into RestrictedArea.Update()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	stmt, err := db.Prepare(`UPDATE restrictions SET 
+		bound_1 = ?,
+		bound_2 = ?,
+		bound_3 = ?,
+		bound_4 = ?,
+		rejoin = ? WHERE
+		id = ?`)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = tx.Stmt(stmt).Exec(
+		r.Bounds[0].ID,
+		r.Bounds[1].ID,
+		r.Bounds[2].ID,
+		r.Bounds[3].ID,
+		r.RejoinPoint.ID,
+		r.ID)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+		return err;
+	} else {
+		err = tx.Commit()
+		return err;
+	}
+}
+
+//Deletes a restricted area based on it's ID (which must not be -1)
+func (r *RestrictedArea) Delete() error {
+	db := connectToDB()
+
+	if r.ID == -1 {
+		errMsg := "Uncreated ID passed into RestrictedArea.Delete()"
+		log.Fatal(errMsg)
+		return errors.New(errMsg)
+	}
+
+	stmt, err := db.Prepare(`DELETE FROM restrictions WHERE id = ?`)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	tx, err := db.Begin();
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = tx.Stmt(stmt).Exec(r.ID)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+		return err;
+	} else {
+		err = tx.Commit()
+		return err;
+	}
 }

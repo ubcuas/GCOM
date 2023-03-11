@@ -2,6 +2,9 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"io/ioutil"
+	"encoding/json"
 
 	"github.com/labstack/echo/v4"
 )
@@ -26,7 +29,6 @@ func GetWaypoints(c echo.Context) error {
 			Error.Println(err)
 			return err
 		}
-
 		fmt.Println("all waypoints in DB:\n", string(prettyJson))
 	*/
 	return c.JSON(http.StatusOK, allWaypoints)
@@ -137,4 +139,45 @@ func GetNextRoute(c echo.Context) error {
 		return c.JSON(http.StatusOK, nil)
 	}
 	return c.JSON(http.StatusOK, r)
+}
+
+//endpoint to load all UASWaypoints from json
+func LoadWaypoints (c echo.Context) error {
+	json_map := make(map[string]interface{})
+	err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+	if err != nil {
+    	return err
+	} 
+    
+	competition, ok := json_map["competition"]
+	if !ok {
+		return c.String(http.StatusBadRequest, `JSON Body must contain valid "competition" field`)
+	}
+
+	var filename string
+	
+	if competition == "UAS" {
+		filename = "uas_waypoints.json"
+	} else {
+		return c.String(http.StatusBadRequest, "No such competition")
+	}
+
+	jsonFile, err := os.Open(filename)
+	if err != nil {
+    	return c.String(http.StatusInternalServerError, "Cannot open waypoint file!")
+	}
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var waypoints Queue
+	json.Unmarshal(byteValue, &waypoints)
+	for _, waypoint := range waypoints.Queue {
+		err = waypoint.Create()
+		Info.Printf("Loaded Waypoint %s\n", waypoint.Name)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Error loading waypoints! (Do all waypoints have non-sentinel ID's?)")
+		}
+	}
+
+	return c.String(http.StatusOK, "All UAS Waypoints Loaded!")
 }

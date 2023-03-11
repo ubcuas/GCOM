@@ -50,6 +50,7 @@ type PathfindingInput struct {
 }
 
 // AEAC specific structures
+
 type AEACRoutes struct {
 	ID               int     `json:"id"`
 	Number           int     `json:"number"`
@@ -61,5 +62,10 @@ type AEACRoutes struct {
 	Remarks          string  `json:"remarks"`
 	Order            int     `json:"order"`
 }
-
 // SUAS specific structures
+
+type RestrictedArea struct {
+	ID int `json:"id"`
+	Bounds []Waypoint `json:"bounds"`
+	RejoinPoint Waypoint `json:"rejoin_at"`
+}
