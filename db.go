@@ -12,13 +12,47 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// delete all currently registered waypoints and routes from the database
+// for debugging purposes
+func cleanDB() error {
+	err := Migrate()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	query := `DELETE FROM Waypoints`
+	err = transactionExec(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	query = `DELETE FROM aeac_routes`
+	err = transactionExec(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	return nil
+}
 
 // Creates a local sqlite database file "database.sqlite" in the root directory
 // if it does not already exist, and starts a database connection
 func connectToDB() *sql.DB {
 	// check if db file exists, and if necessary, create it
 	if _, err := os.Stat("./database.sqlite"); err != nil {
-		os.Create("./database.sqlite")
+		tmpFile, err := os.Create("./database.sqlite")
+		if err != nil {
+			Error.Println(err)
+			panic(err)
+		}
+		// defer tmpFile.Close()
+		err = tmpFile.Close()
+		if err != nil {
+			Error.Println(err)
+			panic(err)
+		}
 	}
 
 	// open connection to db file
@@ -40,7 +74,7 @@ func Migrate() error {
 	//read queries from "migrate.sql" line by line
 	file, err := os.Open("./migrate.sql")
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer file.Close()
@@ -52,33 +86,33 @@ func Migrate() error {
 
 		tx, err := db.Begin()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer tx.Rollback()
 
 		stmt, err := tx.Prepare(queryText)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 
 		err = tx.Commit()
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -105,42 +139,43 @@ func (wp *Waypoint) Create() error {
 	// and describe it as something like "non-sentinel ID passed to Waypoint.create()"
 
 	db := connectToDB()
+	var query string
 
-	id := wp.ID
-	name := wp.Name
-	longitude := wp.Longitude
-	latitude := wp.Latitude
-	altitude := wp.Altitude
-
-	if id != -1 {
+	if wp.ID != -1 {
 		return errors.New(
 			"non-sentinel ID passed to Waypoint.Create()" +
-				"\n Expected ID: -1 but got ID: " + strconv.Itoa(id))
+				"\n Expected ID: -1 but got ID: " + strconv.Itoa(wp.ID))
 	}
-
-	query := `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer tx.Rollback()
 
+	query = `INSERT INTO Waypoints (name, longitude, latitude, altitude) VALUES ($1, $2, $3, $4)`
+
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, longitude, latitude, altitude)
+	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	err = wp.Get()
 	if err != nil {
 		Error.Println(err)
 		return err
@@ -157,13 +192,7 @@ func (wp Waypoint) Update() error {
 
 	db := connectToDB()
 
-	id := wp.ID
-	name := wp.Name
-	longitude := wp.Longitude
-	latitude := wp.Latitude
-	altitude := wp.Altitude
-
-	if id == -1 {
+	if wp.ID == -1 {
 		return errors.New(
 			"sentinel ID (-1) passed to Waypoint.Update(). " +
 				"Did you remember to call Waypoint.Create() beforehand?")
@@ -171,7 +200,7 @@ func (wp Waypoint) Update() error {
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 	defer tx.Rollback()
 
@@ -179,18 +208,18 @@ func (wp Waypoint) Update() error {
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, longitude, latitude, altitude, id)
+	_, err = stmt.Exec(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude, wp.ID)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 	}
 
 	return nil
@@ -202,11 +231,9 @@ func (wp Waypoint) Delete() error {
 
 	db := connectToDB()
 
-	id := wp.ID
-
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer tx.Rollback()
@@ -215,20 +242,20 @@ func (wp Waypoint) Delete() error {
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(id)
+	_, err = stmt.Exec(wp.ID)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -259,16 +286,12 @@ func (wp *Waypoint) Get() error {
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
-		row = stmt.QueryRow(wp.Name)
-		if err != nil {
-			log.Fatal(err)
-			return err
-		}
+		row = stmt.QueryRow(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
 
 	} else {
 		//do based off ID
@@ -277,21 +300,21 @@ func (wp *Waypoint) Get() error {
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 		defer stmt.Close()
 
 		row = stmt.QueryRow(wp.ID)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return err
 		}
 	}
 
 	err := row.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -306,7 +329,7 @@ func getAllWaypoints() (*Queue, error) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return nil, err
 	}
 
@@ -316,7 +339,7 @@ func getAllWaypoints() (*Queue, error) {
 		var wp Waypoint
 		err = rows.Scan(&wp.ID, &wp.Name, &wp.Longitude, &wp.Latitude, &wp.Altitude)
 		if err != nil {
-			log.Fatal(err)
+			Error.Println(err)
 			return nil, err
 		}
 		waypoints = append(waypoints, wp)
@@ -327,25 +350,9 @@ func getAllWaypoints() (*Queue, error) {
 	return &q, nil
 }
 
-// delete all currently registered waypoints from the database
-// for debugging purposes
-func deleteAllWaypoints() error {
-	db := connectToDB()
-
-	query := `DELETE FROM Waypoints`
-
-	_, err := db.Exec(query)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	return nil
-}
-
 // Definitions for AEACRoutes DB methods
 
-// Initializes an AEACRoute in the database 
+// Initializes an AEACRoute in the database
 // and assigns it a non-sentinel ID
 // requires: ID == -1
 func (r *AEACRoutes) Create() error {
@@ -353,13 +360,13 @@ func (r *AEACRoutes) Create() error {
 
 	if r.ID != -1 {
 		errMsg := "Non-Sentinel ID passed into AEACRoutes.Create()"
-		log.Fatal(errMsg)
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO aeac_routes 
@@ -367,7 +374,7 @@ func (r *AEACRoutes) Create() error {
 		(?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
 
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -382,27 +389,27 @@ func (r *AEACRoutes) Create() error {
 		r.Order).Scan(&r.ID)
 
 	if err != nil {
-		log.Fatal(err)
-		return err;
+		Error.Println(err)
+		return err
 	}
-	
+
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
-		return err;
+		Error.Println(err)
+		return err
 	}
 	return nil
 }
 
-// Updates the database entry with id == ID 
+// Updates the database entry with id == ID
 // with data in the AEACRoute struct.
 // requires: ID != -1
 func (r AEACRoutes) Update() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Update()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Update()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
@@ -417,13 +424,13 @@ func (r AEACRoutes) Update() error {
 		odr= ? WHERE
 		id = ?`)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -439,11 +446,11 @@ func (r AEACRoutes) Update() error {
 
 	if err != nil {
 		tx.Rollback()
-		log.Fatal(err)
-		return err;
+		Error.Println(err)
+		return err
 	} else {
 		err = tx.Commit()
-		return err;
+		return err
 	}
 }
 
@@ -454,20 +461,20 @@ func (r AEACRoutes) Delete() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Delete()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Delete()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
 	stmt, err := db.Prepare(`DELETE FROM aeac_routes WHERE id = ?`)
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -475,15 +482,15 @@ func (r AEACRoutes) Delete() error {
 
 	if err != nil {
 		tx.Rollback()
-		log.Fatal(err)
-		return err;
+		Error.Println(err)
+		return err
 	} else {
 		err = tx.Commit()
-		return err;
+		return err
 	}
 }
 
-// Fetches data of an AEACRoute with id == iD 
+// Fetches data of an AEACRoute with id == iD
 // from the database and populates the struct
 // requires: ID != -1
 // returns: sql.ErrNoRows if no such entry exists
@@ -491,28 +498,28 @@ func (r *AEACRoutes) Get() error {
 	db := connectToDB()
 
 	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into AEACRoutes.Get()"
-		log.Fatal(errMsg)
+		errMsg := "uncreated ID passed into AEACRoutes.Get()"
+		Error.Println(errMsg)
 		return errors.New(errMsg)
 	}
 
 	query := `SELECT * FROM aeac_routes WHERE id = ?`
-	tx, err := db.Begin();
+	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
-	defer tx.Rollback();
+	defer tx.Rollback()
 
 	row := tx.QueryRow(query, r.ID)
 
 	if err != nil {
-		log.Fatal(err)
-		return err;
+		Error.Println(err)
+		return err
 	}
 
-	err = row.Scan(&r.ID, 
+	err = row.Scan(&r.ID,
 		&r.Number,
 		&r.StartWaypoint,
 		&r.EndWaypoint,
@@ -520,209 +527,87 @@ func (r *AEACRoutes) Get() error {
 		&r.MaxVehicleWeight,
 		&r.Value,
 		&r.Remarks,
-		&r.Order, 
+		&r.Order,
 	)
 
 	if err == sql.ErrNoRows {
 		log.Printf("No Entry for ID %s", fmt.Sprint(r.ID))
 		return err
 	} else if err != nil {
-		log.Fatal(err)
-		return err;
-	}
-	return nil;
-}
-
-//Creates a restricted area based on the RestrictedArea struct.
-//The struct must have a non-sentinel ID of -1.
-func (r *RestrictedArea) Create() error {
-	db := connectToDB()
-
-	if r.ID != -1 {
-		errMsg := "Non-Sentinel ID passed into RestrictedArea.Create()"
-		log.Fatal(errMsg)
-		return errors.New(errMsg)
-	}
-
-	tx, err := db.Begin();
-	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
-	}
-	stmt, err := tx.Prepare(`INSERT INTO restrictions 
-		(bound_1, bound_2, bound_3, bound_4, rejoin) VALUES 
-		(?, ?, ?, ?, ?) RETURNING id`)
-
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	defer stmt.Close()
-	err = stmt.QueryRow(
-		r.Bounds[0].ID,
-		r.Bounds[1].ID,
-		r.Bounds[2].ID,
-		r.Bounds[3].ID,
-		r.RejoinPoint.ID,
-		).Scan(&r.ID)
-
-	if err != nil {
-		log.Fatal(err)
-		return err;
-	}
-	
-	err = tx.Commit()
-	if err != nil {
-		log.Fatal(err)
-		return err;
 	}
 	return nil
 }
 
-//Obtains a restricted area based on it's ID (which must not be -1)
-func (r *RestrictedArea) Get() error {
-	db := connectToDB()
+// returns a pointer to an AEACRoutes array that contains all the routes currently registered in the database
+func getAllRoutes() (*[]AEACRoutes, error) {
+	query := `SELECT * FROM aeac_routes`
 
-	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into RestrictedArea.Get()"
-		log.Fatal(errMsg)
-		return errors.New(errMsg)
-	}
-
-	query := `SELECT * FROM restrictions WHERE id = ?`
-	tx, err := db.Begin();
+	rows, err := querySelect(query)
 	if err != nil {
-		log.Fatal(err)
-		return err
+		Error.Println(err)
+		return nil, err
 	}
 
-	defer tx.Rollback();
+	var routes []AEACRoutes
 
-	row := tx.QueryRow(query, r.ID)
-
-	if err != nil {
-		log.Fatal(err)
-		return err;
-	}
-
-	var bound_ids []int
-	var rejoin_id int
-
-	err = row.Scan(
-		&r.ID, 
-		&bound_ids[0],
-		&bound_ids[1],
-		&bound_ids[2],
-		&bound_ids[3],
-		&rejoin_id,
-	)
-
-	if err == sql.ErrNoRows {
-		log.Printf("No Entry for ID %s", fmt.Sprint(r.ID))
-		return err
-	} else if err != nil {
-		log.Fatal(err)
-		return err;
-	}
-
-	var bounds []Waypoint
-	
-	for idx, id := range bound_ids {
-		tempWaypoint := Waypoint {
-			ID: id,
+	for rows.Next() {
+		var r AEACRoutes
+		err = rows.Scan(&r.ID, &r.Number, &r.StartWaypoint, &r.EndWaypoint, &r.Passengers,
+			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
+		if err != nil {
+			Error.Println(err)
+			return nil, err
 		}
-		tempWaypoint.Get()
-		bounds[idx] = tempWaypoint
+		routes = append(routes, r)
 	}
 
-	r.Bounds = bounds
-
-	rejoin_wpnt := Waypoint {
-		ID: rejoin_id,
-	}
-	rejoin_wpnt.Get()
-	r.RejoinPoint = rejoin_wpnt
-
-	return nil;
+	return &routes, nil
 }
 
-//Updates a restricted area based on it's ID (which must not be -1)
-func (r *RestrictedArea) Update() error {
+// execute a select query and return the rows
+func querySelect(query string) (*sql.Rows, error) {
 	db := connectToDB()
 
-	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into RestrictedArea.Update()"
-		log.Fatal(errMsg)
-		return errors.New(errMsg)
-	}
-
-	stmt, err := db.Prepare(`UPDATE restrictions SET 
-		bound_1 = ?,
-		bound_2 = ?,
-		bound_3 = ?,
-		bound_4 = ?,
-		rejoin = ? WHERE
-		id = ?`)
+	rows, err := db.Query(query)
 	if err != nil {
-		log.Fatal(err)
-		return err
+		Error.Println(err)
+		return nil, err
 	}
 
-	tx, err := db.Begin();
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	_, err = tx.Stmt(stmt).Exec(
-		r.Bounds[0].ID,
-		r.Bounds[1].ID,
-		r.Bounds[2].ID,
-		r.Bounds[3].ID,
-		r.RejoinPoint.ID,
-		r.ID)
-
-	if err != nil {
-		tx.Rollback()
-		log.Fatal(err)
-		return err;
-	} else {
-		err = tx.Commit()
-		return err;
-	}
+	return rows, nil
 }
 
-//Deletes a restricted area based on it's ID (which must not be -1)
-func (r *RestrictedArea) Delete() error {
+// execute a transaction aganist the database
+func transactionExec(query string) error {
 	db := connectToDB()
 
-	if r.ID == -1 {
-		errMsg := "Uncreated ID passed into RestrictedArea.Delete()"
-		log.Fatal(errMsg)
-		return errors.New(errMsg)
-	}
-
-	stmt, err := db.Prepare(`DELETE FROM restrictions WHERE id = ?`)
+	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil {
+		Error.Println(err)
 		return err
 	}
 
-	tx, err := db.Begin();
+	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
+		Error.Println(err)
 		return err
 	}
 
-	_, err = tx.Stmt(stmt).Exec(r.ID)
-
-	if err != nil {
-		tx.Rollback()
-		log.Fatal(err)
-		return err;
-	} else {
-		err = tx.Commit()
-		return err;
-	}
+	return nil
 }

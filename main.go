@@ -31,7 +31,7 @@ func main() {
 	e := echo.New()
 	Migrate()
 	if DEBUG_FLAG {
-		deleteAllWaypoints()
+		cleanDB()
 	}
 	
 	e.GET("/", Hello)
@@ -39,7 +39,9 @@ func main() {
 	e.POST("/waypoints", PostWaypoints)
 	e.POST("/waypoints/load", LoadWaypoints)
 
-	e.POST("/qr/task1", ParseTask1QRData)
-	e.POST("/qr/task2", ParseTask2QRData)
+	e.GET("/routes", GetRoutes)
+	e.POST("/routes", PostRoutes)
+	e.GET("/nextroute", GetNextRoute)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

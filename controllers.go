@@ -70,7 +70,37 @@ func PostRoutes(c echo.Context) error {
 // endpoint we serve that returns the next route to be taken (the one with the lowest 'order' value)
 func GetNextRoute(c echo.Context) error {
 
-	return nil
+	query := `SELECT * FROM aeac_routes ORDER BY odr ASC LIMIT 1`
+
+	rows, err := querySelect(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	var r AEACRoutes
+
+	for rows.Next() {
+		err = rows.Scan(&r.ID, &r.Number, &r.StartWaypoint, &r.EndWaypoint, &r.Passengers,
+			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
+		if err != nil {
+			Error.Println(err)
+			return err
+		}
+	}
+
+	// fmt.Println("Next route: ", r)
+	err = r.Delete()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	// Warning.Println("Deleted route with ID: ", r.ID)
+	if r.StartWaypoint == "" {
+		return c.JSON(http.StatusOK, nil)
+	}
+	return c.JSON(http.StatusOK, r)
 }
 
 //endpoint to load all UASWaypoints from json

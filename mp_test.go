@@ -6,27 +6,17 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v4"
 )
 
 // test posting and reading the queue from MP
 func TestGetQueue(t *testing.T) {
-
-	//save current queue
-	/*
-		currQueue, err := GetQueue()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("currQue ", currQueue)
-	*/
 
 	wp1 := Waypoint{
 		ID:        -1,
 		Name:      "TestGETWP1",
 		Longitude: -6.2,
 		Latitude:  149.1651830,
-		Altitude:  null.FloatFrom(20.0),
+		Altitude:  20.0,
 	}
 
 	wp2 := Waypoint{
@@ -34,7 +24,7 @@ func TestGetQueue(t *testing.T) {
 		Name:      "TestGETWP2",
 		Longitude: -36.3637798,
 		Latitude:  147.1651830,
-		Altitude:  null.FloatFromPtr(nil),
+		Altitude:  20.0,
 	}
 
 	wp3 := Waypoint{
@@ -42,7 +32,7 @@ func TestGetQueue(t *testing.T) {
 		Name:      "TestGETWP3",
 		Longitude: -37.3637798,
 		Latitude:  146.1641830,
-		Altitude:  null.FloatFrom(10.0),
+		Altitude:  10.0,
 	}
 
 	wpslice := []Waypoint{wp1, wp2, wp3}
@@ -70,9 +60,9 @@ func TestGetQueue(t *testing.T) {
 			assert.Equal(t, getQueue.Queue[1].Latitude, 147.1651830)
 			assert.Equal(t, getQueue.Queue[2].Latitude, 146.1641830)
 
-			assert.Equal(t, getQueue.Queue[0].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, getQueue.Queue[1].Altitude, null.FloatFrom(20.0))
-			assert.Equal(t, getQueue.Queue[2].Altitude, null.FloatFrom(10.0))
+			assert.Equal(t, getQueue.Queue[0].Altitude, 20.0)
+			assert.Equal(t, getQueue.Queue[1].Altitude, 20.0)
+			assert.Equal(t, getQueue.Queue[2].Altitude, 10.0)
 		}
 	}
 }
@@ -146,5 +136,38 @@ func TestLockAndUnlockAircraft(t *testing.T) {
 	err = LockAircraft()
 	assert.NoError(t, err)
 	err = UnlockAircraft()
+	assert.NoError(t, err)
+}
+
+func TestTakeoff(t *testing.T) {
+	takeoff_alt := 150.2
+	err := Takeoff(takeoff_alt)
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestRTL(t *testing.T) {
+	err := ReturnToLaunch()
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestLandImmediately(t *testing.T) {
+	err := LandImmediately()
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
+	assert.NoError(t, err)
+}
+
+func TestPostHome(t *testing.T) {
+	home := Waypoint{
+		ID:        -1,
+		Name:      "TestHome",
+		Longitude: -6.2,
+		Latitude:  149.1651830,
+		Altitude:  20.0,
+	}
+
+	err := PostHome(&home)
+	time.Sleep(2 * time.Second) //to ensure that MP server has updated route
 	assert.NoError(t, err)
 }

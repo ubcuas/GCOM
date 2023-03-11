@@ -22,9 +22,8 @@ func GetQueue() (*Queue, error) {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/queue"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -34,7 +33,6 @@ func GetQueue() (*Queue, error) {
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
-		// panic(err)
 	}
 	defer resp.Body.Close()
 
@@ -53,7 +51,6 @@ func GetQueue() (*Queue, error) {
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
-		// panic(err)
 	}
 
 	return &Queue{Queue: queue}, nil
@@ -69,31 +66,35 @@ func GetQueue() (*Queue, error) {
 // take a pointer to a Queue struct and post those waypoints to MP
 func PostQueue(queue *Queue) error {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/queue"
+	fmt.Println("posting to endpoint: ", endpoint)
 
-	json, err := json.Marshal(queue.Queue)
+	jsonString, err := json.Marshal(queue.Queue)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	req, err := http.NewRequest("POST", endpoint, strings.NewReader(string(json)))
-	req.Header.Set("Content-Type", "application-json")
+	req, err := http.NewRequest("POST", endpoint, strings.NewReader(string(jsonString)))
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		log.Fatal(err)
 		return err
-		// panic(err)
 	}
+	request_body, _ := json.MarshalIndent(queue.Queue, "", "    ")
+	fmt.Println("request body:\n", string(request_body))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
 		return err
-		// panic(err)
 	}
 	defer resp.Body.Close()
 
 	fmt.Println("response status:", resp.Status)
+	if b, err := io.ReadAll(resp.Body); err == nil {
+		fmt.Println(string(b))
+	}
 
 	if resp.Status != "200 OK" {
 		return errors.New("response not OK: " + resp.Status)
@@ -114,9 +115,8 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/status"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -124,7 +124,6 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -143,7 +142,6 @@ func GetAircraftStatus() (*AircraftStatus, error) {
 
 	err = json.Unmarshal(body, &stat)
 	if err != nil {
-		// panic(err)
 		log.Fatal(err)
 		return nil, err
 	}
@@ -160,10 +158,8 @@ func LockAircraft() error {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/lock"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -171,8 +167,6 @@ func LockAircraft() error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -195,10 +189,8 @@ func UnlockAircraft() error {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/unlock"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -206,8 +198,6 @@ func UnlockAircraft() error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -230,10 +220,8 @@ func ReturnToLaunch() error {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/rtl"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		// panic(err)
-		// log.Fatal(err)
 		Error.Println(err)
 		return err
 	}
@@ -263,7 +251,7 @@ func LandImmediately() error {
 	var endpoint = getEnvVariable("MP_ROUTE") + "/land"
 
 	req, err := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		Error.Println(err)
 		return err
@@ -300,7 +288,7 @@ func PostHome(home *Waypoint) error {
 	}
 
 	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(reqBody))
-	req.Header.Set("Content-Type", "application-json")
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		Error.Println(err)
 		return err
@@ -317,6 +305,42 @@ func PostHome(home *Waypoint) error {
 	if resp.Status != "200 OK" {
 		Error.Println("Failed to set home: " + resp.Status)
 		return errors.New("Failed to set home: " + resp.Status)
+	}
+
+	return nil
+}
+
+func Takeoff(altitude float64) error {
+	var endpoint = getEnvVariable("MP_ROUTE") + "/takeoff"
+
+	jsonMap := map[string]interface{}{
+		"altitude": altitude,
+	}
+	reqBody, err := json.Marshal(jsonMap)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	fmt.Println(string(reqBody))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		Error.Println("Failed to takeoff: " + resp.Status)
+		return errors.New("Failed to takeoff: " + resp.Status)
 	}
 
 	return nil
