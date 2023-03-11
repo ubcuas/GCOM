@@ -33,6 +33,9 @@ Any functions related to interfacing with pathfinding are declared here.
 ## rcomms.go
 Any functions related to interfacing with the RCOMMS system are declared here. Most likely, this include instantiation of socket connections via a middleware to allow for endpoints in the form of controllers to be reached. 
 
+## mail.go
+Any functions related to sending emails. Used to automate sending the route plan email. Includes formating and sending an email with a given route.
+
 # Tests
 Tests are ran on a per file basis. For example, tests for `odlc.go` will be in `odlc_test.go`.
 
