@@ -43,5 +43,8 @@ func main() {
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
 
+	e.POST("/qr/task1", ParseTask1QRData)
+	e.POST("/qr/task2", ParseTask2QRData)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

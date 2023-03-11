@@ -34,6 +34,13 @@ func cleanDB() error {
 		return err
 	}
 
+	query = `DELETE FROM restrictions`
+	err = transactionExec(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
 	return nil
 }
 
@@ -291,7 +298,7 @@ func (wp *Waypoint) Get() error {
 		}
 		defer stmt.Close()
 
-		row = stmt.QueryRow(wp.Name, wp.Longitude, wp.Latitude, wp.Altitude)
+		row = stmt.QueryRow(wp.Name)
 
 	} else {
 		//do based off ID
@@ -566,6 +573,52 @@ func getAllRoutes() (*[]AEACRoutes, error) {
 	return &routes, nil
 }
 
+// execute a select query and return the rows
+func querySelect(query string) (*sql.Rows, error) {
+	db := connectToDB()
+
+	rows, err := db.Query(query)
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	return rows, nil
+}
+
+// execute a transaction aganist the database
+func transactionExec(query string) error {
+	db := connectToDB()
+
+	tx, err := db.Begin()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	return nil
+}
+
 //Creates a restricted area based on the RestrictedArea struct.
 //The struct must have a non-sentinel ID of -1.
 func (r *RestrictedArea) Create() error {
@@ -758,50 +811,4 @@ func (r *RestrictedArea) Delete() error {
 		err = tx.Commit()
 		return err;
 	}
-}
-
-// execute a select query and return the rows
-func querySelect(query string) (*sql.Rows, error) {
-	db := connectToDB()
-
-	rows, err := db.Query(query)
-	if err != nil {
-		Error.Println(err)
-		return nil, err
-	}
-
-	return rows, nil
-}
-
-// execute a transaction aganist the database
-func transactionExec(query string) error {
-	db := connectToDB()
-
-	tx, err := db.Begin()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare(query)
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-
-	return nil
 }

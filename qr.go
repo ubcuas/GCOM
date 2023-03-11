@@ -28,7 +28,10 @@ func ParseTask1QRData(c echo.Context) error {
 			ID: -1,
 			Name: wp_name,
 		}
-		wp.Get()
+		err = wp.Get()
+		if err != nil {
+			return c.String(http.StatusBadRequest, "No such waypoint " + wp_name + "!")
+		}
 		waypoints = append(waypoints, wp)
 	}
 
@@ -37,7 +40,10 @@ func ParseTask1QRData(c echo.Context) error {
 		ID: -1,
 		Name: rejoin_name,
 	}
-	rejoin.Get()
+	err = rejoin.Get()
+	if err != nil {
+		return c.String(http.StatusBadRequest, "No such waypoint " + rejoin_name + "!")
+	}
 	restrict := RestrictedArea {
 		ID: -1,
 		Bounds: waypoints,
@@ -61,19 +67,19 @@ func ParseTask2QRData(c echo.Context) error {
 		arg := args[0][13:len(args[0])]
 		number, err := strconv.Atoi(arg)
 		if err != nil {
-			log.Panicf("Error converting %s to int", arg)
+			return c.String(http.StatusBadRequest, "Error converting " + arg + " to int!")
 		}
 
 		arg = args[1][1:len(args[1]) - 5]
 		pax, err := strconv.Atoi(arg)
 		if err != nil {
-			log.Panicf("Error converting %s to int", arg)
+			return c.String(http.StatusBadRequest, "Error converting " + arg + " to int!")
 		}
 
 		arg = args[4][1:len(args[4]) - 3]
 		weight, err := strconv.ParseFloat(arg, 32)
 		if err != nil {
-			log.Panicf("Error converting %s to float", arg)
+			return c.String(http.StatusBadRequest, "Error converting " + arg + " to float!")
 		}
 		
 
@@ -85,7 +91,7 @@ func ParseTask2QRData(c echo.Context) error {
 		arg = args[6][2:len(args[6])]
 		value, err := strconv.ParseFloat(arg, 32)
 		if err != nil {
-			log.Panicf("Error converting %s to float", arg)
+			return c.String(http.StatusBadRequest, "Error converting " + arg + " to float!")
 		}
 
 		route := AEACRoutes{
@@ -101,6 +107,6 @@ func ParseTask2QRData(c echo.Context) error {
 		}
 		route.Create()
 	}
-	return c.String(http.StatusAccepted, buf.String())
+	return c.String(http.StatusAccepted, "Route created!")
 }
 
