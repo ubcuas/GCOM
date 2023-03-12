@@ -70,7 +70,7 @@ func GetRoutes(c echo.Context) error {
 	routes, err := getAllRoutes()
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// fmt.Println("All routes in DB: ", routes)
@@ -86,7 +86,7 @@ func PostRoutes(c echo.Context) error {
 	err := c.Bind(&routes)
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// fmt.Println("Registering routes: ", routes)
@@ -95,13 +95,13 @@ func PostRoutes(c echo.Context) error {
 		err = r.Create()
 		if err != nil {
 			Error.Println(err)
-			return err
+			return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 		}
 	}
 
 	// fmt.Println("Registered AEACRoutes: ", routes, "to the database!")
 
-	return c.String(http.StatusOK, "AEACRoutes registered!")
+	return c.JSON(http.StatusOK, generateJSONMessage("AEACRoutes registered!"))
 }
 
 // endpoint we serve that returns the next route to be taken (the one with the lowest 'order' value)
@@ -113,7 +113,7 @@ func GetNextRoute(c echo.Context) error {
 	rows, err := querySelect(query)
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	var r AEACRoutes
@@ -123,7 +123,7 @@ func GetNextRoute(c echo.Context) error {
 			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
 		if err != nil {
 			Error.Println(err)
-			return err
+			return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 		}
 	}
 
@@ -131,7 +131,7 @@ func GetNextRoute(c echo.Context) error {
 	err = r.Delete()
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// Warning.Println("Deleted route with ID: ", r.ID)
@@ -146,7 +146,7 @@ func LoadWaypoints (c echo.Context) error {
 	json_map := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&json_map)
 	if err != nil {
-    	return err
+    	return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	} 
     
 	competition, ok := json_map["competition"]
