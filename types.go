@@ -69,3 +69,8 @@ type RestrictedArea struct {
 	Bounds []Waypoint `json:"bounds"`
 	RejoinPoint Waypoint `json:"rejoin_at"`
 }
+
+type JSONResponse struct {
+	Type string `json:"type"`
+	Message string `json:"message"`
+}
