@@ -9,22 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestConvertWPtoPFWP(t *testing.T) {
-// 	wp := Waypoint{
-// 		ID:        1,
-// 		Name:      "gcomWP1",
-// 		Longitude: -6.2,
-// 		Latitude:  149.1651830,
-// 		Altitude:  20.0,
-// 	}
-
-// 	pfwp := wp.toPFWaypoint()
-
-// 	assert.Equal(t, wp.ID, pfwp.ID)
-// 	assert.Equal(t, wp.Latitude, pfwp.Latitude)
-// 	assert.Equal(t, wp.Longitude, pfwp.Longitude)
-// }
-
 func TestConvertAEACRoutestoPFRoute(t *testing.T) {
 	cleanDB()
 
