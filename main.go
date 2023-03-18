@@ -41,5 +41,7 @@ func main() {
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
 
+	e.GET("/status", MPGetAircraftStatus)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
