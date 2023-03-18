@@ -141,16 +141,6 @@ func GetNextRoute(c echo.Context) error {
 	return c.JSON(http.StatusOK, r)
 }
 
-func MPGetAircraftStatus(c echo.Context) error {
-	aircraftStatus, err := GetAircraftStatus()
-	if err != nil {
-		Error.Println(err)
-		return err
-	}
-
-	return c.JSON(http.StatusOK, aircraftStatus)
-}
-
 // endpoint to load all UASWaypoints from json
 func LoadWaypoints(c echo.Context) error {
 	json_map := make(map[string]interface{})
@@ -206,3 +196,13 @@ func generateJSONMessage(message string) JSONResponse {
 	}
 	return errMsg
 }
+
+// func MPGetAircraftStatus(c echo.Context) error {
+// 	aircraftStatus, err := GetAircraftStatus()
+// 	if err != nil {
+// 		Error.Println(err)
+// 		return err
+// 	}
+
+// 	return c.JSON(http.StatusOK, aircraftStatus)
+// }
