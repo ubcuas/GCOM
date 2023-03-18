@@ -146,6 +146,20 @@ Endpoints and controllers are defined here, with sample request/response bodies 
     }
     ```
 
+* `(GET) /status`
+    * Gets the current aircraft status (velocity, longitude, latitude, altitude, heading, battery voltage) from Mission Planner.
+    * Sample response body:
+    ```json
+    {
+        "velocity": 10.4,
+        "latitude": -35.3627175,
+        "longitude": 149.1514354,
+        "altitude": 17.0569992065,
+        "heading": 265.771789551,
+        "voltage": 1.5
+    }
+    ```
+
 ## db.go
 
 Functions that manage the storage of `Waypoint` and `AEACRoutes` with the local sqlite database are declared here:
