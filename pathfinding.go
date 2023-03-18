@@ -46,27 +46,27 @@ func (pfInput PathfindingInput) createPathfindingInput() error {
 /**
  * Execute the pathfinding binary, creating an output file "output.json" in the process
  */
-func runPathfinding() (bool, error) {
+func runPathfinding() error {
 	fmt.Println("before check input file")
 	if _, err := os.Stat(input_filepath); errors.Is(err, os.ErrNotExist) {
 		err := errors.New(input_filepath + " does not exist")
 		Error.Println(err)
-		return false, err
+		return err
 	}
 
 	_, err := exec.Command("powershell", "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
 	if err != nil {
 		Error.Println(err)
-		return false, err
+		return err
 	}
 
 	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
 		err := errors.New(output_filepath + " does not exist")
 		Error.Println(err)
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 /*

@@ -277,7 +277,34 @@ For more detailed specifications on endpoint behavior, see https://github.com/ub
 Any functions related to interfacing with ODLC are declared here.
 
 ## pathfinding.go
-Any functions related to interfacing with pathfinding are declared here.
+Functions that interface with the Pathfinding module. For more information, see https://github.com/ubcuas/Pathfinding
+
+* `(r AEACRoutes) toPFRoute(startWaypointID int, endWaypointID int) PFRoute`
+    * Helper function to convert existing `AEACRoutes` struct into a format compatible with pathfinding data ingest.
+    * Param: `startWaypointID` - the integer ID of the `Waypoint` corresponding to `r.StartWaypoint`. This is determined by the database serialization and so the constituent `Waypoint`s of `r` must have been `Create()`d already.
+    * Param: `endWaypointID` - the integer ID fof the `Waypoint` corresponding to `r.EndWaypoint`.
+    * Returns a `PFRoute` struct that represents the same route as `r`.
+
+* `(pfInput PathfindingInput) createPathfindingInput() error`
+    * Creates the input `Text.json` file for the pathfinding module from the data contained within a `PathfindingInput` struct. This file is at `./pathfinding/Text.json`.
+    * Returns an error if unable to write to the specified location.
+
+* `runPathfinding() error`
+    * Run the pathfinding module.
+    * Requires that an input json file named `Text.json` has already been created in `./pathfinding/`.
+    * On success, creates an output json file in `./pathfinding/output.json` containing a json object determining the order of routes to be taken, based on the information provided in `pfInput` when `CreatePathfindingInput` was called.
+    * For example, this may be the contents of `./pathfinding/output.json`:
+        ```json
+        {"Routes":[1,3,2]}
+        ```
+        in this case, we should first take the route in `pfInput.AEACRoutes` with `ID == 1`, then the route in `pfInput.AEACRoutes` with `ID == 3`, and finally the route in `pfInput.AEACRoutes` with `ID == 2`.
+
+    * Returns an error if no matching input json file exists, or if the pathfinding executable is not located at `./pathfinding/UAS-Pathfinding.exe`, or if the output file is not properly created.
+
+* `(pfInput PathfindingInput) readPathfindingOutput() (*[]AEACRoutes, error)`
+    * Reads the output of the pathfinding module and determines the order of routes to be taken. This is done by searching `pfInput.AEACRoutes` for an `AEACRoutes` with a matching `ID`, updating that route's `Order`, and appending it to a `[]AEACRoutes`.
+    * Returns a pointer to that `[]AEACRoutes` after all routes are appended.
+    * Requires that `pfInput` is the same `PathfindingInput` struct that was used to call `createPathfindingInput()`.
 
 ## rcomms.go
 Any functions related to interfacing with the RCOMMS system are declared here. Most likely, this include instantiation of socket connections via a middleware to allow for endpoints in the form of controllers to be reached. 
