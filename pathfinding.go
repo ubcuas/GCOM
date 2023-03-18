@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 )
 
 var input_filepath = "./pathfinding/Text.json"
@@ -54,7 +55,15 @@ func runPathfinding() error {
 		return err
 	}
 
-	_, err := exec.Command("powershell", "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
+	var shellToUse string
+
+	if runtime.GOOS == "windows" {
+		shellToUse = "powershell"
+	} else {
+		shellToUse = "bash"
+	}
+
+	_, err := exec.Command(shellToUse, "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
 	if err != nil {
 		Error.Println(err)
 		return err
