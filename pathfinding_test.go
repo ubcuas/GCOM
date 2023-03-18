@@ -205,7 +205,8 @@ func TestRunPathfinding(t *testing.T) {
 	TestCreateInputJson(t)
 
 	//time.Sleep(2 * time.Second)
-	runPathfinding()
+	err := runPathfinding()
+	assert.NoError(t, err)
 
 	//check that the output file exists
 
