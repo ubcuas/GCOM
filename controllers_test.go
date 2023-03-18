@@ -66,7 +66,13 @@ func TestPostWaypoints(t *testing.T) {
 
 	if assert.NoError(t, PostWaypoints(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "Waypoints successfully registered!", rec.Body.String())
+		successMsg := JSONResponse{
+			Type: "Message",
+			Message: "Waypoints successfully registered!",
+		}
+		var returnedMsg JSONResponse
+		json.Unmarshal([]byte(rec.Body.Bytes()), &returnedMsg)
+		assert.Equal(t, successMsg, returnedMsg)
 	}
 
 	cleanDB()
@@ -105,7 +111,13 @@ func TestGetWaypoints(t *testing.T) {
 
 	if assert.NoError(t, PostWaypoints(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "Waypoints successfully registered!", rec.Body.String())
+		successMsg := JSONResponse{
+			Type: "Message",
+			Message: "Waypoints successfully registered!",
+		}
+		var returnedMsg JSONResponse
+		json.Unmarshal([]byte(rec.Body.Bytes()), &returnedMsg)
+		assert.Equal(t, successMsg, returnedMsg)
 
 		//check if get returns all the waypoints
 
@@ -172,7 +184,13 @@ func TestPostRoutes(t *testing.T) {
 
 	if assert.NoError(t, PostRoutes(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "AEACRoutes registered!", rec.Body.String())
+		successMsg := JSONResponse{
+			Type: "Message",
+			Message: "AEACRoutes registered!",
+		}
+		var returnedMsg JSONResponse
+		json.Unmarshal([]byte(rec.Body.Bytes()), &returnedMsg)
+		assert.Equal(t, successMsg, returnedMsg)
 	}
 
 	cleanDB()
@@ -219,7 +237,13 @@ func TestGetRoutes(t *testing.T) {
 
 	if assert.NoError(t, PostRoutes(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "AEACRoutes registered!", rec.Body.String())
+		successMsg := JSONResponse{
+			Type: "Message",
+			Message: "AEACRoutes registered!",
+		}
+		var returnedMsg JSONResponse
+		json.Unmarshal([]byte(rec.Body.Bytes()), &returnedMsg)
+		assert.Equal(t, successMsg, returnedMsg)
 
 		//check if get returns all the routes
 
@@ -298,7 +322,13 @@ func TestGetNextRoute(t *testing.T) {
 
 	if assert.NoError(t, PostRoutes(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "AEACRoutes registered!", rec.Body.String())
+		successMsg := JSONResponse{
+			Type: "Message",
+			Message: "AEACRoutes registered!",
+		}
+		var returnedMsg JSONResponse
+		json.Unmarshal([]byte(rec.Body.Bytes()), &returnedMsg)
+		assert.Equal(t, successMsg, returnedMsg)
 
 		//check that getNextRoute returns the route with the lowest order
 

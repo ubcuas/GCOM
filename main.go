@@ -28,7 +28,7 @@ var (
 func main() {
 
 	e := echo.New()
-
+	Migrate()
 	if DEBUG_FLAG {
 		cleanDB()
 	}
@@ -36,12 +36,15 @@ func main() {
 	e.GET("/", Hello)
 	e.GET("/waypoints", GetWaypoints)
 	e.POST("/waypoints", PostWaypoints)
+	e.POST("/waypoints/load", LoadWaypoints)
 
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)
 
 	e.GET("/status", MPGetAircraftStatus)
+	e.POST("/qr/task1", ParseTask1QRData)
+	e.POST("/qr/task2", ParseTask2QRData)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 )
@@ -14,11 +17,11 @@ func Hello(c echo.Context) error {
 func GetWaypoints(c echo.Context) error {
 
 	queue, err := getAllWaypoints()
-	allWaypoints := queue.Queue
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
+	allWaypoints := queue.Queue
 
 	/*
 		prettyJson, err := json.MarshalIndent(allWaypoints, "", "    ")
@@ -26,7 +29,6 @@ func GetWaypoints(c echo.Context) error {
 			Error.Println(err)
 			return err
 		}
-
 		fmt.Println("all waypoints in DB:\n", string(prettyJson))
 	*/
 	return c.JSON(http.StatusOK, allWaypoints)
@@ -42,7 +44,7 @@ func PostWaypoints(c echo.Context) error {
 	err := c.Bind(&waypoints)
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// Info.Println("Registering waypoints...", waypoints)
@@ -52,14 +54,14 @@ func PostWaypoints(c echo.Context) error {
 		if err != nil {
 			// log.Fatal(err)
 			Error.Println(err)
-			return err
+			return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 		}
 		// fmt.Println(wp)
 	}
 
 	// fmt.Println("Registered waypoints: ", waypoints, "to the database")
 
-	return c.String(http.StatusOK, "Waypoints successfully registered!")
+	return c.JSON(http.StatusOK, generateJSONMessage("Waypoints successfully registered!"))
 }
 
 // endpoint we serve that responds with a list of all the routes currently in the database
@@ -68,7 +70,7 @@ func GetRoutes(c echo.Context) error {
 	routes, err := getAllRoutes()
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// fmt.Println("All routes in DB: ", routes)
@@ -84,7 +86,7 @@ func PostRoutes(c echo.Context) error {
 	err := c.Bind(&routes)
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// fmt.Println("Registering routes: ", routes)
@@ -93,13 +95,13 @@ func PostRoutes(c echo.Context) error {
 		err = r.Create()
 		if err != nil {
 			Error.Println(err)
-			return err
+			return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 		}
 	}
 
 	// fmt.Println("Registered AEACRoutes: ", routes, "to the database!")
 
-	return c.String(http.StatusOK, "AEACRoutes registered!")
+	return c.JSON(http.StatusOK, generateJSONMessage("AEACRoutes registered!"))
 }
 
 // endpoint we serve that returns the next route to be taken (the one with the lowest 'order' value)
@@ -111,7 +113,7 @@ func GetNextRoute(c echo.Context) error {
 	rows, err := querySelect(query)
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	var r AEACRoutes
@@ -121,7 +123,7 @@ func GetNextRoute(c echo.Context) error {
 			&r.MaxVehicleWeight, &r.Value, &r.Remarks, &r.Order)
 		if err != nil {
 			Error.Println(err)
-			return err
+			return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 		}
 	}
 
@@ -129,7 +131,7 @@ func GetNextRoute(c echo.Context) error {
 	err = r.Delete()
 	if err != nil {
 		Error.Println(err)
-		return err
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
 
 	// Warning.Println("Deleted route with ID: ", r.ID)
@@ -147,4 +149,60 @@ func MPGetAircraftStatus(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, aircraftStatus)
+}
+
+// endpoint to load all UASWaypoints from json
+func LoadWaypoints(c echo.Context) error {
+	json_map := make(map[string]interface{})
+	err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
+	}
+
+	competition, ok := json_map["competition"]
+	if !ok {
+		return c.JSON(http.StatusBadRequest, generateJSONError(`JSON Body must contain valid "competition" field`))
+	}
+
+	var filename string
+
+	if competition == "UAS" {
+		filename = "uas_waypoints.json"
+	} else {
+		return c.JSON(http.StatusBadRequest, generateJSONError("No such competition"))
+	}
+
+	jsonFile, err := os.Open(filename)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, generateJSONError("Cannot open waypoint file!"))
+	}
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var waypoints Queue
+	json.Unmarshal(byteValue, &waypoints)
+	for _, waypoint := range waypoints.Queue {
+		err = waypoint.Create()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, generateJSONError("Error loading waypoints! (Do all waypoints have non-sentinel ID's?)"))
+		}
+	}
+
+	return c.JSON(http.StatusOK, generateJSONMessage("All Waypoints Loaded!"))
+}
+
+func generateJSONError(message string) JSONResponse {
+	errMsg := JSONResponse{
+		Type:    "Error",
+		Message: message,
+	}
+	return errMsg
+}
+
+func generateJSONMessage(message string) JSONResponse {
+	errMsg := JSONResponse{
+		Type:    "Message",
+		Message: message,
+	}
+	return errMsg
 }
