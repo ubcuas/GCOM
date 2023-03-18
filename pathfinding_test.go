@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -184,7 +183,7 @@ func TestCreateInputJson(t *testing.T) {
 	err := CreateSamplepfInput().createPathfindingInput()
 	assert.NoError(t, err)
 
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 	//check that Text.json exists
 	_, err = os.Stat(input_filepath)
 	assert.NoError(t, err)
@@ -205,12 +204,12 @@ func TestRunPathfinding(t *testing.T) {
 
 	TestCreateInputJson(t)
 
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 	runPathfinding()
 
 	//check that the output file exists
 
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
 		t.Error("Output file does not exist")
 	}
@@ -219,7 +218,7 @@ func TestRunPathfinding(t *testing.T) {
 func TestReadPathfindingOutput(t *testing.T) {
 	TestRunPathfinding(t)
 
-	time.Sleep(2 * time.Second)
+	//time.Sleep(2 * time.Second)
 	pfInput := CreateSamplepfInput()
 
 	pfOutput, err := pfInput.readPathfindingOutput()
