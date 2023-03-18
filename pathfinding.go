@@ -11,8 +11,8 @@ import (
 )
 
 var pwd, _ = os.Getwd()
-var input_filepath = filepath.Join(pwd, "/pathfinding/Text.json")
-var output_filepath = filepath.Join(pwd, "/pathfinding/output.json")
+var input_filepath = filepath.Join(pwd, "pathfinding", "Text.json")
+var output_filepath = filepath.Join(pwd, "pathfinding", "output.json")
 
 // helper functions to convert existing types to pathfinding types
 func (r AEACRoutes) toPFRoute(startWaypointID int, endWaypointID int) PFRoute {
@@ -34,6 +34,7 @@ func (pfInput PathfindingInput) createPathfindingInput() error {
 		return err
 	}
 
+	fmt.Println("input_filepath: ", input_filepath)
 	_ = os.WriteFile(input_filepath, file, 0666)
 
 	return nil
