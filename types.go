@@ -40,8 +40,8 @@ type PathfindingInput struct {
 	NumRoutes    int          `json:"numRoutes"`
 	WPQueue      []Waypoint   `json:"waypoints"`
 	RouteQueue   []PFRoute    `json:"routes"`
-	RouteFinder  RouteFinder  `json:"routeFinder"`
-	ReRouter     ReRouter     `json:"reRouter"`
+	RouteFinder  RouteFinder  `json:"RouteFinder"`
+	ReRouter     ReRouter     `json:"ReRouter"`
 	AEACRoutes   []AEACRoutes `json:"aeacRoutes"` //to easily fetch the correct route struct after pf is done
 }
 
