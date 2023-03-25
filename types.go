@@ -29,13 +29,6 @@ type Queue struct {
 //pathfinding structures
 
 //reduced struct for pathfinding-necessary info
-type PFWaypoint struct {
-	ID        int     `json:"waypointId"`
-	Latitude  float64 `json:"refLat"`
-	Longitude float64 `json:"refLong"`
-}
-
-//reduced struct for pathfinding-necessary info
 type PFRoute struct {
 	ID          int     `json:"routeID"`
 	WaypointIDs []int   `json:"waypointIds"`
@@ -46,7 +39,23 @@ type PathfindingInput struct {
 	NumWaypoints int          `json:"numWaypoints"`
 	NumRoutes    int          `json:"numRoutes"`
 	WPQueue      []Waypoint   `json:"waypoints"`
-	RouteQueue   []AEACRoutes `json:"routes"`
+	RouteQueue   []PFRoute    `json:"routes"`
+	RouteFinder  RouteFinder  `json:"RouteFinder"`
+	ReRouter     ReRouter     `json:"ReRouter"`
+	AEACRoutes   []AEACRoutes `json:"aeacRoutes"` //to easily fetch the correct route struct after pf is done
+}
+
+type RouteFinder struct {
+	// RouteIDs           []int   `json:"routeIds"`
+	MaxFlyingDistance  float64 `json:"maxFlyingDistance"`
+	StartingWaypointID int     `json:"startingWaypointId"`
+}
+
+type ReRouter struct {
+	CurrentLong         float64 `json:"currentLong"`
+	CurrentLat          float64 `json:"currentLat"`
+	WaypointObstacleIDs []int   `json:"waypointObstacleIds"`
+	ReRouteWaypointID   int     `json:"reRouteWaypointId"`
 }
 
 // AEAC specific structures

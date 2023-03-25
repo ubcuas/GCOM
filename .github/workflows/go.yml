@@ -14,7 +14,8 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
 
@@ -42,3 +43,4 @@ jobs:
         go test -v odlc_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go qr.go
         go test -v rcomms_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go qr.go
         go test -v mail_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go qr.go
+        go test -v pathfinding_test.go types.go db.go controllers.go log.go main.go odlc.go pathfinding.go rcomms.go mail.go qr.go

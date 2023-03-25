@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
@@ -27,13 +26,13 @@ var (
 )
 
 func main() {
-	
+
 	e := echo.New()
 	Migrate()
 	if DEBUG_FLAG {
 		cleanDB()
 	}
-	
+
 	e.GET("/", Hello)
 	e.GET("/waypoints", GetWaypoints)
 	e.POST("/waypoints", PostWaypoints)

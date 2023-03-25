@@ -22,3 +22,6 @@ __debug_bin.exe
 
 # Go workspace file
 go.work
+pathfinding/Text.json
+pathfinding/output.json
+pathfinding/Text_DEBUG.json

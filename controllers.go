@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
-	"io/ioutil"
-	"encoding/json"
 
 	"github.com/labstack/echo/v4"
 )
@@ -141,21 +141,21 @@ func GetNextRoute(c echo.Context) error {
 	return c.JSON(http.StatusOK, r)
 }
 
-//endpoint to load all UASWaypoints from json
-func LoadWaypoints (c echo.Context) error {
+// endpoint to load all UASWaypoints from json
+func LoadWaypoints(c echo.Context) error {
 	json_map := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&json_map)
 	if err != nil {
-    	return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
-	} 
-    
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
+	}
+
 	competition, ok := json_map["competition"]
 	if !ok {
 		return c.JSON(http.StatusBadRequest, generateJSONError(`JSON Body must contain valid "competition" field`))
 	}
 
 	var filename string
-	
+
 	if competition == "UAS" {
 		filename = "uas_waypoints.json"
 	} else {
@@ -164,7 +164,7 @@ func LoadWaypoints (c echo.Context) error {
 
 	jsonFile, err := os.Open(filename)
 	if err != nil {
-    	return c.JSON(http.StatusInternalServerError, generateJSONError("Cannot open waypoint file!"))
+		return c.JSON(http.StatusInternalServerError, generateJSONError("Cannot open waypoint file!"))
 	}
 	defer jsonFile.Close()
 
@@ -181,18 +181,28 @@ func LoadWaypoints (c echo.Context) error {
 	return c.JSON(http.StatusOK, generateJSONMessage("All Waypoints Loaded!"))
 }
 
-func generateJSONError (message string) JSONResponse {
-	errMsg := JSONResponse {
-		Type: "Error",
+func generateJSONError(message string) JSONResponse {
+	errMsg := JSONResponse{
+		Type:    "Error",
 		Message: message,
 	}
 	return errMsg
 }
 
-func generateJSONMessage (message string) JSONResponse {
-	errMsg := JSONResponse {
-		Type: "Message",
+func generateJSONMessage(message string) JSONResponse {
+	errMsg := JSONResponse{
+		Type:    "Message",
 		Message: message,
 	}
 	return errMsg
 }
+
+// func MPGetAircraftStatus(c echo.Context) error {
+// 	aircraftStatus, err := GetAircraftStatus()
+// 	if err != nil {
+// 		Error.Println(err)
+// 		return err
+// 	}
+
+// 	return c.JSON(http.StatusOK, aircraftStatus)
+// }

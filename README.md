@@ -1,7 +1,7 @@
 # Getting Started
 This project relies on the [Echo](https://echo.labstack.com/guide/) framework. Read a bit more about it if you aren't familiar.
 
-This project uses go 1.19. Details about the packages it relies on are in the `go.mod` file.
+This project uses go 1.18. Details about the packages it relies on are in the `go.mod` file.
 
 To run the project for development, simply run:
 ```
@@ -22,7 +22,143 @@ For testing endpoints for development, it's highly recommended that you use an A
 Controllers are paired routes and HTTP request methods. Middleware, logging, and everything else should be configured here.
 
 ## controllers.go
-Controllers are declared here.
+Endpoints and controllers are defined here, with sample request/response bodies (if applicable):
+
+* `(GET) /waypoints`
+    * Returns a list of all `Waypoint`s currently registered in the database.
+    * Sample response body:
+    ```json
+    [
+        {
+            "id": 1,
+            "name": "Alpha",
+            "longitude": 13.4,
+            "latitude": -4.5,
+            "altitude": 20.4
+        },
+        {
+            "id": 2,
+            "name": "Beta",
+            "longitude": 13.57,
+            "latitude": -4,
+            "altitude": 50.4
+        }
+    ]
+    ```
+
+* `(POST) /waypoints`
+    * Registers a provided list of `Waypoint`s into the database. If this request is made multiple times, any duplicate `Waypoint`s will not be re-registered into the database (a duplicate `Waypoint` is any `Waypoint` whose fields are identical, except possibly `id`).
+    * Sample request body:
+    ```json
+    [
+        {
+            "id": -1,
+            "name": "Alpha",
+            "longitude": 13.4,
+            "latitude": -4.5,
+            "altitude": 20.4
+        },
+        {
+            "id": -1,
+            "name": "Beta",
+            "longitude": 13.57,
+            "latitude": -4.0,
+            "altitude": 50.4
+        }
+    ]
+    ```
+    ---
+
+* `(GET) /routes`
+    * Returns a list of all `AEACRoutes` currently registered in the database
+    * Sample response body:
+    ```json
+    [
+        {
+            "id": 1,
+            "number": 1,
+            "start_waypoint": "alpha",
+            "end_waypoint": "delta",
+            "passengers": 5,
+            "max_vehicle_weight": 30.5,
+            "value": 13.2,
+            "remarks": "",
+            "order": 0
+        },
+        {
+            "id": 2,
+            "number": 2,
+            "start_waypoint": "delta",
+            "end_waypoint": "zeta",
+            "passengers": 10,
+            "max_vehicle_weight": 20.05,
+            "value": 17.3,
+            "remarks": "remark",
+            "order": 1
+        }
+    ]
+    ```
+* `(POST) /routes`
+     * Registers a provided list of `AEACRoutes` into the database. If this request is made multiple times, any duplicate routes will not be re-registered into the database (a duplicate route is any `AEACRoutes` whose fields are identical, except possibly `id`).
+    * Sample request body:
+    ```json
+    [
+        {
+            "id": -1,
+            "number": 1,
+            "start_waypoint": "alpha",
+            "end_waypoint": "delta",
+            "passengers": 5,
+            "max_vehicle_weight": 30.5,
+            "value": 13.2,
+            "remarks": "",
+            "order": 0
+        },
+        {
+            "id": -1,
+            "number": 2,
+            "start_waypoint": "delta",
+            "end_waypoint": "zeta",
+            "passengers": 10,
+            "max_vehicle_weight": 20.05,
+            "value": 17.3,
+            "remarks": "remark",
+            "order": 1
+        }
+    ]
+    ```
+
+* `(GET) /nextroute`
+    * Gets the next `AEACRoutes` that should be followed (the one with the lowest `order` out of the remaining `AEACRoutes`).
+    * **Deletes** the `AEACRoutes` from the database after it is returned.
+    * Sample response body:
+    ```json
+    {
+        "id": 1,
+        "number": 1,
+        "start_waypoint": "alpha",
+        "end_waypoint": "delta",
+        "passengers": 5,
+        "max_vehicle_weight": 30.5,
+        "value": 13.2,
+        "remarks": "",
+        "order": 0
+    }
+    ```
+
+* `(GET) /status`
+    * Gets the current aircraft status (velocity, longitude, latitude, altitude, heading, battery voltage) from Mission Planner.
+    * Sample response body:
+    ```json
+    {
+        "velocity": 10.4,
+        "latitude": -35.3627175,
+        "longitude": 149.1514354,
+        "altitude": 17.0569992065,
+        "heading": 265.771789551,
+        "voltage": 1.5
+    }
+    ```
 
 ## db.go
 
@@ -46,7 +182,7 @@ Functions that manage the storage of `Waypoint` and `AEACRoutes` with the local 
 
 
 * `(wp *Waypoint) Create() error`
-    * Saves the current `Waypoint` struct in the database, and updates the current `Waypoint` struct with the correct serialized `ID`.
+    * Saves the current `Waypoint` struct in the database, and updates the current `Waypoint` struct with the correct serialized `ID`. If this `Waypoint` already exists in the database (a database record exists that has the same name, longitude, latitude, and altitude), no new record is created, but the `wp` struct this method was called on will still be updated to the correct value in the database.
     * Requires that this `Waypoint.ID == -1` (i.e. this `Waypoint` has not yet been registered into the database). 
     * Calling `wp.Create()` mutates `wp.ID` and replaces it with the ID assigned by the database serialization (primary key).
     * Must be called on a `Waypoint` struct (i.e. calling `wp.Create()`).
@@ -70,7 +206,7 @@ Functions that manage the storage of `Waypoint` and `AEACRoutes` with the local 
     * Returns a pointer to a `Queue` that contains all currently registered `Waypoints`.
 ---
 * `(r *AEACRoutes) Create() error`
-    * Saves the current `AEACRoutes` struct in the database, and updates the current `AEACRoutes` struct with the correct serialized `ID`.
+    * Saves the current `AEACRoutes` struct in the database, and updates the current `AEACRoutes` struct with the correct serialized `ID`. If this `AEACRoutes` already exists in the database (a database record exists that has the same number, start_waypoint, end_waypoint, ...), no new record is created, but the `r` struct this method was called on will still be updated to the correct value in the database.
     * Requires that this `AEACRoutes.ID == -1` (i.e. this `AEACRoutes` has not yet been registered into the database). 
     * Calling `r.Create()` mutates `r.ID` and replaces it with the ID assigned by the database serialization (primary key).
     * Must be called on a `AEACRoutes` struct (i.e. calling `r.Create()`).
@@ -141,7 +277,34 @@ For more detailed specifications on endpoint behavior, see https://github.com/ub
 Any functions related to interfacing with ODLC are declared here.
 
 ## pathfinding.go
-Any functions related to interfacing with pathfinding are declared here.
+Functions that interface with the Pathfinding module. For more information, see https://github.com/ubcuas/Pathfinding
+
+* `(r AEACRoutes) toPFRoute(startWaypointID int, endWaypointID int) PFRoute`
+    * Helper function to convert existing `AEACRoutes` struct into a format compatible with pathfinding data ingest.
+    * Param: `startWaypointID` - the integer ID of the `Waypoint` corresponding to `r.StartWaypoint`. This is determined by the database serialization and so the constituent `Waypoint`s of `r` must have been `Create()`d already.
+    * Param: `endWaypointID` - the integer ID fof the `Waypoint` corresponding to `r.EndWaypoint`.
+    * Returns a `PFRoute` struct that represents the same route as `r`.
+
+* `(pfInput PathfindingInput) createPathfindingInput() error`
+    * Creates the input `Text.json` file for the pathfinding module from the data contained within a `PathfindingInput` struct. This file is at `./pathfinding/Text.json`.
+    * Returns an error if unable to write to the specified location.
+
+* `runPathfinding() error`
+    * Run the pathfinding module.
+    * Requires that an input json file named `Text.json` has already been created in `./pathfinding/`.
+    * On success, creates an output json file in `./pathfinding/output.json` containing a json object determining the order of routes to be taken, based on the information provided in `pfInput` when `CreatePathfindingInput` was called.
+    * For example, this may be the contents of `./pathfinding/output.json`:
+        ```json
+        {"Routes":[1,3,2]}
+        ```
+        in this case, we should first take the route in `pfInput.AEACRoutes` with `ID == 1`, then the route in `pfInput.AEACRoutes` with `ID == 3`, and finally the route in `pfInput.AEACRoutes` with `ID == 2`.
+
+    * Returns an error if no matching input json file exists, or if the pathfinding executable is not located at `./pathfinding/UAS-Pathfinding.exe`, or if the output file is not properly created.
+
+* `(pfInput PathfindingInput) readPathfindingOutput() (*[]AEACRoutes, error)`
+    * Reads the output of the pathfinding module and determines the order of routes to be taken. This is done by searching `pfInput.AEACRoutes` for an `AEACRoutes` with a matching `ID`, updating that route's `Order`, and appending it to a `[]AEACRoutes`.
+    * Returns a pointer to that `[]AEACRoutes` after all routes are appended.
+    * Requires that `pfInput` is the same `PathfindingInput` struct that was used to call `createPathfindingInput()`.
 
 ## rcomms.go
 Any functions related to interfacing with the RCOMMS system are declared here. Most likely, this include instantiation of socket connections via a middleware to allow for endpoints in the form of controllers to be reached. 

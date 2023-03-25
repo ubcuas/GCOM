@@ -167,6 +167,34 @@ func TestGetWaypointID(t *testing.T) {
 
 }
 
+// test that creating two waypoints with the same data do not result in them
+// both being registered in the database
+func TestCreateDuplicateWaypoint(t *testing.T) {
+	cleanDB()
+
+	wp := Waypoint{
+		ID:        -1,
+		Name:      "Test Waypoint",
+		Longitude: -79.347015,
+		Latitude:  43.651070,
+		Altitude:  12.2,
+	}
+
+	assert.NoError(t, wp.Create())
+	wp.ID = -1
+	assert.NoError(t, wp.Create())
+	wp.ID = -1
+	assert.NoError(t, wp.Create())
+
+	db_waypoints, err := getAllWaypoints()
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(db_waypoints.Queue), 1)
+	assert.ElementsMatch(t, db_waypoints.Queue, []Waypoint{wp})
+
+	cleanDB()
+}
+
 // test deleting a waypoint record from the database
 func TestDeleteWaypoint(t *testing.T) {
 
@@ -290,6 +318,37 @@ func TestUpdateInvalidWaypoint(t *testing.T) {
 func TestAEACCreate(t *testing.T) {
 	createTestRoute(t)
 	cleanUp()
+}
+
+// test that creating two routes with the same data do not result in them
+// both being registered in the database
+func TestCreateDuplicateRoute(t *testing.T) {
+	cleanDB()
+
+	route1 := AEACRoutes{
+		ID:               -1,
+		Number:           1,
+		StartWaypoint:    "Alpha",
+		EndWaypoint:      "Zeta",
+		Passengers:       4,
+		MaxVehicleWeight: 500.00,
+		Value:            200.00,
+		Order:            1,
+	}
+
+	assert.NoError(t, route1.Create())
+	route1.ID = -1
+	assert.NoError(t, route1.Create())
+	route1.ID = -1
+	assert.NoError(t, route1.Create())
+
+	db_routes, err := getAllRoutes()
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(*db_routes), 1)
+	assert.ElementsMatch(t, *db_routes, []AEACRoutes{route1})
+
+	cleanDB()
 }
 
 func TestAEACGet(t *testing.T) {
