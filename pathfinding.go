@@ -55,14 +55,20 @@ func runPathfinding() error {
 
 	if runtime.GOOS == "windows" {
 		shellToUse = "powershell"
+
+		_, err := exec.Command(shellToUse, "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
+		if err != nil {
+			Error.Println(err)
+			return err
+		}
 	} else {
 		shellToUse = "bash"
-	}
 
-	_, err := exec.Command(shellToUse, "-c", "cd pathfinding; .\\UAS-Pathfinding.exe").CombinedOutput()
-	if err != nil {
-		Error.Println(err)
-		return err
+		_, err := exec.Command(shellToUse, "-c", "cd pathfinding; ./UAS-Pathfinding-Linux.out").CombinedOutput()
+		if err != nil {
+			Error.Println(err)
+			return err
+		}
 	}
 
 	if _, err := os.Stat(output_filepath); errors.Is(err, os.ErrNotExist) {
@@ -75,8 +81,6 @@ func runPathfinding() error {
 }
 
 /*
-*
-
   - Read the output file "output.json" and return the results in a slice of AEACRoutes,
     using the route IDs from pfInput
 

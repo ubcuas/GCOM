@@ -47,7 +47,10 @@ type PathfindingInput struct {
 
 type RouteFinder struct {
 	// RouteIDs           []int   `json:"routeIds"`
-	MaxFlyingDistance  float64 `json:"maxFlyingDistance"`
+	// MaxFlyingDistance  float64 `json:"maxFlyingDistance"`
+	Speed              float64 `json:"speed"`
+	Altitude           float64 `json:"altitude"`
+	ClimbRate          float64 `json:"climbRate"`
 	StartingWaypointID int     `json:"startingWaypointId"`
 }
 
@@ -71,15 +74,16 @@ type AEACRoutes struct {
 	Remarks          string  `json:"remarks"`
 	Order            int     `json:"order"`
 }
+
 // SUAS specific structures
 
 type RestrictedArea struct {
-	ID int `json:"id"`
-	Bounds []Waypoint `json:"bounds"`
-	RejoinPoint Waypoint `json:"rejoin_at"`
+	ID          int        `json:"id"`
+	Bounds      []Waypoint `json:"bounds"`
+	RejoinPoint Waypoint   `json:"rejoin_at"`
 }
 
 type JSONResponse struct {
-	Type string `json:"type"`
+	Type    string `json:"type"`
 	Message string `json:"message"`
 }

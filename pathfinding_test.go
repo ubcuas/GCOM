@@ -140,14 +140,17 @@ func CreateSamplepfInput() *PathfindingInput {
 	aeacRoutes := []AEACRoutes{r1, r2, r3}
 
 	routefinder := RouteFinder{
-		MaxFlyingDistance:  40.6,
+		// MaxFlyingDistance:  40.6,
+		Speed:              16.1,
+		Altitude:           4.65,
+		ClimbRate:          5.6,
 		StartingWaypointID: 0,
 	}
 
 	rerouter := ReRouter{
 		CurrentLong:         50.4,
 		CurrentLat:          60.8,
-		WaypointObstacleIDs: []int{1, 5, 2},
+		WaypointObstacleIDs: []int{1, 3, 2},
 		ReRouteWaypointID:   3,
 	}
 

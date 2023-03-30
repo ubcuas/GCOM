@@ -58,7 +58,9 @@
         }
     ],
     "RouteFinder": {
-        "maxFlyingDistance": 40.6,
+        "speed": 16.1,
+        "altitude": 4.65,
+        "climbRate": 5.6,
         "startingWaypointId": 0
     },
     "ReRouter": {
@@ -66,7 +68,7 @@
         "currentLat": 60.8,
         "waypointObstacleIds": [
             1,
-            5,
+            3,
             2
         ],
         "reRouteWaypointId": 3
