@@ -126,3 +126,106 @@ func (pfInput PathfindingInput) readPathfindingOutput() (*[]AEACRoutes, error) {
 	}
 	return &routes, nil
 }
+
+/*
+ * Run the pathfinding binary with the routes and waypoints as stored in the database
+ * Requires that all waypoints have been uploaded through the /waypoints endpoint,
+ * and that all routes have been uploaded through the /qr/task2 endpoint
+ * This function returns a list of routes that constitute the flight plan for task2,
+ * and calls the email function to send the flight plan to the competition organizers
+ */
+func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
+	//in order to create pfinput, we need a list of all waypoints in db
+	queue, err := getAllWaypoints()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+	var waypoints []Waypoint
+	waypoints = (*queue).Queue
+
+	//in order to create pfinput, we also need a list of all routes in db
+	routes, err := getAllRoutes()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	//create a list of PFRoutes from the list of routes
+	var pfRoutes []PFRoute
+	for _, route := range *routes {
+		//iterate through all waypoints to find the ids of the start and end waypoints
+		var startWaypointID, endWaypointID int
+		for _, waypoint := range (*queue).Queue {
+			if waypoint.Name == route.StartWaypoint {
+				startWaypointID = waypoint.ID
+			}
+			if waypoint.Name == route.EndWaypoint {
+				endWaypointID = waypoint.ID
+			}
+		}
+
+		pfRoutes = append(pfRoutes, route.toPFRoute(startWaypointID, endWaypointID))
+	}
+
+	numWaypoints := len(waypoints)
+	numRoutes := len(pfRoutes)
+
+	//create routefinder
+	routefinder := RouteFinder{
+		// MaxFlyingDistance:  40.6,
+		Speed:              16.1,
+		Altitude:           4.65,
+		ClimbRate:          5.6,
+		StartingWaypointID: 0,
+	}
+
+	//create rerouter
+	rerouter := ReRouter{
+		CurrentLong:         50.4,
+		CurrentLat:          60.8,
+		WaypointObstacleIDs: []int{1, 3, 2},
+		ReRouteWaypointID:   3,
+	}
+
+	//create pfinput
+	pfInput := PathfindingInput{
+		NumWaypoints: numWaypoints,
+		NumRoutes:    numRoutes,
+		WPQueue:      waypoints,
+		RouteQueue:   pfRoutes,
+		RouteFinder:  routefinder,
+		ReRouter:     rerouter,
+		AEACRoutes:   *routes,
+	}
+
+	//create input file
+	err = pfInput.createPathfindingInput()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	//run pathfinding
+	err = runPathfinding()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	//read output file
+	flightPlan, err := pfInput.readPathfindingOutput()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	//send email
+	err = sendPaths(*flightPlan)
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	return flightPlan, nil
+}
