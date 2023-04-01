@@ -12,6 +12,40 @@ import (
 )
 
 /**
+ * Convert an AEACRoutes struct to a []Waypoint for use with Mission Planner Queue
+ * @param routes - pointer to an AEACRoutes struct
+ * @return - []Waypoint containing the waypoints in the AEACRoutes struct
+ * @return - error if anything goes wrong
+ */
+
+func (route *AEACRoutes) ToWaypoints() ([]Waypoint, error) {
+	var output []Waypoint
+
+	//get all waypoints from db
+	queue, err := getAllWaypoints()
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+	allWaypoints := queue.Queue
+	//look through all waypoints to find the ones corresponding to route.StartWaypoint and route.EndWaypoint
+	for _, wp := range allWaypoints {
+		if wp.Name == route.StartWaypoint {
+			output = append(output, wp)
+			break
+		}
+	}
+	for _, wp := range allWaypoints {
+		if wp.Name == route.EndWaypoint {
+			output = append(output, wp)
+			break
+		}
+	}
+
+	return output, nil
+}
+
+/**
  * Gets the current route ("Queue" of Waypoints) that constitute the path the drone is following, from Mission Planner
  *
  * Returns: - Pointer to a Queue struct containing Waypoints generated from the Waypoint data
@@ -103,8 +137,6 @@ func PostQueue(queue *Queue) error {
 	return nil
 }
 
-//TODO: Maybe follow singleton design pattern for AircraftStatus? -> make this method callable only on an instance
-//		of AircraftStatus struct
 /**
  * Gets the current aircraft status from Mission Planner
  *
