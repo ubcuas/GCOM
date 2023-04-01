@@ -12,12 +12,36 @@ import (
 )
 
 /**
+ * Converts a list of AEACRoutes to a list of Waypoints and sends them to Mission Planner
+ */
+func PostFlightPlanToMP(flightPlan *[]AEACRoutes) error {
+	Queue := Queue{Queue: []Waypoint{}} //create empty queue
+
+	for _, route := range *flightPlan {
+		waypoints, err := route.ToWaypoints()
+		if err != nil {
+			Error.Println(err)
+			return err
+		}
+		Queue.Queue = append(Queue.Queue, waypoints...)
+	}
+
+	//send queue to MP
+	err := PostQueue(&Queue)
+	if err != nil {
+		Error.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+/**
  * Convert an AEACRoutes struct to a []Waypoint for use with Mission Planner Queue
  * @param routes - pointer to an AEACRoutes struct
  * @return - []Waypoint containing the waypoints in the AEACRoutes struct
  * @return - error if anything goes wrong
  */
-
 func (route *AEACRoutes) ToWaypoints() ([]Waypoint, error) {
 	var output []Waypoint
 
@@ -29,6 +53,7 @@ func (route *AEACRoutes) ToWaypoints() ([]Waypoint, error) {
 	}
 	allWaypoints := queue.Queue
 	//look through all waypoints to find the ones corresponding to route.StartWaypoint and route.EndWaypoint
+	// do start waypoint first
 	for _, wp := range allWaypoints {
 		if wp.Name == route.StartWaypoint {
 			output = append(output, wp)
