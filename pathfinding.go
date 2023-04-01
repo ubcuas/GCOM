@@ -142,7 +142,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 		return nil, err
 	}
 	var waypoints []Waypoint
-	waypoints = (*queue).Queue
+	waypoints = queue.Queue
 
 	//in order to create pfinput, we also need a list of all routes in db
 	routes, err := getAllRoutes()
@@ -156,7 +156,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 	for _, route := range *routes {
 		//iterate through all waypoints to find the ids of the start and end waypoints
 		var startWaypointID, endWaypointID int
-		for _, waypoint := range (*queue).Queue {
+		for _, waypoint := range queue.Queue {
 			if waypoint.Name == route.StartWaypoint {
 				startWaypointID = waypoint.ID
 			}
