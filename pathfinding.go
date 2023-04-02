@@ -144,6 +144,13 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 	var waypoints []Waypoint
 	waypoints = queue.Queue
 
+	pfWPQueue := make([]Waypoint, len(waypoints))
+	//NOTE: pathfinding uses 0-indexed waypoints, so we need to subtract 1 from the waypoint IDs
+	copy(pfWPQueue, waypoints)
+	for i := range pfWPQueue {
+		pfWPQueue[i].ID--
+	}
+
 	//in order to create pfinput, we also need a list of all routes in db
 	routes, err := getAllRoutes()
 	if err != nil {
@@ -192,7 +199,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 	pfInput := PathfindingInput{
 		NumWaypoints: numWaypoints,
 		NumRoutes:    numRoutes,
-		WPQueue:      waypoints,
+		WPQueue:      pfWPQueue,
 		RouteQueue:   pfRoutes,
 		RouteFinder:  routefinder,
 		ReRouter:     rerouter,
