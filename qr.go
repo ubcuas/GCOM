@@ -50,7 +50,7 @@ func ParseTask1QRData(c echo.Context) error {
 		RejoinPoint: rejoin,
 	}
 	restrict.Create()
-	return c.JSON(http.StatusAccepted, generateJSONError("Restricted Zone created!"))
+	return c.JSON(http.StatusAccepted, generateJSONMessage("Restricted Zone created!"))
 }
 
 func ParseTask2QRData(c echo.Context) error {

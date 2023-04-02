@@ -610,6 +610,38 @@ func getAllRoutes() (*[]AEACRoutes, error) {
 	return &routes, nil
 }
 
+// returns a pointer to an AEACRoutes array that contains all the routes currently registered in the database
+// returns a pointer to a Queue struct that contains all the waypoints currently registered in the database
+func getAllRestrictedAreas() (*RestrictedAreaArray, error) {
+	db := connectToDB()
+
+	query := `SELECT id FROM restrictions`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		Error.Println(err)
+		return nil, err
+	}
+
+	var arr []RestrictedArea
+
+	for rows.Next() {
+		var ra RestrictedArea
+		err = rows.Scan(&ra.ID)
+		if err != nil {
+			Error.Println(err)
+			return nil, err
+		}
+		ra.Get()
+		arr = append(arr, ra)
+	}
+
+	restrictedArray := RestrictedAreaArray{arr}
+
+	return &restrictedArray, nil
+}
+
+
 // execute a select query and return the rows
 func querySelect(query string) (*sql.Rows, error) {
 	db := connectToDB()
@@ -729,9 +761,8 @@ func (r *RestrictedArea) Get() error {
 		return err;
 	}
 
-	var bound_ids []int
+	bound_ids := []int{0,0,0,0}
 	var rejoin_id int
-
 	err = row.Scan(
 		&r.ID, 
 		&bound_ids[0],
@@ -751,12 +782,12 @@ func (r *RestrictedArea) Get() error {
 
 	var bounds []Waypoint
 	
-	for idx, id := range bound_ids {
+	for _, id := range bound_ids {
 		tempWaypoint := Waypoint {
 			ID: id,
 		}
 		tempWaypoint.Get()
-		bounds[idx] = tempWaypoint
+		bounds = append(bounds, tempWaypoint)
 	}
 
 	r.Bounds = bounds
