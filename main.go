@@ -45,5 +45,7 @@ func main() {
 	e.POST("/qr/task1", ParseTask1QRData)
 	e.POST("/qr/task2", ParseTask2QRData)
 
+	e.POST("/task2", Task2MainHandler)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
