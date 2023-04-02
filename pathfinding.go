@@ -163,7 +163,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 	for _, route := range *routes {
 		//iterate through all waypoints to find the ids of the start and end waypoints
 		var startWaypointID, endWaypointID int
-		for _, waypoint := range queue.Queue {
+		for _, waypoint := range pfWPQueue {
 			if waypoint.Name == route.StartWaypoint {
 				startWaypointID = waypoint.ID
 			}
@@ -175,7 +175,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 		pfRoutes = append(pfRoutes, route.toPFRoute(startWaypointID, endWaypointID))
 	}
 
-	numWaypoints := len(waypoints)
+	numWaypoints := len(pfWPQueue)
 	numRoutes := len(pfRoutes)
 
 	//create routefinder
