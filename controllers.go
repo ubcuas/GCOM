@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -141,6 +142,23 @@ func GetNextRoute(c echo.Context) error {
 	return c.JSON(http.StatusOK, r)
 }
 
+// after loading the waypoints into the db, do the flightpath generation for task2
+
+func Task2MainHandler(c echo.Context) error {
+
+	//parse routes to db
+	ParseTask2QRData(c);
+
+	//run pathfinding on db entries now
+	flightPlan, err := runPathfindingWithDBEntries()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, flightPlan)
+
+}
+
 // endpoint to load all UASWaypoints from json
 func LoadWaypoints(c echo.Context) error {
 	json_map := make(map[string]interface{})
@@ -196,13 +214,3 @@ func generateJSONMessage(message string) JSONResponse {
 	}
 	return errMsg
 }
-
-// func MPGetAircraftStatus(c echo.Context) error {
-// 	aircraftStatus, err := GetAircraftStatus()
-// 	if err != nil {
-// 		Error.Println(err)
-// 		return err
-// 	}
-
-// 	return c.JSON(http.StatusOK, aircraftStatus)
-// }
