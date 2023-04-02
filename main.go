@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/subtle"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // get an environment variable from .env based on its key
@@ -28,6 +30,15 @@ var (
 func main() {
 
 	e := echo.New()
+	e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		// Be careful to use constant time comparison to prevent timing attacks
+		if subtle.ConstantTimeCompare([]byte(username), []byte(getEnvVariable("AUTH_USER"))) == 1 &&
+			subtle.ConstantTimeCompare([]byte(password), []byte(getEnvVariable("AUTH_PASSWORD"))) == 1 {
+			return true, nil
+		}
+		return false, nil
+	}))
+
 	Migrate()
 	if DEBUG_FLAG {
 		cleanDB()
