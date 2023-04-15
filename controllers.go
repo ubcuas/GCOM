@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -147,14 +148,15 @@ func GetNextRoute(c echo.Context) error {
 func Task2MainHandler(c echo.Context) error {
 
 	//parse routes to db
-	ParseTask2QRData(c);
+	ParseTask2QRData(c)
 
 	//run pathfinding on db entries now
 	flightPlan, err := runPathfindingWithDBEntries()
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "connectex: The requested address is not valid in its context.") {
+		fmt.Println(err.Error())
 		return c.JSON(http.StatusInternalServerError, generateJSONError(err.Error()))
 	}
-
+	fmt.Println("Flight plan: ", flightPlan)
 	return c.JSON(http.StatusOK, flightPlan)
 
 }

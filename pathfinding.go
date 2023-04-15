@@ -231,7 +231,7 @@ func runPathfindingWithDBEntries() (*[]AEACRoutes, error) {
 	err = sendPaths(*flightPlan)
 	if err != nil {
 		Error.Println(err)
-		return nil, err
+		return flightPlan, err
 	}
 
 	return flightPlan, nil
