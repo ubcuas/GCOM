@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>WebSocket Test</title>
+</head>
+<body>
+	<h1>WebSocket Test</h1>
+
+	<div id="status"></div>
+
+	<script>
+		const socket = new WebSocket("ws://localhost:1323/status");
+
+		socket.addEventListener("open", () => {
+			console.log("WebSocket connection established.");
+		});
+
+		socket.addEventListener("close", () => {
+			console.log("WebSocket connection closed.");
+		});
+
+        socket.onmessage = function(event) {
+            const timeDiv = document.getElementById("status");
+			timeDiv.textContent = event.data;
+        };
+	</script>
+</body>
+</html>

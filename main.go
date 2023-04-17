@@ -47,5 +47,7 @@ func main() {
 
 	e.POST("/aeac/task2", Task2MainHandler)
 
+	e.GET("/status", AircraftStatusWSHandler)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

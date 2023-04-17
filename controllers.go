@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
 
@@ -141,6 +143,36 @@ func GetNextRoute(c echo.Context) error {
 		return c.JSON(http.StatusOK, nil)
 	}
 	return c.JSON(http.StatusOK, r)
+}
+
+func AircraftStatusWSHandler(c echo.Context) error {
+	var upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	conn, err := upgrader.Upgrade(c.Response().Writer, c.Request(), nil)
+	if err != nil {
+		fmt.Println("Error upgrading to WebSocket:", err)
+		return err
+	}
+
+	defer conn.Close()
+
+	fmt.Println("WebSocket connection established.")
+
+	for {
+		err = conn.WriteMessage(websocket.TextMessage, []byte(time.Now().Format("15:04:05")))
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil
 }
 
 // after loading the waypoints into the db, do the flightpath generation for task2
