@@ -15,4 +15,3 @@ updates:
     # Select the teams to be added as requested reviewers
     reviewers:
       - "ubcuas/software-leads"
-      - "ubcuas/gcom-back-end"
