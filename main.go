@@ -38,6 +38,8 @@ func main() {
 	e.POST("/waypoints", PostWaypoints)
 	e.POST("/waypoints/load", LoadWaypoints)
 
+	e.GET("/restrictedzones", GetRestrictedZones)
+
 	e.GET("/routes", GetRoutes)
 	e.POST("/routes", PostRoutes)
 	e.GET("/nextroute", GetNextRoute)

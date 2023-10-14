@@ -83,6 +83,21 @@ type RestrictedArea struct {
 	RejoinPoint Waypoint   `json:"rejoin_at"`
 }
 
+type RestrictedAreaArray struct {
+	RestrictedAreas []RestrictedArea `json:"restricted_areas"`
+}
+
+type CondensedRestrictedArea struct {
+	ID          int        `json:"id"`
+	Bounds      []string   `json:"bounds"`
+	RejoinPoint string     `json:"rejoin_at"`
+}
+
+type CondensedRestrictedAreaArray struct {
+	RestrictedAreas []CondensedRestrictedArea `json:"restricted_areas"`
+}
+
+//helper structs
 type JSONResponse struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`

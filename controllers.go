@@ -181,6 +181,30 @@ func LoadWaypoints(c echo.Context) error {
 	return c.JSON(http.StatusOK, generateJSONMessage("All Waypoints Loaded!"))
 }
 
+func GetRestrictedZones (c echo.Context) error {
+	areas, err := getAllRestrictedAreas()
+	if err != nil {
+		Error.Println(err)
+		return nil
+	}
+
+	var condensedArray []CondensedRestrictedArea
+
+	for _, area := range areas.RestrictedAreas {
+		var condensed CondensedRestrictedArea
+		condensed.ID = area.ID
+		var wpNames []string
+		for _, wp := range area.Bounds {
+			wpNames = append(wpNames, wp.Name)
+		}
+		condensed.Bounds = wpNames
+		condensed.RejoinPoint = area.RejoinPoint.Name
+		condensedArray = append(condensedArray, condensed)
+	}
+
+	return c.JSON(http.StatusOK, condensedArray)
+}
+
 func generateJSONError(message string) JSONResponse {
 	errMsg := JSONResponse{
 		Type:    "Error",
