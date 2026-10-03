@@ -1,10 +1,12 @@
 import json
-
+import os
 import requests
 
 
 class DroneApiClient:
-    _mission_planner_api_url = "http://localhost:9000"
+    # _mission_planner_api_url = "http://localhost:9000"
+    MISSION_PLANNER_URL = os.getenv("MISSION_PLANNER_URL")
+    _mission_planner_api_url = MISSION_PLANNER_URL
 
     @staticmethod
     def _fetch_from_mission_planner(endpoint, method="GET", data=None):

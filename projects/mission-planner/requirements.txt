@@ -5,3 +5,4 @@ matplotlib
 flask-socketio
 flasgger
 openapi-spec-validator
+eventlet

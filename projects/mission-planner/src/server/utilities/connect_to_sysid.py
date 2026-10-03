@@ -24,7 +24,15 @@ def connect_to_sysid(connection_str: str, sysid: int, timeout: float = 3) -> mav
 
     while time.time() - time_start < timeout:
         try:
-            the_connection.wait_heartbeat(timeout=1)
+            print("Sending initial heartbeat to wake up MAVProxy router...")
+            the_connection.mav.heartbeat_send(
+                mavutil.mavlink.MAV_TYPE_GCS, 
+                mavutil.mavlink.MAV_AUTOPILOT_INVALID, 
+                0, 0, 0
+            )
+            msg = the_connection.wait_heartbeat(timeout=1)
+            if not msg:
+                raise ConnectionError("MAV connection failed. Is mavproxy running?")
             logger.debug(
                 f"Heartbeat from system {the_connection.target_system} component {the_connection.target_component}"
             )

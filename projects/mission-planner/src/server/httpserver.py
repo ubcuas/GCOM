@@ -774,7 +774,7 @@ class HTTP_Server:
 
         try:
             socketio.run(
-                app, host=host, port=port, debug=(not production), use_reloader=False
+                app, host=host, port=port, debug=(not production), allow_unsafe_werkzeug=True, use_reloader=False
             )
         finally:
             # Ensure handler thread stops cleanly

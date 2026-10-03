@@ -6,6 +6,8 @@ from server.services import MavlinkHandler, StatusCache
 from server.status_wsclient import Status_Client
 from server.utilities.connect_to_sysid import connect_to_sysid
 
+import os
+
 stop_event = Event()
 
 
@@ -28,11 +30,14 @@ def run_status_client(ws_client, production, host, port):
 
 if __name__ == "__main__":
     # Simplified argument parsing here, replace with your own
-    production = True
-    HOST, PORT = "localhost", 9000
-    STATUS_HOST, STATUS_PORT = "localhost", 8000
+    production = False
+    # HOST, PORT = "localhost", 9000
+    # STATUS_HOST, STATUS_PORT = "localhost", 8000
+    HOST, PORT = os.getenv("HOST"), os.getenv("PORT")
+    STATUS_HOST, STATUS_PORT = os.getenv("STATUS_HOST"), os.getenv("STATUS_PORT")
     DISABLE_STATUS = False
-    MAVLINK_CONNECTION_STRING = "udpin:localhost:14551"
+    # MAVLINK_CONNECTION_STRING = "udpin:localhost:14551"
+    MAVLINK_CONNECTION_STRING = os.getenv("MAVLINK_CONNECTION_STRING")
 
     mav_connection = connect_to_sysid(MAVLINK_CONNECTION_STRING, 1)
     if mav_connection is None:

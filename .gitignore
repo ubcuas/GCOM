@@ -10,3 +10,9 @@
 projects/web-backend/src/db.sqlite3-journal
 /.idea
 *.rdb
+
+# python venv
+projects/web-backend/.venv/*
+projects/mission-planner/.venv/*
+
+*mav*
