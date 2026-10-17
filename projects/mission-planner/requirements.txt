@@ -3,6 +3,9 @@ requests
 pymavlink
 matplotlib
 flask-socketio
+MAVProxy
+future
+gnureadline
 flasgger
 openapi-spec-validator
 eventlet

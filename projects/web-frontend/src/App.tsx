@@ -8,13 +8,15 @@ import MapRoute from "./routes/MapRoute";
 import Queue from "./routes/Queue";
 import Settings from "./routes/Settings";
 import VideoFeed from "./routes/VideoFeed";
-import OldcImages from "./routes/OldcImages";
+import OdlcImages from "./routes/OdlcImages";
+import DepthArchive from "./routes/DepthArchive";
 import { selectPreferredTheme } from "./store/slices/appSlice";
 import { updateAircraftStatus } from "./store/slices/dataSlice";
 import { useAppDispatch, useAppSelector } from "./store/store";
 import { socket } from "./api/socket";
 import { parseAndTransformDroneData } from "./types/AircraftStatus";
 import { WebRTCProvider } from "./context/WebRTCContext";
+import { restoreOdlcSession } from "./store/thunks/odlcSessionThunks";
 
 function App() {
     const colorScheme = useAppSelector(selectPreferredTheme);
@@ -86,6 +88,10 @@ function App() {
     );
 
     useEffect(() => {
+        dispatch(restoreOdlcSession());
+    }, [dispatch]);
+
+    useEffect(() => {
         socket.on("drone_update", (data) => {
             try {
                 const aircraftStatus = parseAndTransformDroneData(data);
@@ -120,7 +126,8 @@ function App() {
                         {/* <Route path="/mps-queue" component={MPSQueue} /> */}
                         <Route path="/queue" component={Queue} />
                         <Route path="/webrtc-test" component={VideoFeed} />
-                        <Route path="/oldc-images" component={OldcImages} />
+                        <Route path="/odlc-images" component={OdlcImages} />
+                        <Route path="/depth-archive" component={DepthArchive} />
                     </Switch>
                 </Box>
                 <ErrorSnackbar />

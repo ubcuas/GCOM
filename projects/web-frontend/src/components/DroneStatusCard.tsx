@@ -2,7 +2,6 @@ import { useAppSelector } from "../store/store";
 import { selectAircraftStatus } from "../store/slices/dataSlice";
 import PositionSection from "./DroneStatus/PositionSection";
 import SpeedSection from "./DroneStatus/SpeedSection";
-import TimeStamp from "./DroneStatus/TimeStamp";
 import MPSControlSection from "./DroneStatus/MPSControlSection";
 import StatusIndicators from "./DroneStatus/StatusIndicators";
 import { AircraftStatus } from "../types/AircraftStatus";
@@ -52,7 +51,6 @@ export default function DroneStatusCard() {
             />
             <SpeedSection speed={roundedState.speed} verticalSpeed={roundedState.verticalSpeed} />
             <MPSControlSection />
-            {/* <TimeStamp time={roundedState.timestamp} /> */}
         </Paper>
     );
 }

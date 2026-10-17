@@ -3,6 +3,7 @@ import { Action, Middleware, ThunkAction, configureStore } from "@reduxjs/toolki
 import { useDispatch, useSelector } from "react-redux";
 import dataReducer from "./slices/dataSlice";
 import appReducer from "./slices/appSlice";
+import { odlcSyncMiddleware } from "./middleware/odlcSyncMiddleware";
 
 const localStorageMiddleware: Middleware = (store) => (next) => (action) => {
     const result = next(action);
@@ -22,7 +23,7 @@ const store = configureStore({
         app: appReducer,
         // more TBD
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(localStorageMiddleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(localStorageMiddleware, odlcSyncMiddleware),
 });
 
 export default store;

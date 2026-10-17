@@ -4,17 +4,18 @@ import { CropFree, Flight, MyLocation, Place } from "@mui/icons-material";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import { Layer, LayerProps, Map, MapRef, MapLayerMouseEvent, Marker, Source } from "react-map-gl/maplibre";
-import { selectMapCenterCoords } from "../../store/slices/appSlice";
 import {
     addWaypointToCurrentRoute,
     editWaypointInCurrentRoute,
     selectAircraftStatus,
     selectCurrentRouteWaypoints,
+    selectTakeoffWaypoint,
 } from "../../store/slices/dataSlice";
+import { openSnackbar } from "../../store/slices/appSlice";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import WaypointItem from "../WaypointItem";
 import { roundTo } from "../../utils/routeTo";
-import { MAPTILER_API_KEY } from "../../constants";
+import { MAP_STYLE } from "../../constants";
 import { saveCurrentRouteToBackend } from "../../store/thunks/dataThunks";
 import { WaypointEditState } from "../../types/Waypoint";
 
@@ -31,9 +32,9 @@ type CreationMapProps = {
 };
 
 export default function WaypointCreationMap({ handleDelete, handleEdit, editState }: CreationMapProps) {
-    const coords = useAppSelector(selectMapCenterCoords);
     const clientWPQueue = useAppSelector(selectCurrentRouteWaypoints);
     const aircraftStatus = useAppSelector(selectAircraftStatus);
+    const takeoffWaypoint = useAppSelector(selectTakeoffWaypoint);
     const dispatch = useAppDispatch();
     const mapRef = useRef<MapRef>(null);
     const [selectedWaypoints, setSelectedWaypoints] = useState<boolean[]>(clientWPQueue.map(() => false));
@@ -84,11 +85,22 @@ export default function WaypointCreationMap({ handleDelete, handleEdit, editStat
         const unnamedCount = clientWPQueue.filter((wp) => wp.name?.startsWith("Unnamed Waypoint")).length;
         const newName = `Unnamed Waypoint ${unnamedCount + 1}`;
 
+        const defaultAltitude = takeoffWaypoint?.altitude ?? 30;
+        if (!takeoffWaypoint?.altitude) {
+            dispatch(
+                openSnackbar({
+                    message: "Takeoff altitude unknown. Waypoint altitude set to 30m automatically.",
+                    severity: "warning",
+                }),
+            );
+        }
+
         dispatch(
             addWaypointToCurrentRoute({
                 id: "-1",
                 latitude: roundTo(event.lngLat.lat, 7),
                 longitude: roundTo(event.lngLat.lng, 7),
+                altitude: defaultAltitude,
                 name: newName,
             }),
         );
@@ -108,15 +120,11 @@ export default function WaypointCreationMap({ handleDelete, handleEdit, editStat
         <Map
             ref={mapRef}
             initialViewState={{
-                longitude: coords.long,
-                latitude: coords.lat,
-                zoom: 14,
+                longitude: aircraftStatus.longitude,
+                latitude: aircraftStatus.latitude,
+                zoom: 16,
             }}
-            mapStyle={
-                window.navigator.onLine
-                    ? `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_API_KEY}`
-                    : "./src/mapStyles/osmbright.json"
-            }
+            mapStyle={MAP_STYLE}
             onClick={createNewWaypoint}
             doubleClickZoom={false}
             style={{

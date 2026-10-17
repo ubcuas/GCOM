@@ -20,6 +20,28 @@ export const fetchAllRoutes = createAsyncThunk("data/fetchAllRoutes", async (_, 
     }
 });
 
+export const ensureActiveRoute = createAsyncThunk(
+    "data/ensureActiveRoute",
+    async (_, { dispatch, getState, rejectWithValue }) => {
+        try {
+            const routes = await dispatch(fetchAllRoutes()).unwrap();
+
+            if (routes.length === 0) {
+                const newRoute = await dispatch(createNewRoute("Unnamed Route")).unwrap();
+                dispatch(setCurrentRoute(newRoute));
+                return;
+            }
+
+            const state = getState() as RootState;
+            if (!state.data.currentRouteId) {
+                dispatch(setCurrentRoute(routes[0]));
+            }
+        } catch (error) {
+            return rejectWithValue(extractAxiosError(error));
+        }
+    },
+);
+
 export const fetchRouteById = createAsyncThunk(
     "data/fetchRouteById",
     async (id: number, { dispatch, rejectWithValue }) => {
