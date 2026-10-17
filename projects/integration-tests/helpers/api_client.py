@@ -196,7 +196,7 @@ class APIClient:
         """
         response = requests.get(f"{self.web_backend_url}/api/drone/flightmode")
         response.raise_for_status()
-        return response.json()["mode"]
+        return response.json()["flightmode"]
 
     def set_flight_mode(self, mode: str) -> Response:
         """Set flight mode via web-backend.

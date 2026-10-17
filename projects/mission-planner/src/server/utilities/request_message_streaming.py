@@ -1,3 +1,5 @@
+import math
+
 from pymavlink import mavutil
 
 from server.logging_config import logger
@@ -282,4 +284,10 @@ def set_parameter(handler: MavlinkHandler, param_id, param_value) -> bool:
 
     logger.info(f"Value of parameter {param_id} changed from {before} to {after}")
 
-    return before != after and after == param_value
+    # A parameter that already has the requested value is a successful
+    # idempotent update. MAVLink reports parameter values as floats, so use a
+    # tolerance instead of requiring exact equality.
+    try:
+        return math.isclose(float(after), float(param_value), rel_tol=1e-6, abs_tol=1e-3)
+    except (TypeError, ValueError):
+        return after == param_value
