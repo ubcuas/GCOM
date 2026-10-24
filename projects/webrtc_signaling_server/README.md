@@ -47,20 +47,30 @@ There are two client roles:
 - **`sfu`**: the video source (the SFU, or a mock/streaming node). Only one at a time.
 - **`frontend`**: a GCOM web frontend instance. Any number can connect.
 
-Other roles will be rejected.
+A client declares its role in the Socket.IO `auth` payload when it connects. There is no separate register event:
+
+```javascript
+const socket = io("http://localhost:8081", { auth: { role: "frontend" } });
+```
+
+```python
+await sio.connect("http://localhost:8081", auth={"role": "sfu"})
+```
+
+The server refuses the connection (the client receives `connect_error`) if the role is missing or invalid, or if an `sfu` is already connected.
 
 | Direction | Event | Payload | Meaning |
 |---|---|---|---|
-| client → server | `register` | `{"role": "frontend" \| "sfu"}` | Sent immediately after connecting. Clients that have not registered cannot send `signal`. |
-| server → sfu | `peer_joined` | `{"peer_id": "<sid>"}` | A frontend has registered. The SFU should create a peer connection and send it an offer. When the SFU registers, it receives one `peer_joined` for every frontend already connected. |
+| client → server | `connect` (Socket.IO built-in) | `auth: {"role": "frontend" \| "sfu"}` | Opening the connection. The role is sent in the `auth` payload; see above. |
+| server → sfu | `peer_joined` | `{"peer_id": "<sid>"}` | A frontend has connected. The SFU should create a peer connection and send it an offer. When the SFU connects, it receives one `peer_joined` for every frontend already connected. |
 | server → sfu | `peer_left` | `{"peer_id": "<sid>"}` | A frontend disconnected. The SFU should close that peer connection. |
-| server → frontend | `sfu_status` | `{"available": true \| false}` | Sent when a frontend registers, and to all frontends when the SFU connects or disconnects. |
+| server → frontend | `sfu_status` | `{"available": true \| false}` | Sent when a frontend connects, and to all frontends when the SFU connects or disconnects. |
 | client → server → client | `signal` | `{"to": "<sid>", "type": ..., "data": {...}}` | An offer, answer or ICE candidate (see [Message Format](#message-format)). `to` is required. The server adds `"from": "<sender sid>"` and forwards it to that one peer only. |
 | server → client | `error` | `{"message": "..."}` | The client's last message was rejected. |
 
 Routing rules:
 - `signal` is only forwarded between a frontend and the SFU. Frontends never receive anything about each other.
-- `signal` with a missing/unknown `to`, or sent from an unregistered client, is rejected with `error` by the server.
+- `signal` with a missing/unknown `to`, or sent from a client without a valid role, is rejected with `error` by the server.
 - The SFU always sends the offer; frontends only answer.
 
 ## Message Format

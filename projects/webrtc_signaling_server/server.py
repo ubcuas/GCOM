@@ -8,7 +8,7 @@ and GCOM system by coordinating the exchange of session descriptions
 """
 
 import logging
-from typing import Set
+from typing import Optional, Set
 from aiohttp import web
 import socketio
 
@@ -23,6 +23,7 @@ VALID_MESSAGE_TYPES = {"offer", "answer", "ice-candidate"}
 
 # Track connected clients
 connected_clients: Set[str] = set()
+sfu_sid: Optional[str] = None
 
 # Create Socket.IO server
 sio = socketio.AsyncServer(
@@ -40,6 +41,13 @@ async def connect(sid, environ, auth):
     #Find the role of the connected Client
     role = auth.get("role") if auth else None
     logger.info(f"New {sid} has role {role}")
+
+    global sfu_sid
+    if role == "sfu":
+        if sfu_sid is not None:
+            logger.warning(f"Rejecting {sid}: an SFU is already connected ({sfu_sid})")
+            return False
+        sfu_sid = sid
 
     # Notify existing clients about the new connection
     for client_id in connected_clients:
@@ -63,6 +71,10 @@ async def connect(sid, environ, auth):
 @sio.event
 async def disconnect(sid):
     """Handle client disconnection"""
+    global sfu_sid
+    if sid == sfu_sid:
+        sfu_sid = None
+
     connected_clients.discard(sid)
     logger.info(f"Client disconnected: {sid}")
     logger.info(f"Total connected clients: {len(connected_clients)}")
@@ -75,12 +87,11 @@ async def signal(sid, data):
 
     Expected data format:
     {
+        "to": "<sid>",
         "type": "offer" | "answer" | "ice-candidate",
         "data": <message-specific-data>
     }
     """
-    logger.info(f"Received signal from {sid}: {data}")
-
     # Validate message structure
     if not isinstance(data, dict):
         logger.error(
@@ -88,6 +99,8 @@ async def signal(sid, data):
         )
         await sio.emit("error", {"message": "Invalid message format"}, room=sid)
         return
+    
+    logger.info(f"Received signal from {sid}: {data}")
 
     message_type = data.get("type")
 
@@ -107,27 +120,23 @@ async def signal(sid, data):
         )
         return
 
-    # Get the target peer ID if specified
+    # Get the target peer ID
     target_peer_id = data.get("to")
 
-    if target_peer_id: 
-        # Send to specific peer
-        if target_peer_id in connected_clients:
-            logger.info(f"Forwarding {message_type} from {sid} to {target_peer_id}")
-            # Add "from" field so recipient knows who sent it
-            forwarded_data = {**data, "from": sid}
-            await sio.emit("signal", forwarded_data, room=target_peer_id)
-        else:
-            logger.error(f"Target peer {target_peer_id} not connected")
-            await sio.emit("error", {"message": f"Peer {target_peer_id} not found"}, room=sid)
-    else:
-        # Broadcast to all other connected clients
-        for client_id in connected_clients:
-            if client_id != sid:
-                logger.info(f"Forwarding {message_type} from {sid} to {client_id}")
-                # Add "from" field so recipient knows who sent it
-                forwarded_data = {**data, "from": sid}
-                await sio.emit("signal", forwarded_data, room=client_id)
+    if not target_peer_id:
+        await sio.emit("error", {"message": "signal requires a 'to' field"}, room=sid)
+        return
+    if target_peer_id not in connected_clients:
+        await sio.emit("error", {"message": f"Peer {target_peer_id} not found"}, room=sid)
+        return
+    if sfu_sid not in (sid, target_peer_id):
+        await sio.emit("error", {"message": "frontend to frontend connection is not allowed"}, room=sid)
+        return
+    # Send to specific peer
+    logger.info(f"Forwarding {message_type} from {sid} to {target_peer_id}")
+    # Add "from" field so recipient knows who sent it
+    forwarded_data = {**data, "from": sid}
+    await sio.emit("signal", forwarded_data, room=target_peer_id)
 
 
 async def index(request):
