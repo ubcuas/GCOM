@@ -1,10 +1,15 @@
 import { useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SIGNALING_SERVER_URL } from "../constants";
-import { saveOldcSession } from "../api/endpoints";
-import { OldcImageSchema } from "../schemas/oldc";
-import { useAppDispatch, useAppSelector } from "../store/store";
-import { appendOldcImage, selectOldcImages } from "../store/slices/dataSlice";
+import { OdlcImageSchema } from "../schemas/odlc";
+import { useAppDispatch } from "../store/store";
+import { appendOdlcImageFromAircraft } from "../store/thunks/odlcSessionThunks";
+
+export type DepthResult = {
+    u: number;
+    v: number;
+    depth_m: number | null;
+};
 
 type SignalingStatus = "disconnected" | "connecting" | "connected";
 type PeerStatus = "disconnected" | "connecting" | "connected" | "failed";
@@ -28,6 +33,8 @@ type UseWebRTCConnectionResult = {
     connect: () => void;
     disconnect: () => void;
     isConnecting: boolean;
+    sendCommand: (message: object) => void;
+    lastDepthResult: DepthResult | null;
 };
 
 export function useWebRTCConnection(): UseWebRTCConnectionResult {
@@ -35,17 +42,16 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
     const [peerStatus, setPeerStatus] = useState<PeerStatus>("disconnected");
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [lastDepthResult, setLastDepthResult] = useState<DepthResult | null>(null);
 
     const dispatch = useAppDispatch();
-    const oldcImages = useAppSelector(selectOldcImages);
 
     const socketRef = useRef<Socket | null>(null);
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+    const dataChannelRef = useRef<RTCDataChannel | null>(null);
     const iceCandidateQueueRef = useRef<RTCIceCandidateInit[]>([]);
     const remotePeerIdRef = useRef<string | null>(null);
     const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const sessionIdRef = useRef<string>(crypto.randomUUID());
-    const oldcImagesRef = useRef<ReturnType<typeof selectOldcImages>>(oldcImages);
 
     const createPeerConnection = () => {
         const pc = new RTCPeerConnection({
@@ -149,18 +155,29 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
 
         pc.addEventListener("datachannel", (event) => {
             const channel = event.channel;
-            if (channel.label === "oldc_images") {
+            if (channel.label === "odlc_images") {
+                dataChannelRef.current = channel;
                 channel.addEventListener("message", (msgEvent: MessageEvent<string>) => {
-                    const result = OldcImageSchema.safeParse(JSON.parse(msgEvent.data));
-                    if (!result.success) {
-                        console.error("Invalid OLDC image data received:", result.error);
+                    const parsedMessage = JSON.parse(msgEvent.data) as Record<string, unknown>;
+
+                    if (parsedMessage.action === "DEPTH_RESULT") {
+                        console.log("Depth result received:", parsedMessage);
+                        setLastDepthResult({
+                            u: parsedMessage.u as number,
+                            v: parsedMessage.v as number,
+                            depth_m: parsedMessage.depth_m as number | null,
+                        });
                         return;
                     }
-                    oldcImagesRef.current = [...oldcImagesRef.current, result.data];
-                    dispatch(appendOldcImage(result.data));
-                    saveOldcSession(sessionIdRef.current, oldcImagesRef.current).catch((err) => {
-                        console.error("Failed to save OLDC session:", err);
-                    });
+
+                    console.log("📸 ODLC Image Message Parsed:", parsedMessage);
+                    const result = OdlcImageSchema.safeParse(parsedMessage);
+                    console.log("📸 ODLC Image Validation Result:", result);
+                    if (!result.success) {
+                        console.error("Invalid ODLC image data received:", result.error);
+                        return;
+                    }
+                    dispatch(appendOdlcImageFromAircraft(result.data));
                 });
             }
         });
@@ -284,7 +301,7 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
             clearTimeout(connectionTimeoutRef.current);
         }
 
-        const timeout_seconds = 10;
+        const timeout_seconds = 20;
         connectionTimeoutRef.current = setTimeout(() => {
             console.error(`Connection attempt timed out after ${timeout_seconds} seconds`);
             disconnect();
@@ -348,12 +365,19 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
             peerConnectionRef.current = null;
         }
 
+        dataChannelRef.current = null;
         iceCandidateQueueRef.current = [];
         remotePeerIdRef.current = null;
         setRemoteStream(null);
         setSignalingStatus("disconnected");
         setPeerStatus("disconnected");
         setIsConnecting(false);
+    };
+
+    const sendCommand = (message: object) => {
+        if (dataChannelRef.current?.readyState === "open") {
+            dataChannelRef.current.send(JSON.stringify(message));
+        }
     };
 
     return {
@@ -363,5 +387,7 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
         connect,
         disconnect,
         isConnecting,
+        sendCommand,
+        lastDepthResult,
     };
 }

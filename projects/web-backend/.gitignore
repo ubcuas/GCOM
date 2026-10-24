@@ -2,7 +2,7 @@
 *.pyc
 /.idea
 files/
-oldc_sessions/
+odlc_sessions/
 
 dump.rdb
 **/.DS_Store

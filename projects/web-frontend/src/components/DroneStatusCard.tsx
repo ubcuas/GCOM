@@ -51,7 +51,6 @@ export default function DroneStatusCard() {
             />
             <SpeedSection speed={roundedState.speed} verticalSpeed={roundedState.verticalSpeed} />
             <MPSControlSection />
-            {/* <TimeStamp time={roundedState.timestamp} /> */}
         </Paper>
     );
 }

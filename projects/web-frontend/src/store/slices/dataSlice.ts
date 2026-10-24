@@ -3,7 +3,32 @@ import { AircraftStatus } from "../../types/AircraftStatus";
 import { Route } from "../../types/Route";
 import { RootState } from "../store";
 import { Waypoint } from "../../types/Waypoint";
-import type { OldcImage } from "../../schemas/oldc";
+import type { OdlcImage } from "../../schemas/odlc";
+
+// Per-image annotation: line segment with optional backend-computed distance
+// and deprojected camera-frame endpoints (meters). The 3D points are populated
+// asynchronously alongside `distance` and used to render dX/dY/dZ in meters.
+export type CameraPoint3D = [number, number, number];
+
+export type OdlcImageAnnotation = {
+    id: string;
+    p1: { x: number; y: number };
+    p2: { x: number; y: number };
+    distance?: number;
+    p1_3d?: CameraPoint3D;
+    p2_3d?: CameraPoint3D;
+};
+
+// One ODLC image plus UI state (flag, text, metadata, annotations).
+export type OdlcImageRecord = {
+    id: string;
+    receivedAt: number;
+    image: OdlcImage;
+    flagged: boolean;
+    textInput: string;
+    metadata: string;
+    annotations: OdlcImageAnnotation[];
+};
 
 // DataState holds actual information that is supposed to be aligned with backend.
 type DataState = {
@@ -11,7 +36,8 @@ type DataState = {
     availableRoutes: Route[];
     currentRouteId: number | null;
     takeoffWaypoint: Waypoint | null;
-    oldcImages: OldcImage[];
+    odlcImageRecords: OdlcImageRecord[];
+    selectedOdlcImageId: string | null;
 };
 
 const initialState: DataState = {
@@ -31,7 +57,8 @@ const initialState: DataState = {
     availableRoutes: [],
     currentRouteId: null,
     takeoffWaypoint: null,
-    oldcImages: [],
+    odlcImageRecords: [],
+    selectedOdlcImageId: null,
 };
 
 const dataSlice = createSlice({
@@ -111,11 +138,95 @@ const dataSlice = createSlice({
         setTakeoffWaypoint: (state, action: PayloadAction<Waypoint | null>) => {
             state.takeoffWaypoint = action.payload;
         },
-        appendOldcImage: (state, action: PayloadAction<OldcImage>) => {
-            state.oldcImages.push(action.payload);
+        appendOdlcImage: {
+            reducer: (state, action: PayloadAction<OdlcImageRecord>) => {
+                state.odlcImageRecords.push(action.payload);
+            },
+            prepare: (image: OdlcImage, heading: number) => ({
+                payload: {
+                    id: crypto.randomUUID(),
+                    receivedAt: Date.now(),
+                    image,
+                    flagged: false,
+                    textInput: "",
+                    metadata: `Direction: ${Math.round(heading)}°`,
+                    annotations: [],
+                } as OdlcImageRecord,
+            }),
         },
-        clearOldcImages: (state) => {
-            state.oldcImages = [];
+        loadOdlcImageRecords: (state, action: PayloadAction<OdlcImageRecord[]>) => {
+            state.odlcImageRecords = action.payload;
+            state.selectedOdlcImageId = null;
+        },
+        clearOdlcImages: (state) => {
+            state.odlcImageRecords = [];
+            state.selectedOdlcImageId = null;
+        },
+        setSelectedOdlcImage: (state, action: PayloadAction<string | null>) => {
+            state.selectedOdlcImageId = action.payload;
+        },
+        updateOdlcImageFlag: (state, action: PayloadAction<{ id: string; flagged: boolean }>) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) r.flagged = action.payload.flagged;
+        },
+        updateOdlcImageTextInput: (state, action: PayloadAction<{ id: string; textInput: string }>) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) r.textInput = action.payload.textInput;
+        },
+        updateOdlcImageMetadata: (state, action: PayloadAction<{ id: string; metadata: string }>) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) r.metadata = action.payload.metadata;
+        },
+        updateOdlcImageAnnotations: (
+            state,
+            action: PayloadAction<{ id: string; annotations: OdlcImageAnnotation[] }>,
+        ) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) r.annotations = action.payload.annotations;
+        },
+        addOdlcImageAnnotation: (
+            state,
+            action: PayloadAction<{
+                id: string;
+                p1: { x: number; y: number };
+                p2: { x: number; y: number };
+                annotationId: string;
+            }>,
+        ) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) {
+                r.annotations.push({
+                    id: action.payload.annotationId,
+                    p1: action.payload.p1,
+                    p2: action.payload.p2,
+                });
+            }
+        },
+        undoLastOdlcImageAnnotation: (state, action: PayloadAction<string>) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload);
+            if (r && r.annotations.length > 0) r.annotations.pop();
+        },
+        deleteOdlcImageAnnotation: (state, action: PayloadAction<{ id: string; annotationId: string }>) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            if (r) r.annotations = r.annotations.filter((a) => a.id !== action.payload.annotationId);
+        },
+        setOdlcImageAnnotationMeasurements: (
+            state,
+            action: PayloadAction<{
+                id: string;
+                annotationId: string;
+                distance: number;
+                p1_3d: CameraPoint3D;
+                p2_3d: CameraPoint3D;
+            }>,
+        ) => {
+            const r = state.odlcImageRecords.find((x) => x.id === action.payload.id);
+            const a = r?.annotations.find((x) => x.id === action.payload.annotationId);
+            if (a) {
+                a.distance = action.payload.distance;
+                a.p1_3d = action.payload.p1_3d;
+                a.p2_3d = action.payload.p2_3d;
+            }
         },
     },
 });
@@ -133,8 +244,18 @@ export const {
     editWaypointInCurrentRoute,
     deleteWaypointFromCurrentRoute,
     setTakeoffWaypoint,
-    appendOldcImage,
-    clearOldcImages,
+    appendOdlcImage,
+    loadOdlcImageRecords,
+    clearOdlcImages,
+    setSelectedOdlcImage,
+    updateOdlcImageFlag,
+    updateOdlcImageTextInput,
+    updateOdlcImageMetadata,
+    updateOdlcImageAnnotations,
+    addOdlcImageAnnotation,
+    undoLastOdlcImageAnnotation,
+    deleteOdlcImageAnnotation,
+    setOdlcImageAnnotationMeasurements,
 } = dataSlice.actions;
 
 export const selectAircraftStatus = (state: RootState) => state.data.aircraftStatus;
@@ -145,7 +266,14 @@ export const selectCurrentRouteWaypoints = (state: RootState) =>
     state.data.availableRoutes.find((r) => r.id === state.data.currentRouteId)?.waypoints ?? [];
 
 export const selectTakeoffWaypoint = (state: RootState) => state.data.takeoffWaypoint;
-export const selectOldcImages = (state: RootState) => state.data.oldcImages;
+export const selectOdlcImageRecords = (state: RootState) => state.data.odlcImageRecords;
+export const selectSelectedOdlcImageId = (state: RootState) => state.data.selectedOdlcImageId;
+export const selectSelectedOdlcImageRecord = (state: RootState) => {
+    const id = state.data.selectedOdlcImageId;
+    return id ? state.data.odlcImageRecords.find((r) => r.id === id) ?? null : null;
+};
+export const selectOdlcImageRecordById = (state: RootState, id: string) =>
+    state.data.odlcImageRecords.find((r) => r.id === id) ?? null;
 
 const dataReducer = dataSlice.reducer;
 export default dataReducer;

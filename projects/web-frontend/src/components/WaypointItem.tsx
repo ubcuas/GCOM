@@ -16,7 +16,9 @@ export default function WaypointItem({ waypoint, sx, handleDelete, handleEdit }:
             <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <Typography variant="h6">{waypoint.name || "No Name"}</Typography>
                 <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Typography color="grey">ID#{waypoint.id}</Typography>
+                    <Typography color="grey">
+                        ID#{waypoint.id.length > 4 ? `${waypoint.id.slice(0, 4)}...` : waypoint.id}
+                    </Typography>
                     <Box>
                         {handleDelete && (
                             <IconButton color="warning" size="medium" onClick={handleDelete}>

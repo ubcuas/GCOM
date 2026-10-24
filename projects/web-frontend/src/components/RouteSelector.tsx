@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { selectAvailableRoutes, selectCurrentRoute } from "../store/slices/dataSlice";
-import { fetchAllRoutes, switchToRoute, createNewRoute, deleteRouteById } from "../store/thunks/dataThunks";
+import { ensureActiveRoute, switchToRoute, createNewRoute, deleteRouteById } from "../store/thunks/dataThunks";
 
 export const RouteSelector = () => {
     const dispatch = useAppDispatch();
@@ -25,14 +25,8 @@ export const RouteSelector = () => {
     const [routeToDelete, setRouteToDelete] = useState<number | null>(null);
 
     useEffect(() => {
-        void dispatch(fetchAllRoutes());
+        void dispatch(ensureActiveRoute());
     }, [dispatch]);
-
-    useEffect(() => {
-        if (availableRoutes.length > 0 && !currentRoute) {
-            void dispatch(switchToRoute(availableRoutes[0].id));
-        }
-    }, [availableRoutes, currentRoute, dispatch]);
 
     const handleRouteChange = (routeId: number) => {
         void dispatch(switchToRoute(routeId));
@@ -60,6 +54,7 @@ export const RouteSelector = () => {
             await dispatch(deleteRouteById(routeToDelete));
             setRouteToDelete(null);
             setShowDeleteConfirm(false);
+            void dispatch(ensureActiveRoute());
         }
     };
 
@@ -91,27 +86,21 @@ export const RouteSelector = () => {
                     gap: 2,
                 }}
             >
-                {availableRoutes.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                        No routes available. Create one to get started.
-                    </Typography>
-                ) : (
-                    <FormControl size="small" fullWidth>
-                        <InputLabel id="route-select-label">Select a route</InputLabel>
-                        <Select
-                            labelId="route-select-label"
-                            value={String(currentRoute?.id) ?? ""}
-                            onChange={(e) => handleRouteChange(Number(e.target.value))}
-                            label="Select a route"
-                        >
-                            {availableRoutes.map((route) => (
-                                <MenuItem key={route.id} value={route.id}>
-                                    {route.name} ({route.waypoints.length} waypoints)
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                )}
+                <FormControl size="small" fullWidth>
+                    <InputLabel id="route-select-label">Select a route</InputLabel>
+                    <Select
+                        labelId="route-select-label"
+                        value={currentRoute ? String(currentRoute.id) : ""}
+                        onChange={(e) => handleRouteChange(Number(e.target.value))}
+                        label="Select a route"
+                    >
+                        {availableRoutes.map((route) => (
+                            <MenuItem key={route.id} value={route.id}>
+                                {route.name} ({route.waypoints.length} waypoints)
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
 
                 {currentRoute && (
                     <Box

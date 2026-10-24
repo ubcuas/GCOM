@@ -4,20 +4,18 @@ import { Fragment, useEffect, useRef } from "react";
 import Map, { Layer, LayerProps, MapRef, Marker, Source } from "react-map-gl/maplibre";
 import {
     initializeMpsWaypointMapState,
-    selectMapCenterCoords,
     selectMpsWaypointMapState,
     toggleMpsWaypointMapState,
 } from "../../store/slices/appSlice";
 import { selectAircraftStatus, selectCurrentRouteWaypoints, selectTakeoffWaypoint } from "../../store/slices/dataSlice";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import WaypointItem from "../WaypointItem";
-import { MAPTILER_API_KEY } from "../../constants";
+import { MAP_STYLE } from "../../constants";
 
 export default function MapView() {
     const mpsWaypoints = useAppSelector(selectCurrentRouteWaypoints);
     const mpsWaypointMapState = useAppSelector(selectMpsWaypointMapState);
     const aircraftStatus = useAppSelector(selectAircraftStatus);
-    const coords = useAppSelector(selectMapCenterCoords);
     const takeoffWaypoint = useAppSelector(selectTakeoffWaypoint);
     const dispatch = useAppDispatch();
     const mapRef = useRef<MapRef>(null);
@@ -75,15 +73,11 @@ export default function MapView() {
             <Map
                 ref={mapRef}
                 initialViewState={{
-                    longitude: coords.long,
-                    latitude: coords.lat,
-                    zoom: 10,
+                    longitude: aircraftStatus.longitude,
+                    latitude: aircraftStatus.latitude,
+                    zoom: 16,
                 }}
-                mapStyle={
-                    window.navigator.onLine
-                        ? `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_API_KEY}`
-                        : "http://localhost:8000/api/map-tiles/osmbright"
-                }
+                mapStyle={MAP_STYLE}
                 doubleClickZoom={false}
             >
                 <Box

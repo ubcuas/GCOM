@@ -1,11 +1,11 @@
-import { EditLocationAlt } from "@mui/icons-material";
+import { CloudQueue, EditLocationAlt } from "@mui/icons-material";
 import Home from "@mui/icons-material/Home";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import MapIcon from "@mui/icons-material/Map";
 import Settings from "@mui/icons-material/Settings";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import { Paper, Tab, Tabs } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRoute } from "wouter";
 
 const linkMap: Record<string, number> = {
@@ -13,18 +13,23 @@ const linkMap: Record<string, number> = {
     map: 1,
     queue: 2,
     "webrtc-test": 3,
-    "oldc-images": 4,
-    settings: 5,
+    "odlc-images": 4,
+    "depth-archive": 5,
+    settings: 6,
 };
 
 export default function Nav() {
     const [_match, params] = useRoute("/:route");
-    const [tab, setTab] = useState(() => {
+    const [tab, setTab] = useState<number | false>(() => {
         if (params?.route === undefined) {
             return 0;
         }
-        return linkMap[params?.route];
+        return linkMap[params?.route] ?? false;
     });
+
+    useEffect(() => {
+        setTab(params?.route === undefined ? 0 : linkMap[params.route] ?? false);
+    }, [params?.route]);
 
     const handleNav = (_event: React.SyntheticEvent, newValue: number) => {
         setTab(newValue);
@@ -100,7 +105,15 @@ export default function Nav() {
                         minWidth: 0,
                     }}
                     label={<ImageSearchIcon />}
-                    href="/oldc-images"
+                    href="/odlc-images"
+                    LinkComponent={Link}
+                />
+                <Tab
+                    sx={{
+                        minWidth: 0,
+                    }}
+                    label={<CloudQueue />}
+                    href="/depth-archive"
                     LinkComponent={Link}
                 />
                 <Tab

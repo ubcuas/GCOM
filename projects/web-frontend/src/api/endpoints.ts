@@ -2,8 +2,9 @@ import { Waypoint } from "../types/Waypoint";
 import { Route } from "../types/Route";
 import api from "./api";
 import { WaypointSchema, RouteSchema, PartialWaypointSchema } from "../schemas/waypoint";
-import { OldcSessionPayloadSchema } from "../schemas/oldc";
-import type { OldcImage } from "../schemas/oldc";
+import { OdlcSessionSchema } from "../schemas/odlc";
+import type { OdlcImageRecord } from "../store/slices/dataSlice";
+import type { z } from "zod";
 
 // TODO: Implement new endpoint logic
 
@@ -102,7 +103,78 @@ export const getDroneParameter = async (
     return response.data;
 };
 
-export const saveOldcSession = async (sessionId: string, images: OldcImage[]): Promise<void> => {
-    const payload = OldcSessionPayloadSchema.parse({ sessionId, images });
-    await api.post("/vision/oldc-session/save/", payload);
+export type OdlcSessionPayload = z.infer<typeof OdlcSessionSchema>;
+
+export const getOdlcSession = async (sessionId: string): Promise<OdlcSessionPayload | null> => {
+    try {
+        const response = await api.get(`/vision/odlc-session/${sessionId}/`);
+        return OdlcSessionSchema.parse(response.data);
+    } catch (err: unknown) {
+        if (typeof err === "object" && err !== null && "response" in err) {
+            const status = (err as { response?: { status?: number } }).response?.status;
+            if (status === 404) return null;
+        }
+        throw err;
+    }
+};
+
+export const postOdlcRecord = async (sessionId: string, record: OdlcImageRecord): Promise<void> => {
+    await api.post(`/vision/odlc-session/${sessionId}/records/`, record);
+};
+
+export const patchOdlcRecord = async (
+    sessionId: string,
+    recordId: string,
+    updates: Partial<Pick<OdlcImageRecord, "flagged" | "textInput" | "metadata" | "annotations">>,
+): Promise<void> => {
+    await api.patch(`/vision/odlc-session/${sessionId}/records/${recordId}/`, updates);
+};
+
+/**
+ * Deprojects a 2D pixel coordinate and depth value into a 3D point in camera space.
+ * Calls the backend which implements the RealSense deprojection formula with
+ * hardcoded Brown-Conrady camera intrinsics.
+ *
+ * @param pixel - [x, y] pixel coordinates in the image (column, row)
+ * @param depth - Depth at the pixel in meters
+ * @returns A 3D point [x, y, z] in camera coordinate space, in meters
+ */
+export const deprojectPixel = async (
+    pixel: [number, number],
+    depth: number,
+): Promise<{ point: [number, number, number] }> => {
+    const response = await api.post<{ point: [number, number, number] }>("/vision/deproject-pixel/", {
+        pixel,
+        depth,
+    });
+    return response.data;
+};
+
+/**
+ * List archive dates (newest first) for which any captured ODLC content lives
+ * in the bucket. The backend enumerates the `odlc/<YYYY-MM-DD>/` prefixes.
+ */
+export const getArchiveDates = async (): Promise<unknown> => {
+    const response = await api.get("/vision/archive/dates/");
+    return response.data;
+};
+
+/**
+ * List every archived record for the given `YYYY-MM-DD` date. Each entry
+ * includes the bucket-relative `colorKey` / `depthKey` plus any sidecar
+ * metadata (bounding box, confidence, color detection, yaw, receivedAt).
+ */
+export const getArchiveRecordsForDate = async (date: string): Promise<unknown> => {
+    const response = await api.get(`/vision/archive/dates/${encodeURIComponent(date)}/`);
+    return response.data;
+};
+
+/**
+ * Build the absolute backend URL for streaming a single archive object. The
+ * `key` is interpreted relative to the `odlc/` archive prefix on the server.
+ */
+export const getArchiveObjectFetchUrl = (key: string): string => {
+    const base = api.defaults.baseURL ?? "";
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return `${normalizedBase}vision/archive/object/?key=${encodeURIComponent(key)}`;
 };

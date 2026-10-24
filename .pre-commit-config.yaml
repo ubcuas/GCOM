@@ -1,37 +1,37 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
-    -   id: check-added-large-files
-        args: ['--maxkb=500']
-    -   id: check-merge-conflict
-    -   id: debug-statements
-    -   id: check-case-conflict
--   repo: https://github.com/astral-sh/ruff-pre-commit
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-case-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4
     hooks:
-    -   id: ruff
-        args: [ --fix ]
-    -   id: ruff-format
--   repo: local
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
     hooks:
-    -   id: eslint
+      - id: eslint
         name: eslint
         entry: bash -c 'cd projects/web-frontend && npm run lint'
         language: system
         files: projects/web-frontend/.*\.[jt]sx?$
         pass_filenames: false
-    -   id: generate-web-backend-api-spec
+      - id: generate-web-backend-api-spec
         name: Generate Web Backend API Spec
-        entry: bash -c 'cd projects/web-backend && venv/bin/python src/manage.py spectacular --file api_spec.yaml --validate'
+        entry: bash -c 'cd projects/web-backend && .venv/bin/python src/manage.py spectacular --file api_spec.yaml --validate'
         language: system
         files: ^projects/web-backend/
         pass_filenames: false
-    -   id: generate-mp-api-spec
+      - id: generate-mp-api-spec
         name: Generate Mission Planner API Spec
-        entry: bash -c 'cd projects/mission-planner && venv/bin/python generate_spec.py'
+        entry: bash -c 'cd projects/mission-planner && .venv/bin/python generate_spec.py'
         language: system
         files: ^projects/mission-planner/
         pass_filenames: false

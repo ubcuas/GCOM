@@ -155,3 +155,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
+AWS_S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
