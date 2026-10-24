@@ -322,7 +322,7 @@ class HTTP_Server:
 
             except Exception as e:
                 logger.error(f"Prepare takeoff failed - {type(e).__name__}: {str(e)}")
-                return "Prepare takeoff failed - unknown error", 500
+                return f"Prepare takeoff failed - {type(e).__name__}: {str(e)}", 500
 
         @app.route("/arm", methods=["PUT"])
         def put_arm_disarm_drone():

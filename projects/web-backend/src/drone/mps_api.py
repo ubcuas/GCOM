@@ -119,6 +119,11 @@ class DroneApiClient:
         )
 
     @staticmethod
+    def get_flightmode():
+        # Get the flightmode result from DroneApiClient._fetch_from_mission_planner("status", method="GET")
+        return DroneApiClient._fetch_from_mission_planner("status", method="GET").json()["flightmode"]
+
+    @staticmethod
     def get_parameter(param_id):
         return DroneApiClient._fetch_from_mission_planner(
             f"parameters/{param_id}", method="GET"

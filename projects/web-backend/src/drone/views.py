@@ -106,13 +106,10 @@ def land(request):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def post_rtl(request):
-    try:
-        response = DroneApiClient.post_rtl()
-        return HttpResponse(status=response.status_code)
-    except (KeyError, ValueError, TypeError):
-        return JsonResponse({"error": "Invalid input"}, status=400)
+    response = DroneApiClient.post_rtl()
+    return HttpResponse(status=response.status_code)
 
 
 @require_http_methods(["GET"])
@@ -200,8 +197,22 @@ def diversion(request):
 
 
 @csrf_exempt
-@require_http_methods(["PUT"])
+@require_http_methods(["GET", "PUT"])
 def flightmode(request):
+    if request.method == "GET":
+        response = DroneApiClient.get_current_status()
+        if response.status_code >= 400:
+            return JsonResponse(
+                {"error": "Mission-planner error", "details": response.text},
+                status=response.status_code,
+            )
+
+        status = response.json()
+        return JsonResponse(
+            {"flightmode": status.get("flightmode")},
+            status=response.status_code,
+        )
+
     try:
         data = json.loads(request.body)
         mode = data.get("mode")

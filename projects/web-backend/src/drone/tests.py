@@ -1,7 +1,29 @@
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import Client, TestCase
+from unittest.mock import Mock, patch
 
 from .models import DroneSingleton, DroneTelemetry
+
+
+class DroneControlEndpointTest(TestCase):
+    def test_get_flightmode_returns_current_mode(self):
+        response = Mock(status_code=200)
+        response.json.return_value = {"flightmode": "GUIDED"}
+
+        with patch("drone.views.DroneApiClient.get_current_status", return_value=response):
+            result = Client().get("/api/drone/flightmode")
+
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json(), {"flightmode": "GUIDED"})
+
+    def test_get_rtl_initiates_rtl(self):
+        response = Mock(status_code=200)
+
+        with patch("drone.views.DroneApiClient.post_rtl", return_value=response) as post_rtl:
+            result = Client().get("/api/drone/rtl")
+
+        self.assertEqual(result.status_code, 200)
+        post_rtl.assert_called_once_with()
 
 
 class DroneTelemetryModelTest(TestCase):

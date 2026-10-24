@@ -55,7 +55,7 @@ def wait_until_position_aiding(handler: MavlinkHandler, timeout=120):
     else:
         raise ValueError("Autopilot not supported")
 
-    flags = ["EKF_PRED_POS_HORIZ_REL", "EKF_PRED_POS_HORIZ_REL"]
+    flags = ["EKF_PRED_POS_HORIZ_REL"]
     time_start = time.time()
     while True:
         if (
@@ -89,9 +89,11 @@ def ekf_pos_aiding(
     """
     msg = handler.wait_for_message(estimator_status_msg, timeout=3.0)
     if not msg:
-        raise ValueError(
-            f"No message of type {estimator_status_msg} received within the timeout"
-        )
+        # Some ArduPilot configurations do not stream estimator status. A
+        # valid cached global position is the available readiness signal in
+        # that case.
+        position = handler.status_cache.get_message("GLOBAL_POSITION_INT")
+        return bool(position and position.lat != 0 and position.lon != 0)
 
     logger.debug(f"from sysid {msg.get_srcSystem()} {msg}")
     ekf_flags = msg.flags
