@@ -12,8 +12,5 @@ projects/web-backend/src/db.sqlite3-journal
 /.idea
 *.rdb
 
+*mav*
 **/.venv
-
-mav.parm
-mav.tlog
-mav.tlog.raw

@@ -6,3 +6,5 @@ odlc_sessions/
 
 dump.rdb
 **/.DS_Store
+
+*venv*

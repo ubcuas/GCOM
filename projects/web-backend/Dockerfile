@@ -1,33 +1,18 @@
-FROM python:3.12
+FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y \
-    supervisor \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Prevent Python from buffering stdout/stderr and writing .pyc files
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-RUN mkdir -p /src /var/log/supervisor
+WORKDIR /backend
 
-WORKDIR /src
+COPY requirements.txt .
 
-COPY ./src /src
-COPY pyproject.toml /src
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip3 install poetry \
-    && poetry config virtualenvs.create false \
-    && poetry install --only main
-
-RUN cat <<EOF > /etc/supervisor/supervisord.conf
-[supervisord]
-nodaemon=true
-
-[program:server]
-command=poetry run python server.py
-directory=/src
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/supervisor/server_stdout.log
-stderr_logfile=/var/log/supervisor/server_stderr.log
-EOF
-
+COPY . .
+# RUN chmod +x /src/server.py
+# CMD ["source", "venv/bin/activate", "&&", 
+CMD ["python", "src/server.py"]
 EXPOSE 8000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]

@@ -26,3 +26,16 @@ Learn more about each project from their individual readmes:
 - **[web-frontend](projects/web-frontend/README.md)** - User interface for operators
 - **[web-backend](projects/web-backend/README.md)** - Central server coordinating data flow and business logic
 - **[mission-planner](projects/mission-planner/README.md)** - Low-level drone communication and flight operations
+
+## Running with Docker Compose
+
+The default SITL image targets amd64. On an ARM64 host, select the ARM image
+and platform when starting the stack:
+
+```bash
+UASITL_IMAGE=ubcuas/uasitl:copter-arm-4.5.5 \
+UASITL_PLATFORM=linux/arm64 \
+docker compose up -d
+```
+
+These variables can also be placed in a `.env` file for repeated local use.

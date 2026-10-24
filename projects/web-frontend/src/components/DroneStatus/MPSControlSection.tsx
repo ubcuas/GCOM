@@ -48,7 +48,7 @@ export default function MPSControlSection() {
                     required
                     id="takeoffAltitude"
                     type="number"
-                    label="Take Off Altitude (m)" // Relative to drone start altitude
+                    label="Take Off Relative Altitude (m)" // Relative to drone start altitude
                     onChange={(e) => {
                         setTakeoffAltitude(parseFloat(e.target.value));
                     }}
