@@ -131,7 +131,6 @@ function createArchiveImage(entry: ArchiveRecord, colorBase64: string, depthBase
     };
 }
 
-
 function getArchiveItemLabel(record: OdlcImageRecord): string {
     const entryId = record.id.split(":").slice(1).join(":") || record.id;
     return `${new Date(record.receivedAt).toLocaleTimeString()} · ${entryId}`;
@@ -783,7 +782,9 @@ export default function DepthArchive() {
                                         )}
                                         <Typography variant="caption" sx={{ color: "#fff", fontFamily: "monospace" }}>
                                             {selectedRecord.metadata.trim() ||
-                                                `${selectedRecord.image.yaw_deg!.toFixed(1)}° ${yawToCompass(selectedRecord.image.yaw_deg!)}`}
+                                                `${selectedRecord.image.yaw_deg!.toFixed(1)}° ${yawToCompass(
+                                                    selectedRecord.image.yaw_deg!,
+                                                )}`}
                                         </Typography>
                                     </Box>
                                 )}

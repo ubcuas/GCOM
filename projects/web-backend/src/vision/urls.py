@@ -8,8 +8,10 @@ from .views import (
     get_archive_dates,
     get_archive_object,
     get_archive_records_for_date,
+    get_latest_odlc_session,
     get_odlc_session,
-    patch_odlc_record,
+    get_odlc_session_index,
+    odlc_record,
     post_odlc_record,
 )
 
@@ -19,7 +21,15 @@ router.register(r"groundobject", GroundObjectViewset, basename="groundobject")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path(
+        "odlc-session/latest/", get_latest_odlc_session, name="get_latest_odlc_session"
+    ),
     path("odlc-session/<str:session_id>/", get_odlc_session, name="get_odlc_session"),
+    path(
+        "odlc-session/<str:session_id>/index/",
+        get_odlc_session_index,
+        name="get_odlc_session_index",
+    ),
     path(
         "odlc-session/<str:session_id>/records/",
         post_odlc_record,
@@ -27,8 +37,8 @@ urlpatterns = [
     ),
     path(
         "odlc-session/<str:session_id>/records/<str:record_id>/",
-        patch_odlc_record,
-        name="patch_odlc_record",
+        odlc_record,
+        name="odlc_record",
     ),
     path("deproject-pixel/", deproject_pixel, name="deproject_pixel"),
     path("archive/dates/", get_archive_dates, name="get_archive_dates"),

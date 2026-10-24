@@ -37,7 +37,11 @@ import {
 } from "../store/slices/dataSlice";
 import ImageAnnotationOverlay from "../components/ImageAnnotationOverlay";
 import SessionIdDisplay from "../components/SessionIdDisplay";
-import { syncOdlcImageToBackend, appendOdlcImageFromAircraft } from "../store/thunks/odlcSessionThunks";
+import {
+    syncOdlcImageToBackend,
+    appendOdlcImageFromAircraft,
+    pollOdlcSession,
+} from "../store/thunks/odlcSessionThunks";
 import type { OdlcImageRecord } from "../store/slices/dataSlice";
 import { classifyOdlcColor, ODLC_COLORS, ODLC_COLOR_LABELS } from "../utils/odlcColorGroup";
 import type { OdlcColor, RGB } from "../utils/odlcColorGroup";
@@ -147,6 +151,7 @@ export default function OdlcImages() {
     const [flaggedOnly, setFlaggedOnly] = useState(false);
     const [sortBy, setSortBy] = useState<SortBy>("recency");
     const [colorFilter, setColorFilter] = useState<ColorFilter>("all");
+    const [autoRefresh, setAutoRefresh] = useState(false);
     const [highlightedAnnotationId, setHighlightedAnnotationId] = useState<string | null>(null);
 
     const dispatch = useAppDispatch();
@@ -164,6 +169,27 @@ export default function OdlcImages() {
     // Callback ref: fires on attach/detach so we measure correctly even when
     // the list container isn't in the DOM on first render (e.g. empty state
     // then session restore populates records and mounts the main layout).
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        if (autoRefresh) {
+            pollIntervalRef.current = setInterval(() => {
+                dispatch(pollOdlcSession());
+            }, 1000);
+        } else {
+            if (pollIntervalRef.current !== null) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        }
+        return () => {
+            if (pollIntervalRef.current !== null) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+    }, [autoRefresh, dispatch]);
+
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
     const listContainerCallbackRef = useCallback((el: HTMLDivElement | null) => {
         resizeObserverRef.current?.disconnect();
@@ -192,10 +218,12 @@ export default function OdlcImages() {
         [filteredSorted, clampedPage, pageSize],
     );
 
-    // Reset to first page when filters or pageSize change
+    // Reset to first page when filters change. Do not reset when pageSize changes:
+    // pageSize is driven by ResizeObserver and can flicker across row-count thresholds
+    // (scrollbar, flex layout), which was sending users back to page 1 while paging.
     useEffect(() => {
         setPage(0);
-    }, [flaggedOnly, sortBy, colorFilter, pageSize]);
+    }, [flaggedOnly, sortBy, colorFilter]);
 
     /** Flagged records in current filter/sort order (export includes only these). */
     const flaggedForExport = useMemo(() => filteredSorted.filter((r) => r.flagged), [filteredSorted]);
@@ -293,28 +321,6 @@ export default function OdlcImages() {
         });
     }, [selectedRecord]);
 
-    if (records.length === 0) {
-        return (
-            <Box sx={{ p: 3, width: "100%" }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
-                    <Typography variant="h5" fontWeight="bold">
-                        ODLC Images
-                    </Typography>
-                    <SessionIdDisplay />
-                </Stack>
-                <Paper sx={{ p: 4, textAlign: "center" }}>
-                    <Typography color="text.secondary">No ODLC images captured yet.</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                        Connect to a WebRTC stream to receive images.
-                    </Typography>
-                    <Button variant="contained" size="small" onClick={loadSampleImages}>
-                        Load sample images
-                    </Button>
-                </Paper>
-            </Box>
-        );
-    }
-
     return (
         <Box sx={{ p: 3, width: "100%", display: "flex", flexDirection: "column", height: "100%" }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
@@ -341,6 +347,12 @@ export default function OdlcImages() {
                         Filters
                     </Typography>
                     <Stack spacing={1} sx={{ mb: 2 }}>
+                        <FormControlLabel
+                            control={
+                                <Switch size="small" checked={autoRefresh} onChange={(_, v) => setAutoRefresh(v)} />
+                            }
+                            label={<Typography variant="body2">Auto-refresh</Typography>}
+                        />
                         <FormControlLabel
                             control={
                                 <Switch size="small" checked={flaggedOnly} onChange={(_, v) => setFlaggedOnly(v)} />
@@ -493,7 +505,17 @@ export default function OdlcImages() {
                             position: "relative",
                         }}
                     >
-                        {selectedRecord ? (
+                        {records.length === 0 ? (
+                            <Stack alignItems="center" spacing={1}>
+                                <Typography color="text.secondary">No ODLC images captured yet.</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    Connect to a WebRTC stream to receive images.
+                                </Typography>
+                                <Button variant="contained" size="small" onClick={loadSampleImages} sx={{ mt: 1 }}>
+                                    Load sample images
+                                </Button>
+                            </Stack>
+                        ) : selectedRecord ? (
                             <>
                                 <ImageAnnotationOverlay
                                     imageSrc={`data:image/jpeg;base64,${selectedRecord.image.image_data}`}

@@ -162,6 +162,14 @@ const dataSlice = createSlice({
             state.odlcImageRecords = [];
             state.selectedOdlcImageId = null;
         },
+        mergeOdlcImageRecords: (state, action: PayloadAction<OdlcImageRecord[]>) => {
+            const existingIds = new Set(state.odlcImageRecords.map((r) => r.id));
+            for (const record of action.payload) {
+                if (!existingIds.has(record.id)) {
+                    state.odlcImageRecords.push(record);
+                }
+            }
+        },
         setSelectedOdlcImage: (state, action: PayloadAction<string | null>) => {
             state.selectedOdlcImageId = action.payload;
         },
@@ -247,6 +255,7 @@ export const {
     appendOdlcImage,
     loadOdlcImageRecords,
     clearOdlcImages,
+    mergeOdlcImageRecords,
     setSelectedOdlcImage,
     updateOdlcImageFlag,
     updateOdlcImageTextInput,

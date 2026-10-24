@@ -15,9 +15,6 @@ from .storage import (
     download_archive_object,
     list_archive_dates,
     list_archive_records,
-    upload_odlc_depth,
-    upload_odlc_image,
-    upload_odlc_metadata,
 )
 
 ODLC_SESSIONS_DIR = Path(__file__).resolve().parent.parent.parent / "odlc_sessions"
@@ -27,6 +24,26 @@ _PATCHABLE_FIELDS = {"flagged", "textInput", "metadata", "annotations"}
 
 def _session_path(session_id: str) -> Path:
     return ODLC_SESSIONS_DIR / f"{session_id}.json"
+
+
+def _index_path(session_id: str) -> Path:
+    return ODLC_SESSIONS_DIR / f"{session_id}.index.json"
+
+
+def _read_index(session_id: str) -> list[dict] | None:
+    path = _index_path(session_id)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text())
+
+
+def _write_index(session_id: str, records: list[dict]) -> None:
+    entries = [
+        {"id": r["id"], "receivedAt": r.get("receivedAt", 0)}
+        for r in records
+        if r.get("id") and r.get("receivedAt")
+    ]
+    _index_path(session_id).write_text(json.dumps(entries))
 
 
 def _read_session(session_id: str) -> dict | None:
@@ -39,6 +56,7 @@ def _read_session(session_id: str) -> dict | None:
 def _write_session(session_id: str, data: dict) -> None:
     ODLC_SESSIONS_DIR.mkdir(exist_ok=True)
     _session_path(session_id).write_text(json.dumps(data))
+    _write_index(session_id, data.get("records", []))
 
 
 def _empty_session(session_id: str) -> dict:
@@ -91,15 +109,82 @@ def deproject_pixel(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+def get_latest_odlc_session(request):
+    try:
+        session_files = [
+            p
+            for p in ODLC_SESSIONS_DIR.glob("*.json")
+            if not p.name.endswith(".index.json")
+        ]
+        if not session_files:
+            return JsonResponse({"error": "No sessions found"}, status=404)
+        latest = max(session_files, key=lambda p: p.stat().st_mtime)
+        session_id = latest.stem
+        return JsonResponse({"sessionId": session_id})
+    except Exception as e:
+        print(f"Error finding latest ODLC session: {e}")
+        return JsonResponse(
+            {"error": "Internal server error", "details": str(e)}, status=500
+        )
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
 def get_odlc_session(request, session_id: str):
     try:
         with _SESSION_LOCK:
             data = _read_session(session_id)
         if data is None:
             return JsonResponse({"error": "Session not found"}, status=404)
+        since_raw = request.GET.get("since")
+        if since_raw is not None:
+            try:
+                since = int(since_raw)
+                data = {
+                    **data,
+                    "records": [
+                        r
+                        for r in data.get("records", [])
+                        if r.get("receivedAt", 0) > since
+                    ],
+                }
+            except ValueError:
+                return JsonResponse({"error": "Invalid 'since' parameter"}, status=400)
         return JsonResponse(data)
     except Exception as e:
         print(f"Error reading ODLC session: {e}")
+        return JsonResponse(
+            {"error": "Internal server error", "details": str(e)}, status=500
+        )
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_odlc_session_index(request, session_id: str):
+    try:
+        with _SESSION_LOCK:
+            index = _read_index(session_id)
+            if index is None:
+                data = _read_session(session_id)
+                if data is None:
+                    return JsonResponse({"error": "Session not found"}, status=404)
+                records = data.get("records", [])
+                _write_index(session_id, records)
+                index = [
+                    {"id": r["id"], "receivedAt": r.get("receivedAt", 0)}
+                    for r in records
+                    if r.get("id") and r.get("receivedAt")
+                ]
+        since_raw = request.GET.get("since")
+        if since_raw is not None:
+            try:
+                since = int(since_raw)
+                index = [e for e in index if e.get("receivedAt", 0) > since]
+            except ValueError:
+                return JsonResponse({"error": "Invalid 'since' parameter"}, status=400)
+        return JsonResponse({"sessionId": session_id, "records": index})
+    except Exception as e:
+        print(f"Error reading ODLC session index: {e}")
         return JsonResponse(
             {"error": "Internal server error", "details": str(e)}, status=500
         )
@@ -113,39 +198,39 @@ def post_odlc_record(request, session_id: str):
         if not isinstance(record, dict) or not record.get("id"):
             return JsonResponse({"error": "Invalid record"}, status=400)
 
-        image = record.get("image") or {}
-        received_at = record.get("receivedAt")
-        image_b64 = image.get("image_data")
-        depth_b64 = image.get("depth_data")
-        if image_b64 and not image.get("image_url"):
-            try:
-                record["image"]["image_url"] = upload_odlc_image(
-                    record["id"], image_b64, received_at
-                )
-            except Exception as e:
-                print(f"S3 image upload failed for record {record['id']}: {e}")
-        if depth_b64 and not image.get("depth_url"):
-            try:
-                record["image"]["depth_url"] = upload_odlc_depth(
-                    record["id"], depth_b64, received_at
-                )
-            except Exception as e:
-                print(f"S3 depth upload failed for record {record['id']}: {e}")
-        if image:
-            try:
-                upload_odlc_metadata(
-                    record["id"],
-                    received_at,
-                    {
-                        "boundingBox": image.get("bounding_box"),
-                        "confidenceLevel": image.get("confidence_level"),
-                        "yawDeg": image.get("yaw_deg"),
-                        "colorDetection": image.get("color_detection"),
-                        "heading": record.get("metadata"),
-                    },
-                )
-            except Exception as e:
-                print(f"S3 metadata upload failed for record {record['id']}: {e}")
+        # image = record.get("image") or {}
+        # received_at = record.get("receivedAt")
+        # image_b64 = image.get("image_data")
+        # depth_b64 = image.get("depth_data")
+        # if image_b64 and not image.get("image_url"):
+        #     try:
+        #         record["image"]["image_url"] = upload_odlc_image(
+        #             record["id"], image_b64, received_at
+        #         )
+        #     except Exception as e:
+        #         print(f"S3 image upload failed for record {record['id']}: {e}")
+        # if depth_b64 and not image.get("depth_url"):
+        #     try:
+        #         record["image"]["depth_url"] = upload_odlc_depth(
+        #             record["id"], depth_b64, received_at
+        #         )
+        #     except Exception as e:
+        #         print(f"S3 depth upload failed for record {record['id']}: {e}")
+        # if image:
+        #     try:
+        #         upload_odlc_metadata(
+        #             record["id"],
+        #             received_at,
+        #             {
+        #                 "boundingBox": image.get("bounding_box"),
+        #                 "confidenceLevel": image.get("confidence_level"),
+        #                 "yawDeg": image.get("yaw_deg"),
+        #                 "colorDetection": image.get("color_detection"),
+        #                 "heading": record.get("metadata"),
+        #             },
+        #         )
+        #     except Exception as e:
+        #         print(f"S3 metadata upload failed for record {record['id']}: {e}")
 
         with _SESSION_LOCK:
             data = _read_session(session_id) or _empty_session(session_id)
@@ -221,9 +306,7 @@ def get_archive_object(request):
     """
     key = (request.GET.get("key") or "").strip()
     if not key:
-        return JsonResponse(
-            {"error": "Missing 'key' query parameter"}, status=400
-        )
+        return JsonResponse({"error": "Missing 'key' query parameter"}, status=400)
     try:
         body, content_type = download_archive_object(key)
     except Exception as e:
@@ -238,8 +321,26 @@ def get_archive_object(request):
 
 
 @csrf_exempt
-@require_http_methods(["PATCH"])
-def patch_odlc_record(request, session_id: str, record_id: str):
+@require_http_methods(["GET", "PATCH"])
+def odlc_record(request, session_id: str, record_id: str):
+    if request.method == "GET":
+        try:
+            with _SESSION_LOCK:
+                data = _read_session(session_id)
+            if data is None:
+                return JsonResponse({"error": "Session not found"}, status=404)
+            record = next(
+                (r for r in data.get("records", []) if r.get("id") == record_id), None
+            )
+            if record is None:
+                return JsonResponse({"error": "Record not found"}, status=404)
+            return JsonResponse(record)
+        except Exception as e:
+            print(f"Error reading ODLC record: {e}")
+            return JsonResponse(
+                {"error": "Internal server error", "details": str(e)}, status=500
+            )
+
     try:
         updates = json.loads(request.body)
         if not isinstance(updates, dict):

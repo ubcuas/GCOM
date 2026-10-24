@@ -1,6 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getOdlcSession, patchOdlcRecord } from "../../api/endpoints";
-import { appendOdlcImage, clearOdlcImages, loadOdlcImageRecords } from "../slices/dataSlice";
+import {
+    getLatestOdlcSessionId,
+    getOdlcSession,
+    getNewOdlcRecordIds,
+    getOdlcRecord,
+    patchOdlcRecord,
+} from "../../api/endpoints";
+import { appendOdlcImage, clearOdlcImages, loadOdlcImageRecords, mergeOdlcImageRecords } from "../slices/dataSlice";
 import { setOdlcSessionId } from "../slices/appSlice";
 import { AppDispatch, RootState } from "../store";
 import type { OdlcImage } from "../../schemas/odlc";
@@ -40,20 +46,43 @@ export const newOdlcSession = createAsyncThunk<void, void, { state: RootState }>
     },
 );
 
+export const pollOdlcSession = createAsyncThunk<void, void, { state: RootState }>(
+    "odlcSession/poll",
+    async (_, { dispatch, getState }) => {
+        const state = getState();
+        const sessionId = state.app.odlcSessionId;
+        if (!sessionId) return;
+        const records = state.data.odlcImageRecords;
+        const since = records.length > 0 ? Math.max(...records.map((r) => r.receivedAt)) : 0;
+        try {
+            const newIds = await getNewOdlcRecordIds(sessionId, since);
+            if (newIds.length === 0) return;
+            const fetched = await Promise.all(newIds.map((id) => getOdlcRecord(sessionId, id)));
+            const valid = fetched.filter((r): r is NonNullable<typeof r> => r !== null);
+            if (valid.length > 0) {
+                dispatch(mergeOdlcImageRecords(valid));
+            }
+        } catch (err) {
+            console.error("Failed to poll ODLC session:", err);
+        }
+    },
+);
+
 export const restoreOdlcSession = createAsyncThunk<void, void, { state: RootState }>(
     "odlcSession/restore",
-    async (_, { dispatch, getState }) => {
-        const sessionId = getState().app.odlcSessionId;
-        if (!sessionId) {
-            dispatch(newOdlcSession());
-            return;
-        }
+    async (_, { dispatch }) => {
         try {
+            const sessionId = await getLatestOdlcSessionId();
+            if (sessionId === null) {
+                dispatch(newOdlcSession());
+                return;
+            }
             const session = await getOdlcSession(sessionId);
             if (session === null) {
                 dispatch(newOdlcSession());
                 return;
             }
+            dispatch(setOdlcSessionId(sessionId));
             dispatch(loadOdlcImageRecords(session.records));
         } catch (err) {
             console.error("Failed to restore ODLC session:", err);

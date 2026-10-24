@@ -170,7 +170,6 @@ export function useWebRTCConnection(): UseWebRTCConnectionResult {
                         return;
                     }
 
-                    console.log("📸 ODLC Image Message Parsed:", parsedMessage);
                     const result = OdlcImageSchema.safeParse(parsedMessage);
                     console.log("📸 ODLC Image Validation Result:", result);
                     if (!result.success) {
