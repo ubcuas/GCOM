@@ -14,3 +14,4 @@ projects/web-backend/src/db.sqlite3-journal
 
 *mav*
 **/.venv
+**/venv

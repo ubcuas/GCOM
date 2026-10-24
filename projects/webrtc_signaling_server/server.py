@@ -34,8 +34,13 @@ sio.attach(app)
 
 
 @sio.event
-async def connect(sid, environ):
+async def connect(sid, environ, auth):
     """Handle client connection"""
+  
+    #Find the role of the connected Client
+    role = auth.get("role") if auth else None
+    logger.info(f"New {sid} has role {role}")
+
     # Notify existing clients about the new connection
     for client_id in connected_clients:
         logger.info(f"Notifying {client_id} about new peer {sid}")
@@ -105,7 +110,7 @@ async def signal(sid, data):
     # Get the target peer ID if specified
     target_peer_id = data.get("to")
 
-    if target_peer_id:
+    if target_peer_id: 
         # Send to specific peer
         if target_peer_id in connected_clients:
             logger.info(f"Forwarding {message_type} from {sid} to {target_peer_id}")
