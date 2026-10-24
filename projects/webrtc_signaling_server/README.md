@@ -14,7 +14,7 @@ This server facilitates the exchange of WebRTC session descriptions (SDP) and IC
 
 1. Navigate to the signaling server directory:
 ```bash
-cd infrastructure/webrtc_signaling_server
+cd projects/webrtc_signaling_server
 ```
 
 2. Install dependencies:
@@ -47,6 +47,8 @@ There are two client roles:
 - **`sfu`**: the video source (the SFU, or a mock/streaming node). Only one at a time.
 - **`frontend`**: a GCOM web frontend instance. Any number can connect.
 
+Other roles will be rejected.
+
 | Direction | Event | Payload | Meaning |
 |---|---|---|---|
 | client → server | `register` | `{"role": "frontend" \| "sfu"}` | Sent immediately after connecting. Clients that have not registered cannot send `signal`. |
@@ -58,7 +60,7 @@ There are two client roles:
 
 Routing rules:
 - `signal` is only forwarded between a frontend and the SFU. Frontends never receive anything about each other.
-- `signal` with a missing/unknown `to`, or `to` from an unregistered client is rejected with `error` by the server.
+- `signal` with a missing/unknown `to`, or sent from an unregistered client, is rejected with `error` by the server.
 - The SFU always sends the offer; frontends only answer.
 
 ## Message Format
@@ -67,7 +69,7 @@ Clients should send signaling messages in the following format:
 
 ```json
 {
-  "to": { ... },
+  "to": "<sid>",
   "type": "offer" | "answer" | "ice-candidate",
   "data": { ... }
 }
@@ -84,6 +86,7 @@ Clients should send signaling messages in the following format:
 **Offer:**
 ```json
 {
+  "to": "<sid>",
   "type": "offer",
   "data": {
     "sdp": "...",
@@ -95,6 +98,7 @@ Clients should send signaling messages in the following format:
 **Answer:**
 ```json
 {
+  "to": "<sid>",
   "type": "answer",
   "data": {
     "sdp": "...",
@@ -106,6 +110,7 @@ Clients should send signaling messages in the following format:
 **ICE Candidate:**
 ```json
 {
+  "to": "<sid>",
   "type": "ice-candidate",
   "data": {
     "candidate": "...",
@@ -120,7 +125,7 @@ Clients should send signaling messages in the following format:
 Clients connect using Socket.IO protocol. Example using JavaScript:
 
 ```javascript
-const socket = io('http://localhost:8080');
+const socket = io('http://localhost:8081');
 
 socket.on('connect', () => {
   console.log('Connected to signaling server');
@@ -150,14 +155,14 @@ socket.emit('signal', {
 
 ## Health Check
 
-A simple HTTP endpoint is available at `http://localhost:8080/` for health checks.
+A simple HTTP endpoint is available at `http://localhost:8081/` for health checks.
 
 ## Architecture
 
 This signaling server is a critical component in the Hawkeye-OS streaming architecture:
 
 ```
-Streaming Node <---> Signaling Server <---> GCOM System
+Streaming Node <---> Signaling Server <---> GCOM frontend(s)
                            |
                     (Coordinates WebRTC
                      connection setup)
